@@ -1,0 +1,25 @@
+{
+  "name": "@gow/galois",
+  "version": "0.1.0",
+  "description": "Arithmetic and polynomial operations in finite fields",
+  "main": "index.js",
+  "typings": "galois.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Bobbin Threadbare",
+    "email": "bobbinth@protonmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GuildOfWeavers/galois.git"
+  },
+  "engines": {
+    "node": "12.3.x"
+  },
+  "devDependencies": {
+    "@types/node": "12.0.x",
+    "del": "4.0.x",
+    "gulp": "4.0.x"
+  },
+  "dependencies": {}
+}
