@@ -93,6 +93,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    prng(seed: bigint | Buffer, length: number): bigint[] {
+        throw new Error('Not implemented');
+    }
+
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     invMany(values: bigint[]): bigint[] {

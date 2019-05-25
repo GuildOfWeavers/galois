@@ -72,6 +72,9 @@ class BinaryField {
     rand() {
         throw new Error('Not implemented');
     }
+    prng(seed, length) {
+        throw new Error('Not implemented');
+    }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     invMany(values) {

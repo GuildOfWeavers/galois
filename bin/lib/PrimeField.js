@@ -77,9 +77,20 @@ class PrimeField {
         }
         return this.mod(lm);
     }
+    // RANDOMNESS
+    // --------------------------------------------------------------------------------------------
     rand() {
         const buffer = crypto.randomBytes(this.elementSize);
         return this.mod(BigInt('0x' + buffer.toString('hex')));
+    }
+    prng(seed, length) {
+        const result = new Array(length);
+        let numseed = utils_1.sha256(seed);
+        for (let i = 0; i < length; i++) {
+            result[i] = this.mod(numseed);
+            numseed = utils_1.sha256(numseed);
+        }
+        return result;
     }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 // ================================================================================================
 import { FiniteField, Polynom } from '@guildofweavers/galois';
 import * as crypto from 'crypto';
-import { isPowerOf2 } from './utils';
+import { isPowerOf2, sha256 } from './utils';
 
 // CLASS DEFINITION
 // ================================================================================================
@@ -96,9 +96,21 @@ export class PrimeField implements FiniteField {
         return this.mod(lm);
     }
 
+    // RANDOMNESS
+    // --------------------------------------------------------------------------------------------
     rand(): bigint {
         const buffer = crypto.randomBytes(this.elementSize);
         return this.mod(BigInt('0x' + buffer.toString('hex')));
+    }
+
+    prng(seed: bigint | Buffer, length: number): bigint[] {
+        const result = new Array<bigint>(length);
+        let numseed = sha256(seed);
+        for (let i = 0; i < length; i++) {
+            result[i] = this.mod(numseed);
+            numseed = sha256(numseed);
+        }
+        return result;
     }
 
     // BATCH OPERATIONS

@@ -96,10 +96,20 @@ declare module '@guildofweavers/galois' {
          */
         getPowerSeries(base: bigint, length: number): bigint[];
         
+        // RANDOMNESS
+        // ----------------------------------------------------------------------------------------
+
         /**
          * Generate a cryptographically-secure random field element
          */
         rand(): bigint;
+
+        /**
+         * Generates a sequence of pseudorandom field elements from the provided seed
+         * @param seed Seed of the PRNG
+         * @param length Length of sequence to generate
+         */
+        prng(seed: bigint | Buffer, length: number): bigint[];
 
         // ROOTS OF UNITY
         // ----------------------------------------------------------------------------------------
