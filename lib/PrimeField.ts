@@ -1,6 +1,6 @@
 // IMPORTS
 // ================================================================================================
-import { FiniteField, Polynom } from '@gow/galois';
+import { FiniteField, Polynom } from '@guildofweavers/galois';
 import * as crypto from 'crypto';
 import { isPowerOf2 } from './utils';
 

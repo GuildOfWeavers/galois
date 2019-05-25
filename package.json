@@ -1,5 +1,5 @@
 {
-  "name": "@gow/galois",
+  "name": "@guildofweavers/galois",
   "version": "0.1.0",
   "description": "Arithmetic and polynomial operations in finite fields",
   "main": "index.js",
@@ -9,6 +9,12 @@
     "name": "Bobbin Threadbare",
     "email": "bobbinth@protonmail.com"
   },
+  "keywords": [
+    "finite fields",
+    "fast fourier transform",
+    "lagrange interpolation",
+    "cryptography"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/GuildOfWeavers/galois.git"
