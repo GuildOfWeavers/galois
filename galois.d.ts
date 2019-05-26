@@ -106,10 +106,16 @@ declare module '@guildofweavers/galois' {
 
         /**
          * Generates a sequence of pseudorandom field elements from the provided seed
-         * @param seed Seed of the PRNG
+         * @param seed Seed for the PRNG
          * @param length Length of sequence to generate
          */
         prng(seed: bigint | Buffer, length: number): bigint[];
+
+        /**
+         * Generates a single pseudorandom field element from the provided seed
+         * @param seed Seed for the PRNG
+         */
+        prng(seed: bigint | Buffer): bigint;
 
         // ROOTS OF UNITY
         // ----------------------------------------------------------------------------------------

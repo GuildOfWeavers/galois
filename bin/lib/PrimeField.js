@@ -84,6 +84,10 @@ class PrimeField {
         return this.mod(BigInt('0x' + buffer.toString('hex')));
     }
     prng(seed, length) {
+        if (length === undefined) {
+            // if length is not specified, return just a single element
+            return this.mod(utils_1.sha256(seed));
+        }
         const result = new Array(length);
         let numseed = utils_1.sha256(seed);
         for (let i = 0; i < length; i++) {

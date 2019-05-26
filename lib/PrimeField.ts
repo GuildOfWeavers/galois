@@ -103,7 +103,14 @@ export class PrimeField implements FiniteField {
         return this.mod(BigInt('0x' + buffer.toString('hex')));
     }
 
-    prng(seed: bigint | Buffer, length: number): bigint[] {
+    prng(seed: bigint | Buffer): bigint
+    prng(seed: bigint | Buffer, length?: number): bigint[];
+    prng(seed: bigint | Buffer, length?: number): bigint[] | bigint {
+        if (length === undefined) {
+            // if length is not specified, return just a single element
+            return this.mod(sha256(seed));
+        }
+
         const result = new Array<bigint>(length);
         let numseed = sha256(seed);
         for (let i = 0; i < length; i++) {

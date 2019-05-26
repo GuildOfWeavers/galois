@@ -88,8 +88,8 @@ The methods can be used to perform basic polynomial arithmetic:
 * **rand**(): `bigint`<br />
   Generate a cryptographically-secure random field element.
 
-* **prng**(seed: `bigint` | `Buffer`, length: `number`): `bigint[]`<br />
-  Generates a sequence of pseudorandom field elements from the provided seed.
+* **prng**(seed: `bigint` | `Buffer`, length?: `number`): `bigint[]` | `bigint`<br />
+  Generates pseudorandom field elements from the provided seed. If the `length` parameter is provided, a sequence of elements is returned; otherwise, the returned value is a single field element.
 
 * **getRootOfUnity**(order: `number`): `bigint`<br />
   Computes a primitive root of unity such that `root**order = 1`.

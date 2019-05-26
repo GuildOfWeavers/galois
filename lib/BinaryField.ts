@@ -93,7 +93,9 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    prng(seed: bigint | Buffer, length: number): bigint[] {
+    prng(seed: bigint | Buffer): bigint
+    prng(seed: bigint | Buffer, length?: number): bigint[];
+    prng(seed: bigint | Buffer, length?: number): bigint[] | bigint {
         throw new Error('Not implemented');
     }
 
