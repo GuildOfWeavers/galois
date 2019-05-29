@@ -104,3 +104,6 @@ The methods can be used to perform basic polynomial arithmetic:
 
 * Wikipedia article on [finite fields](https://en.wikipedia.org/wiki/Finite_field).
 * Many algorithms in this library have been copied (with minimal changes) from Vitalik Buterin's [MIMC STARK project](https://github.com/ethereum/research/tree/master/mimc_stark), including: Fast Fourier Transform, Lagrange Interpolation, and Montgomery batch inversion.
+
+# License
+[MIT](/LICENSE) © 2019 Guild of Weavers
