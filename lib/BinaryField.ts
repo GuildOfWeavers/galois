@@ -32,6 +32,10 @@ export class BinaryField implements FiniteField {
         return Math.ceil(this.extensionDegree / 8);
     }
 
+    get zero(): bigint {
+        throw new Error('Not implemented');
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     add(x: bigint, y: bigint): bigint {

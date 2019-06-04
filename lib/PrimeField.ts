@@ -34,6 +34,10 @@ export class PrimeField implements FiniteField {
         return 1;
     }
 
+    get zero(): bigint {
+        return 0n
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value: bigint): bigint {
@@ -62,6 +66,12 @@ export class PrimeField implements FiniteField {
         base = this.mod(base);
         if (base === 0n && exponent === 0n) {
             throw new TypeError('Base and exponent cannot be both 0');
+        }
+
+        // handle raising to negative power
+        if (exponent < 0n) {
+            base = this.inv(base);
+            exponent = -exponent;
         }
 
         let result = 1n;

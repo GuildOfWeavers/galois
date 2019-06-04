@@ -14,6 +14,9 @@ declare module '@guildofweavers/galois' {
         /** Size of a field element in bytes */
         readonly elementSize: number;
 
+        /** Additive identity of the field */
+        readonly zero: bigint;
+
         // BASIC ARITHMETICS
         // ----------------------------------------------------------------------------------------
 
@@ -48,7 +51,7 @@ declare module '@guildofweavers/galois' {
         /**
          * Computes b**p
          * @param b Field element to exponentiate
-         * @param p Exponent
+         * @param p Exponent, a positive or a negative number
          */
         exp(b: bigint, p: bigint): bigint;
 
