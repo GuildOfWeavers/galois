@@ -17,6 +17,9 @@ declare module '@guildofweavers/galois' {
         /** Additive identity of the field */
         readonly zero: bigint;
 
+        /** Multiplicative identity of the field */
+        readonly one: bigint;
+
         // BASIC ARITHMETICS
         // ----------------------------------------------------------------------------------------
 

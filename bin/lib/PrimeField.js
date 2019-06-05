@@ -27,6 +27,9 @@ class PrimeField {
     get zero() {
         return 0n;
     }
+    get one() {
+        return 1n;
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value) {

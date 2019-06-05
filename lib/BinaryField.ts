@@ -36,6 +36,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    get one(): bigint {
+        throw new Error('Not implemented');
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     add(x: bigint, y: bigint): bigint {

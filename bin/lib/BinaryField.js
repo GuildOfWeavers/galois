@@ -25,6 +25,9 @@ class BinaryField {
     get zero() {
         throw new Error('Not implemented');
     }
+    get one() {
+        throw new Error('Not implemented');
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     add(x, y) {

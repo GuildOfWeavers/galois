@@ -38,6 +38,10 @@ export class PrimeField implements FiniteField {
         return 0n
     }
 
+    get one(): bigint {
+        return 1n;
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value: bigint): bigint {
