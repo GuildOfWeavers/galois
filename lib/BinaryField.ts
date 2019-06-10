@@ -97,6 +97,8 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    // RANDOMNESS
+    // ----------------------------------------------------------------------------------------
     rand(): bigint {
         throw new Error('Not implemented');
     }
@@ -104,6 +106,62 @@ export class BinaryField implements FiniteField {
     prng(seed: bigint | Buffer): bigint
     prng(seed: bigint | Buffer, length?: number): bigint[];
     prng(seed: bigint | Buffer, length?: number): bigint[] | bigint {
+        throw new Error('Not implemented');
+    }
+
+    // VECTOR OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        throw new Error('Not implemented');
+    }
+
+    subVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        throw new Error('Not implemented');
+    }
+
+    mulVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        throw new Error('Not implemented');
+    }
+
+    divVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        throw new Error('Not implemented');
+    }
+
+    expVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        throw new Error('Not implemented');
+    }
+
+    combineVectors(a: bigint[], b: bigint[]): bigint {
+        throw new Error('Not implemented');
+    }
+
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+    
+    subMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+
+    mulMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+
+    divMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+
+    expMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+
+    mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][] {
+        throw new Error('Not implemented');
+    }
+
+    mulMatrixByVector(m: bigint[][], v: bigint[]): bigint[] {
         throw new Error('Not implemented');
     }
 

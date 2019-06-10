@@ -107,6 +107,131 @@ class PrimeField {
         }
         return result;
     }
+    // VECTOR OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addVectorElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.add, a, b)
+            : this.vectorElementsOp(this.add, a, b);
+    }
+    subVectorElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.sub, a, b)
+            : this.vectorElementsOp(this.sub, a, b);
+    }
+    mulVectorElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.mul, a, b)
+            : this.vectorElementsOp(this.mul, a, b);
+    }
+    divVectorElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.mul, a, this.inv(b))
+            : this.vectorElementsOp(this.div, a, b);
+    }
+    expVectorElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.exp, a, b)
+            : this.vectorElementsOp(this.exp, a, b);
+    }
+    combineVectors(a, b) {
+        let result = 0n;
+        for (let i = 0; i < a.length; i++) {
+            result = this.mod(result + a[i] * b[i]);
+        }
+        return result;
+    }
+    vectorElementsOp(op, a, b) {
+        const result = new Array(a.length);
+        for (let i = 0; i < result.length; i++) {
+            result[i] = op.call(this, a[i], b[i]);
+        }
+        return result;
+    }
+    vectorScalarOp(op, a, b) {
+        const result = new Array(a.length);
+        for (let i = 0; i < result.length; i++) {
+            result[i] = op.call(this, a[i], b);
+        }
+        return result;
+    }
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addMatrixElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.add, a, b)
+            : this.matrixElementsOp(this.add, a, b);
+    }
+    subMatrixElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.sub, a, b)
+            : this.matrixElementsOp(this.sub, a, b);
+    }
+    mulMatrixElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.mul, a, b)
+            : this.matrixElementsOp(this.mul, a, b);
+    }
+    divMatrixElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.mul, a, this.inv(b))
+            : this.matrixElementsOp(this.div, a, b);
+    }
+    expMatrixElements(a, b) {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.exp, a, b)
+            : this.matrixElementsOp(this.exp, a, b);
+    }
+    mulMatrixes(a, b) {
+        const n = a.length;
+        const m = a[0].length;
+        const p = b[0].length;
+        const result = new Array(n);
+        for (let i = 0; i < n; i++) {
+            let row = result[i] = new Array(p);
+            for (let j = 0; j < p; j++) {
+                let s = 0n;
+                for (let k = 0; k < m; k++) {
+                    s = this.add(s, this.mul(a[i][k], b[k][j]));
+                }
+                row[j] = s;
+            }
+        }
+        return result;
+    }
+    mulMatrixByVector(m, v) {
+        const result = new Array(m.length);
+        for (let i = 0; i < result.length; i++) {
+            let s = 0n;
+            let row = m[i];
+            for (let j = 0; j < v.length; j++) {
+                s = this.add(s, this.mul(row[j], v[j]));
+            }
+            result[i] = s;
+        }
+        return result;
+    }
+    matrixElementsOp(op, a, b) {
+        const result = new Array(a.length);
+        for (let i = 0; i < result.length; i++) {
+            let r1 = a[i], r2 = b[i];
+            let row = result[i] = new Array(r1.length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = op.call(this, r1[j], r2[j]);
+            }
+        }
+        return result;
+    }
+    matrixScalarOp(op, a, b) {
+        const result = new Array(a.length);
+        for (let i = 0; i < result.length; i++) {
+            let row = result[i] = new Array(a[i].length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = op.call(this, a[i][j], b);
+            }
+        }
+        return result;
+    }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     invMany(values) {

@@ -75,10 +75,55 @@ class BinaryField {
     inv(a) {
         throw new Error('Not implemented');
     }
+    // RANDOMNESS
+    // ----------------------------------------------------------------------------------------
     rand() {
         throw new Error('Not implemented');
     }
     prng(seed, length) {
+        throw new Error('Not implemented');
+    }
+    // VECTOR OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addVectorElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    subVectorElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulVectorElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    divVectorElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    expVectorElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    combineVectors(a, b) {
+        throw new Error('Not implemented');
+    }
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addMatrixElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    subMatrixElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulMatrixElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    divMatrixElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    expMatrixElements(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulMatrixes(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulMatrixByVector(m, v) {
         throw new Error('Not implemented');
     }
     // BATCH OPERATIONS

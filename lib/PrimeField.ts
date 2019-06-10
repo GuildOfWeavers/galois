@@ -4,6 +4,12 @@ import { FiniteField, Polynom } from '@guildofweavers/galois';
 import * as crypto from 'crypto';
 import { isPowerOf2, sha256 } from './utils';
 
+// INTERFACES
+// ================================================================================================
+interface ArithmeticOperation {
+    (this: PrimeField, a: bigint, b: bigint): bigint;
+}
+
 // CLASS DEFINITION
 // ================================================================================================
 export class PrimeField implements FiniteField {
@@ -130,6 +136,149 @@ export class PrimeField implements FiniteField {
         for (let i = 0; i < length; i++) {
             result[i] = this.mod(numseed);
             numseed = sha256(numseed);
+        }
+        return result;
+    }
+
+    // VECTOR OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.add, a, b)
+            : this.vectorElementsOp(this.add, a, b);
+    }
+
+    subVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.sub, a, b)
+            : this.vectorElementsOp(this.sub, a, b);
+    }
+
+    mulVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.mul, a, b)
+            : this.vectorElementsOp(this.mul, a, b);
+    }
+
+    divVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.mul, a, this.inv(b))
+            : this.vectorElementsOp(this.div, a, b);
+    }
+
+    expVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+        return (typeof b === 'bigint')
+            ? this.vectorScalarOp(this.exp, a, b)
+            : this.vectorElementsOp(this.exp, a, b);
+    }
+
+    combineVectors(a: bigint[], b: bigint[]): bigint {
+        let result = 0n;
+        for (let i = 0; i < a.length; i++) {
+            result = this.mod(result + a[i] * b[i]);
+        }
+        return result;
+    }
+
+    private vectorElementsOp(op: ArithmeticOperation, a: bigint[], b: bigint[]) {
+        const result = new Array<bigint>(a.length);
+        for (let i = 0; i < result.length; i++) {
+            result[i] = op.call(this, a[i], b[i]);
+        }
+        return result;
+    }
+
+    private vectorScalarOp(op: ArithmeticOperation, a: bigint[], b: bigint) {
+        const result = new Array<bigint>(a.length);
+        for (let i = 0; i < result.length; i++) {
+            result[i] = op.call(this, a[i], b);
+        }
+        return result;
+    }
+
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    addMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.add, a, b)
+            : this.matrixElementsOp(this.add, a, b);
+    }
+    
+    subMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.sub, a, b)
+            : this.matrixElementsOp(this.sub, a, b);
+    }
+
+    mulMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.mul, a, b)
+            : this.matrixElementsOp(this.mul, a, b);
+    }
+
+    divMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.mul, a, this.inv(b))
+            : this.matrixElementsOp(this.div, a, b);
+    }
+
+    expMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+        return (typeof b === 'bigint')
+            ? this.matrixScalarOp(this.exp, a, b)
+            : this.matrixElementsOp(this.exp, a, b);
+    }
+
+    mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][] {
+        const n = a.length;
+        const m = a[0].length;
+        const p = b[0].length;
+
+        const result = new Array<bigint[]>(n);
+        for (let i = 0; i < n; i++) {
+            let row = result[i] = new Array<bigint>(p);
+            for (let j = 0; j < p; j++) {
+                let s = 0n;
+                for (let k = 0; k < m; k++) {
+                    s = this.add(s, this.mul(a[i][k], b[k][j]));
+                }
+                row[j] = s;
+            }
+        }
+        return result;
+    }
+
+    mulMatrixByVector(m: bigint[][], v: bigint[]): bigint[] {
+        const result = new Array<bigint>(m.length);
+        for (let i = 0; i < result.length; i++) {
+            let s = 0n;
+            let row = m[i];
+            for (let j = 0; j < v.length; j++) {
+                s = this.add(s, this.mul(row[j], v[j]));
+            }
+            result[i] = s;
+        }
+        return result;
+    }
+
+    private matrixElementsOp(op: ArithmeticOperation, a: bigint[][], b: bigint[][]): bigint[][] {
+        const result = new Array<bigint[]>(a.length);
+        for (let i = 0; i < result.length; i++) {
+            let r1 = a[i], r2 = b[i];
+            let row = result[i] = new Array<bigint>(r1.length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = op.call(this, r1[j], r2[j]);
+            }
+        }
+        return result;
+    }
+
+    private matrixScalarOp(op: ArithmeticOperation, a: bigint[][], b: bigint): bigint[][] {
+        const result = new Array<bigint[]>(a.length);
+        for (let i = 0; i < result.length; i++) {
+            let row = result[i] = new Array<bigint>(a[i].length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = op.call(this, a[i][j], b);
+            }
         }
         return result;
     }

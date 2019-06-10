@@ -64,9 +64,89 @@ declare module '@guildofweavers/galois' {
          */
         inv(value: bigint): bigint;
 
+        // VECTOR OPERATIONS
+        // ----------------------------------------------------------------------------------------
+        /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
+        addVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] + b for all i */
+        addVectorElements(a: bigint[], b: bigint): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] - b[i] for all i */
+        subVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] - b for all i */
+        subVectorElements(a: bigint[], b: bigint): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] * b[i] for all i */
+        mulVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] * b for all i */
+        mulVectorElements(a: bigint[], b: bigint): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] * inv(b[i]) for all i */
+        divVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i] * inv(b) for all i */
+        divVectorElements(a: bigint[], b: bigint): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i]^b[i] for all i */
+        expVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a new vector v such that v[i] = a[i]^b for all i */
+        expVectorElements(a: bigint[], b: bigint[]): bigint[];
+
+        /** Computes a linear combination of two vectors */
+        combineVectors(a: bigint[], b: bigint[]): bigint;
+
+        // MATRIX OPERATIONS
+        // ----------------------------------------------------------------------------------------
+        /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
+        addMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] + b for all i and j */
+        addMatrixElements(a: bigint[][], b: bigint): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] - b[i,j] for all i and j */
+        subMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] - b for all i and j */
+        subMatrixElements(a: bigint[][], b: bigint): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] * b[i,j] for all i and j */
+        mulMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] * b for all i and j */
+        mulMatrixElements(a: bigint[][], b: bigint): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] * inv(b[i,j]) for all i and j */
+        divMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j] * inv(b) for all i and j */
+        divMatrixElements(a: bigint[][], b: bigint): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j]^b[i,j] for all i and j */
+        expMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /** Computes a new matrix m such that m[i,j] = a[i,j]^b for all i and j */
+        expMatrixElements(a: bigint[][], b: bigint): bigint[][];
+
+        /**
+         * Computes a matrix with dimensions [m,n] which is a product of matrixes a and b
+         * @param a Matrix with dimensions [m,p]
+         * @param b Matrix with dimensions [p,n]
+         */
+        mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][];
+
+        /**
+         * Computes a vector of length m which is a product of matrix a and vector b
+         * @param a Matrix with dimensions [m,n]
+         * @param b Vector of length n
+         */
+        mulMatrixByVector(a: bigint[][], b: bigint[]): bigint[];
+
         // BATCH OPERATIONS
         // ----------------------------------------------------------------------------------------
-
         /**
          * Computes modular inverse for all passed-in values using Montgomery batch inversion
          * @param values Field elements
