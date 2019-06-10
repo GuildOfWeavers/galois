@@ -20,9 +20,20 @@
             "presentation": {
                 "reveal": "silent"
             },
-            "problemMatcher": [
-                "$tsc"
-            ]
+            "problemMatcher": [ "$tsc" ]
+        },
+        {
+            "label": "test",
+            "type": "gulp",
+            "task": "test",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": [ "$tsc" ]
         },
         {
             "label": "publish",
@@ -31,9 +42,7 @@
             "presentation": {
                 "reveal": "always"
             },
-            "problemMatcher": [
-                "$tsc"
-            ]
+            "problemMatcher": [ "$tsc" ]
         }
     ]
 }

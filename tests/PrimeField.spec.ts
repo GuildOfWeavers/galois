@@ -399,12 +399,12 @@ describe('PrimeField;', () => {
                 {
                     p1: [-1n, 0n, 1n],
                     p2: [ 1n, 1n, 0n],
-                    pr: [-1n, 1n, 0n]
+                    pr: [-1n, 1n]
                 },
                 {
                     p1: [-1n, 0n, 1n],
                     p2: [-1n, 1n, 0n],
-                    pr: [ 1n, 1n, 0n]
+                    pr: [ 1n, 1n]
                 }
             ];
 

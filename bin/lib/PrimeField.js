@@ -350,8 +350,8 @@ class PrimeField {
         if (a.length < b.length) {
             throw new Error('Cannot divide by polynomial of higher order');
         }
-        let apos = a.length - 1;
-        let bpos = b.length - 1;
+        let apos = lastNonZeroIndex(a);
+        let bpos = lastNonZeroIndex(b);
         let diff = apos - bpos;
         a = a.slice();
         let result = new Array(diff + 1);
@@ -549,5 +549,11 @@ function zpoly(xs, F) {
         }
     }
     return result;
+}
+function lastNonZeroIndex(values) {
+    for (let i = values.length - 1; i >= 0; i--) {
+        if (values[i] !== 0n)
+            return i;
+    }
 }
 //# sourceMappingURL=PrimeField.js.map
