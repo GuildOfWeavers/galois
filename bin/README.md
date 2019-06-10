@@ -55,6 +55,35 @@ Optimized versions of basic arithmetic methods to provide more efficiency when w
 * **combineMany**(values: `bigint[][]`, coefficients: `bigint[]`): `bigint[]`<br />
   Computes linear combinations for each row in the passed in `values` matrix. More specifically: `sum(values[column][row] * coefficients[column])` for all columns and rows.
 
+### Vector operations
+Element-wise operations on vectors. For example, `addVectorElements` computes a new vectors `v` such that `v[i] = a[i] + b[i]` for all elements. When the second argument is a scalar, uses that scalar as the second operand in the operation.
+
+* **addVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+* **subVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+* **mulVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+* **divVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+* **expVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+
+* **combineVectors**(a: `bigint[]`, b: `bigint[]`): `bigint`
+  Computes a linear combination of two vectors.
+
+### Matrix operations
+Element-wise operations on matrixes. For example, `addMatrixElements` computes a new matrix `m` such that `m[i][j] = a[i][j] + b[i][j]` for all elements. When the second argument is a scalar, uses that scalar as the second operand in the operation.
+
+* **addMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+* **subMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+* **mulMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+* **divMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+* **expMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+
+* **mulMatrixes**(a: `bigint[][]`, b: `bigint[][]`): `bigint[][]`
+  Computes a [product of two matrixes](https://en.wikipedia.org/wiki/Matrix_multiplication) such that given input matrix dimensions [*m*,*p*] and [*p*,*n*], the output matrix will have dimensions of [*m*,*n*].
+
+* **mulMatrixByVector**(a: `bigint[][]`, b: `bigint[]`): `bigint[]`
+  Similar to matrix multiplication but the second parameter is a vector. Given a matrix with dimensions [*m*,*n*] and a vector with length *n*, the output vector will have length *m*.
+
+**Note**: matrixes are assumed to be in row-major form.
+
 ### Basic polynomial operations
 Polynomials are represented by a `Polynom` type which is really just an array of `bigint`s encoding coefficients of the polynomial in reverse order. For example, a polynomial `x^3 + 2x^2 + 3x + 4` would be encoded as `[4n, 3n, 2n, 1n]`.
 
