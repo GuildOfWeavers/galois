@@ -4,6 +4,7 @@
 const gulp  = require('gulp');
 const del   = require('del');
 const exec  = require('child_process').exec;
+const mocha = require('gulp-mocha');
 
 // TASKS
 // ================================================================================================
@@ -36,10 +37,24 @@ function publish(cb) {
   });
 }
 
+function runTests(cb) {
+    gulp.src('./bin/tests/**/*.spec.js')
+        .pipe( mocha({reporter: 'spec', bail: false}))
+        .on('error', err => {
+            if (err && (!err.message || err.message !== 'There were test failures')) {
+                console.error(JSON.stringify(err, null, 2));
+            }
+        } )
+        .once('error', () => process.exit(1))
+        .on('end', () => process.exit(0));
+    cb();
+}
+
 const build = gulp.series(clean, compile, copyFiles);
 
 // EXPORTS
 // ================================================================================================
 exports.build = build;
 exports.publish = gulp.series(build, publish);
+exports.test = gulp.series(build, runTests);
 exports.default = build;
