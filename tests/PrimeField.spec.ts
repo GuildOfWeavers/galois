@@ -141,7 +141,7 @@ describe('PrimeField;', () => {
                 {
                     modulus: 11n,
                     tests: [
-                        [1n,   1n,   1n], [2n, 2n, 1n], [4n,  2n, 2n],
+                        [1n,   1n,   1n], [2n, 2n, 1n], [4n,  2n, 2n],  // TODO: test more complicated divisions - e.g. 5/6, 7/3
                         [6n,   3n,   2n], [9n, 3n, 3n], [10n, 1n, 10n],
                         [100n, 100n, 1n]
                     ]
@@ -178,7 +178,7 @@ describe('PrimeField;', () => {
                     {
                         modulus: 11n,
                         tests: [
-                            [1n,  1n,  1n],
+                            [1n,  1n,  1n],                                                 // TODO: test when base is 0; also test 0 exponent
                             [2n,  1n,  2n], [2n, 2n, 4n], [2n, 3n, 8n], [2n,  4n,  5n],
                             [3n,  1n,  3n], [3n, 2n, 9n], [3n, 3n, 5n],
                             [6n,  1n,  6n], [6n, 2n, 3n],
@@ -268,7 +268,7 @@ describe('PrimeField;', () => {
                     });
 
                     tests.forEach(num => {
-                        it(`should calculate correct modular inverse for ${num}n`, () => {
+                        it(`should calculate correctly modular inverse for ${num}n`, () => {
                             const inverse = F.inv(num);
 
                             expect(F.mul(num, inverse)).to.equal(1n);
@@ -306,14 +306,14 @@ describe('PrimeField;', () => {
                 }
             ];
 
-            [3n, 7n, 11n, 13n, 71n, 101n].forEach(modulus => {
+            [3n, 11n, 101n].forEach(modulus => {
                 describe(`modulus ${modulus}n;`, () => {
                     beforeEach(() => {
                         F = new PrimeField(modulus);
                     });
 
                     tests.forEach(({p1, p2, pr}) => {
-                        it('should correct add two polynomials', () => {
+                        it('should correctly add two polynomials', () => {
                             expect(F.addPolys(p1, p2)).to.deep.equal(pr.map(n => F.mod(n)));
                         });
                     });
@@ -335,14 +335,14 @@ describe('PrimeField;', () => {
                 }
             ];
 
-            [3n, 7n, 11n, 13n, 71n, 101n].forEach(modulus => {
+            [3n, 11n, 101n].forEach(modulus => {
                 describe(`modulus ${modulus}n;`, () => {
                     beforeEach(() => {
                         F = new PrimeField(modulus);
                     });
 
                     tests.forEach(({p1, p2, pr}) => {
-                        it('should correct subtract two polynomials', () => {
+                        it('should correctly subtract two polynomials', () => {
                             expect(F.subPolys(p1, p2)).to.deep.equal(pr.map(n => F.mod(n)));
                         });
                     });
@@ -374,14 +374,14 @@ describe('PrimeField;', () => {
                 }
             ];
 
-            [3n, 7n, 11n, 13n, 71n, 101n].forEach(modulus => {
+            [3n, 11n, 101n].forEach(modulus => {
                 describe(`modulus ${modulus}n;`, () => {
                     beforeEach(() => {
                         F = new PrimeField(modulus);
                     });
 
                     tests.forEach(({p1, p2, pr}) => {
-                        it('should correct multiply two polynomials', () => {
+                        it('should correctly multiply two polynomials', () => {
                             expect(F.mulPolys(p1, p2)).to.deep.equal(pr.map(n => F.mod(n)));
                         });
                     });
@@ -408,14 +408,14 @@ describe('PrimeField;', () => {
                 }
             ];
 
-            [3n, 7n, 11n, 13n, 71n, 101n].forEach(modulus => {
+            [3n, 11n, 101n].forEach(modulus => {
                 describe(`modulus ${modulus}n;`, () => {
                     beforeEach(() => {
                         F = new PrimeField(modulus);
                     });
 
                     tests.forEach(({p1, p2, pr}) => {
-                        it('should correct multiply two polynomials', () => {
+                        it('should correctly multiply two polynomials', () => {
                             expect(F.divPolys(p1, p2)).to.deep.equal(pr.map(n => F.mod(n)));
                         });
                     });
@@ -448,7 +448,7 @@ describe('PrimeField;', () => {
             let xs: bigint[];
             let ys: bigint[];
 
-            [7n, 11n, 13n, 71n, 101n]
+            [7n, 11n, 101n]
                 .forEach(modulus => {
                     describe(`modulus ${modulus}n;`, () => {
                         beforeEach(() => {
@@ -461,7 +461,7 @@ describe('PrimeField;', () => {
                             ys = xs.map(x => F.mod(fn(x)));
                         });
 
-                        it(`should return correct polynom`, () => {
+                        it(`should return correctly polynom`, () => {
                             expect(F.interpolate(xs, ys)).to.deep.equal(poly.map(n => F.mod(n)));
                         });
                     });
@@ -491,11 +491,11 @@ describe('PrimeField;', () => {
                         ys = F.evalPolyAtRoots(poly, xs);
                     });
 
-                    it(`should return correct polynom by interpolateRoots()`, () => {
+                    it(`should return correctly polynom by interpolateRoots()`, () => {
                         expect(F.interpolateRoots(xs, ys)).to.deep.equal(poly.map(n => F.mod(n)));
                     });
 
-                    it(`should return correct polynom by interpolate()`, () => {
+                    it(`should return correctly polynom by interpolate()`, () => {
                         expect(F.interpolate(xs, ys)).to.deep.equal(poly.map(n => F.mod(n)));
                     });
 

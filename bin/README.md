@@ -64,7 +64,7 @@ Element-wise operations on vectors. For example, `addVectorElements` computes a 
 * **divVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
 * **expVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
 
-* **combineVectors**(a: `bigint[]`, b: `bigint[]`): `bigint`
+* **combineVectors**(a: `bigint[]`, b: `bigint[]`): `bigint`<br />
   Computes a linear combination of two vectors.
 
 ### Matrix operations
@@ -76,10 +76,10 @@ Element-wise operations on matrixes. For example, `addMatrixElements` computes a
 * **divMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
 * **expMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
 
-* **mulMatrixes**(a: `bigint[][]`, b: `bigint[][]`): `bigint[][]`
+* **mulMatrixes**(a: `bigint[][]`, b: `bigint[][]`): `bigint[][]`<br />
   Computes a [product of two matrixes](https://en.wikipedia.org/wiki/Matrix_multiplication) such that given input matrix dimensions [*m*,*p*] and [*p*,*n*], the output matrix will have dimensions of [*m*,*n*].
 
-* **mulMatrixByVector**(a: `bigint[][]`, b: `bigint[]`): `bigint[]`
+* **mulMatrixByVector**(a: `bigint[][]`, b: `bigint[]`): `bigint[]`<br />
   Similar to matrix multiplication but the second parameter is a vector. Given a matrix with dimensions [*m*,*n*] and a vector with length *n*, the output vector will have length *m*.
 
 **Note**: matrixes are assumed to be in row-major form.
