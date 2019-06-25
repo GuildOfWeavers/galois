@@ -7,6 +7,9 @@ let F: PrimeField;
     return String(this) + 'n';
 };
 
+const strVector = (v: bigint[]): string => JSON.stringify(v).replace(/"/g, '');
+const strMatrix = (m: bigint[][]): string => JSON.stringify(m).replace(/"/g, '');
+
 describe('PrimeField;', () => {
     describe('Basic arithmetic;', () => {
         describe('add();', () => {
@@ -135,26 +138,33 @@ describe('PrimeField;', () => {
                 {
                     modulus: 2n,
                     tests: [
-                        [1n, 1n, 1n]
+                        [1n, 1n, 1n], [2n, 1n, 0n], // * 1n
+                        [1n, 2n, 1n], [2n, 2n, 0n], // * 1n
+                        [1n, 3n, 1n], [2n, 3n, 0n], // * 1n
+                        [1n, 5n, 1n], [2n, 5n, 0n]  // * 1n
                     ]
                 },
                 {
                     modulus: 11n,
                     tests: [
-                        [1n,   1n,   1n], [2n, 2n, 1n], [4n,  2n, 2n],  // TODO: test more complicated divisions - e.g. 5/6, 7/3
-                        [6n,   3n,   2n], [9n, 3n, 3n], [10n, 1n, 10n],
-                        [100n, 100n, 1n]
+                        [1n, 1n, 1n], [2n, 1n, 2n], [6n, 1n, 6n], [10n, 1n, 10n], [11n, 1n, 0n],                          // * 1n
+                        [1n, 2n, 6n], [2n, 2n, 1n], [3n, 2n, 7n], [4n, 2n, 2n],                                           // * 6n
+                        [1n, 3n, 4n], [2n, 3n, 8n], [3n, 3n, 1n], [4n, 3n, 5n], [5n, 3n, 9n], [6n, 3n, 2n], [7n, 3n, 6n], // * 4n
+                        [4n, 6n, 8n], [5n, 6n, 10n],                                                                      // * 2n
+                        [1n, 100n, 1n], [2n, 100n, 2n], [7n, 100n, 7n], [100n, 100n, 1n]                                  // * 1n
                     ]
                 },
                 {
                     modulus: 101n,
                     tests: [
-                        [1n,   1n,  1n], [2n,  2n,  1n],
-                        [20n,  5n,  4n], [20n, 4n,  5n],
-                        [25n,  5n,  5n], [36n, 6n,  6n],
-                        [30n,  5n,  6n], [30n, 6n,  5n],
-                        [10n,  10n, 1n], [60n, 20n, 3n],
-                        [120n, 20n, 6n], [90n, 30n, 3n]
+                        [1n, 1n, 1n],   [5n, 1n, 5n],   [100n, 1n, 100n], [101n, 1n, 0n],                  // * 1n
+                        [1n, 2n, 51n],  [2n, 2n, 1n],   [3n, 2n, 52n],    [5n, 2n, 53n],                   // * 51n
+                        [1n, 4n, 76n],  [2n, 4n, 51n],  [3n, 4n, 26n],    [4n, 4n, 1n],  [20n, 4n, 5n],    // * 76n
+                        [1n, 5n, 81n],  [2n, 5n, 61n],  [20n, 5n, 4n],    [25n, 5n, 5n], [30n, 5n, 6n],    // * 81n
+                        [1n, 6n, 17n],  [2n, 6n, 34n],  [3n, 6n, 51n],    [30n, 6n, 5n], [36n, 6n, 6n],    // * 17n
+                        [1n, 10n, 91n], [2n, 10n, 81n], [5n, 10n, 51n],   [10n, 10n, 1n],                  // * 91n
+                        [1n, 20n, 96n], [2n, 20n, 91n], [7n, 20n, 66n],   [60n, 20n, 3n], [120n, 20n, 6n], // * 96n
+                        [1n, 30n, 64n], [3n, 30n, 91n], [29n, 30n, 38n],  [90n, 30n, 3n]                   // * 64n
                     ]
                 }
             ].forEach(({modulus, tests}) => {
@@ -178,7 +188,9 @@ describe('PrimeField;', () => {
                     {
                         modulus: 11n,
                         tests: [
-                            [1n,  1n,  1n],                                                 // TODO: test when base is 0; also test 0 exponent
+                            [1n,  0n,  1n], [2n,  0n,  1n], [5n,  0n,  1n], [10n,  0n,  1n],
+                            [0n,  1n,  0n], [0n,  2n,  0n], [0n,  5n,  0n], [0n,  10n,  0n],
+                            [1n,  1n,  1n],
                             [2n,  1n,  2n], [2n, 2n, 4n], [2n, 3n, 8n], [2n,  4n,  5n],
                             [3n,  1n,  3n], [3n, 2n, 9n], [3n, 3n, 5n],
                             [6n,  1n,  6n], [6n, 2n, 3n],
@@ -188,8 +200,10 @@ describe('PrimeField;', () => {
                     {
                         modulus: 101n,
                         tests: [
-                            [1n, 1n, 1n],  [2n,  2n, 4n], [3n, 3n, 27n], [4n, 4n, 54n],
-                            [6n, 2n, 36n], [10n, 2n, 100n]
+                            [1n,  0n,  1n], [2n,  0n,  1n], [5n,  0n,  1n], [10n,  0n,  1n],
+                            [0n,  1n,  0n], [0n,  2n,  0n], [0n,  5n,  0n], [0n,  10n,  0n],
+                            [1n, 1n, 1n],   [2n,  2n, 4n], [3n, 3n, 27n], [4n, 4n, 54n],
+                            [6n, 2n, 36n],  [10n, 2n, 100n]
                         ]
                     }
                 ].forEach(({modulus, tests}) => {
@@ -279,7 +293,699 @@ describe('PrimeField;', () => {
         });
     });
 
-    describe('Polynomial tests;', () => {
+    describe('Vector operations;', () => {
+        describe('addVectorElements();', () => {
+            const vTests = [
+                { v1: [1n],                 v2: [2n],                 vr: [3n] },
+                { v1: [1n, 0n, 5n],         v2: [2n, 5n, 25n],        vr: [3n, 5n, 30n] },
+                { v1: [0n, 4n, 3n, 0n],     v2: [1n, 0n, 1n, 5n],     vr: [1n, 4n, 4n, 5n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], v2: [1n, 0n, 1n, 7n, 8n], vr: [1n, 0n, 2n, 7n, 8n] }
+            ];
+
+            const nTests = [
+                { v1: [1n],                 n: 2n, vr: [3n] },
+                { v1: [1n, 0n, 5n],         n: 3n, vr: [4n, 3n, 8n] },
+                { v1: [0n, 4n, 3n, 0n],     n: 5n, vr: [5n, 9n, 8n, 5n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], n: 0n, vr: [0n, 0n, 1n, 0n, 0n] }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    vTests.forEach(({v1, v2, vr}) => {
+                        it(`should correctly add vectors ${strVector(v1)} and ${strVector(v2)}`, () => {
+                            expect(F.addVectorElements(v1, v2)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+
+                    nTests.forEach(({v1, n, vr}) => {
+                        it(`should correctly add vector ${strVector(v1)} and number ${n}`, () => {
+                            expect(F.addVectorElements(v1, n)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('subVectorElements();', () => {
+            const vTests = [
+                { v1: [1n],                 v2: [2n],                 vr: [-1n] },
+                { v1: [1n, 0n, 5n],         v2: [2n, 5n, 25n],        vr: [-1n, -5n, -20n] },
+                { v1: [0n, 4n, 3n, 0n],     v2: [1n, 0n, 1n, 5n],     vr: [-1n, 4n, 2n, -5n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], v2: [1n, 0n, 1n, 7n, 8n], vr: [-1n, 0n, 0n, -7n, -8n] }
+            ];
+
+            const nTests = [
+                { v1: [1n],                 n: 2n, vr: [-1n] },
+                { v1: [1n, 0n, 5n],         n: 3n, vr: [-2n, -3n, 2n] },
+                { v1: [0n, 4n, 3n, 0n],     n: 5n, vr: [-5n, -1n, -2n, -5n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], n: 0n, vr: [0n, 0n, 1n, 0n, 0n] }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    vTests.forEach(({v1, v2, vr}) => {
+                        it(`should correctly subtract vectors ${strVector(v1)} and ${strVector(v2)}`, () => {
+                            expect(F.subVectorElements(v1, v2)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+
+                    nTests.forEach(({v1, n, vr}) => {
+                        it(`should correctly subtract number ${n} from vector ${strVector(v1)}`, () => {
+                            expect(F.subVectorElements(v1, n)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('mulVectorElements();', () => {
+            const vTests = [
+                { v1: [1n],                 v2: [2n],                 vr: [2n] },
+                { v1: [1n, 0n, 5n],         v2: [2n, 5n, 25n],        vr: [2n, 0n, 125n] },
+                { v1: [0n, 4n, 3n, 0n],     v2: [1n, 0n, 1n, 5n],     vr: [0n, 0n, 3n, 0n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], v2: [1n, 0n, 1n, 7n, 8n], vr: [0n, 0n, 1n, 0n, 0n] }
+            ];
+
+            const nTests = [
+                { v1: [1n],                 n: 2n, vr: [2n] },
+                { v1: [1n, 0n, 5n],         n: 3n, vr: [3n, 0n, 15n] },
+                { v1: [0n, 4n, 3n, 0n],     n: 5n, vr: [0n, 20n, 15n, 0n] },
+                { v1: [0n, 0n, 1n, 0n, 0n], n: 0n, vr: [0n, 0n, 0n, 0n, 0n] }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    vTests.forEach(({v1, v2, vr}) => {
+                        it(`should correctly multiply vectors ${strVector(v1)} and ${strVector(v2)}`, () => {
+                            expect(F.mulVectorElements(v1, v2)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+
+                    nTests.forEach(({v1, n, vr}) => {
+                        it(`should correctly multiply vector ${strVector(v1)} and number ${n}`, () => {
+                            expect(F.mulVectorElements(v1, n)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('divVectorElements();', () => {
+            const vTests = [
+                {
+                    v1: [1n],
+                    v2: [2n],
+                    vr: {
+                        3  : [2n], // * [2n]
+                        11 : [6n], // * [6n]
+                        101: [51n] // * [51n]
+                    }
+                },
+                {
+                    v1: [1n, 0n, 5n],
+                    v2: [2n, 5n, 25n],
+                    vr: {
+                        3  : [2n, 0n, 5n],   // * [2n, 2n, 1n]
+                        11 : [6n, 0n, 20n],  // * [6n, 9n, 4n]
+                        101: [51n, 0n, 485n] // * [51n, 81n, 97n]
+                    }
+                },
+                {
+                    v1: [0n, 4n, 3n, 0n],
+                    v2: [1n, 0n, 1n, 5n],
+                    vr: {
+                        3  : [0n, 0n, 3n, 0n], // * [1n, 0n, 1n, 2n]
+                        11 : [0n, 0n, 3n, 0n], // * [1n, 0n, 1n, 9n]
+                        101: [0n, 0n, 3n, 0n]  // * [1n, 0n, 1n, 81n]
+                    }
+                },
+                {
+                    v1: [0n, 0n, 1n, 0n, 0n],
+                    v2: [1n, 0n, 1n, 7n, 8n],
+                    vr: {
+                        3  : [0n, 0n, 1n, 0n, 0n], // * [1n, 0n, 1n, 1n, 2n]
+                        11 : [0n, 0n, 1n, 0n, 0n], // * [1n, 0n, 1n, 8n, 7n]
+                        101: [0n, 0n, 1n, 0n, 0n]  // * [1n, 0n, 1n, 29n, 38n]
+                    }
+                }
+            ];
+            const nTests = [
+                {
+                    v1: [1n],
+                    n: 2n,
+                    vr: {
+                        3  : [2n], // * 2n
+                        11 : [6n], // * 6n
+                        101: [51n] // * 51n
+                    }
+                },
+                {
+                    v1: [1n, 0n, 5n],
+                    n : 3n,
+                    vr: {
+                        3  : [1n, 0n, 5n],   // * 1n
+                        11 : [4n, 0n, 20n],  // * 4n
+                        101: [34n, 0n, 170n] // * 34n
+                    },
+                },
+                {
+                    v1: [0n, 4n, 3n, 0n],
+                    n: 5n,
+                    vr: {
+                        3  : [0n, 8n, 6n, 0n],    // * 2n
+                        11 : [0n, 36n, 27n, 0n],  // * 9n
+                        101: [0n, 324n, 243n, 0n] // * 81n
+                    }
+                },
+                {
+                    v1: [0n, 0n, 1n, 0n, 0n],
+                    n: 0n,
+                    vr: {
+                        3  : [0n, 0n, 0n, 0n, 0n], // * 0n
+                        11 : [0n, 0n, 0n, 0n, 0n], // * 0n
+                        101: [0n, 0n, 0n, 0n, 0n]  // * 0n
+                    }
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                const resultKey = String(modulus);
+
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    vTests.forEach(({v1, v2, vr}) => {
+                        it(`should correctly divide vectors ${strVector(v1)} and ${strVector(v2)}`, () => {
+                            expect(F.divVectorElements(v1, v2)).to.deep.equal((vr as any)[resultKey].map((n: any) => F.mod(n)));
+                        });
+                    });
+
+                    nTests.forEach(({v1, n, vr}) => {
+                        it(`should correctly divide vector ${strVector(v1)} on number ${n}`, () => {
+                            expect(F.divVectorElements(v1, n)).to.deep.equal((vr as any)[resultKey].map((n: any) => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('expVectorElements();', () => {
+            const vTests = [
+                { v1: [1n],                 v2: [2n],                 vr: [1n] },
+                { v1: [1n, 0n, 5n],         v2: [2n, 5n, 3n],         vr: [1n, 0n, 125n] },
+                { v1: [0n, 4n, 3n, 0n],     v2: [1n, 0n, 1n, 5n],     vr: [0n, 1n, 3n, 0n] },
+                { v1: [0n, 1n, 1n, 0n, 0n], v2: [1n, 0n, 1n, 7n, 8n], vr: [0n, 1n, 1n, 0n, 0n] }
+            ];
+            const nTests = [
+                { v1: [1n],                 n: 2n, vr: [1n] },
+                { v1: [1n, 0n, 5n],         n: 3n, vr: [1n, 0n, 125n] },
+                { v1: [0n, 4n, 3n, 0n],     n: 5n, vr: [0n, 1024n, 243n, 0n] },
+                { v1: [0n, 0n, 2n, 0n, 0n], n: 3n, vr: [0n, 0n, 8n, 0n, 0n] }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    vTests.forEach(({v1, v2, vr}) => {
+                        it(`should correctly raise vector ${strVector(v1)} to a power ${strVector(v2)}`, () => {
+                            expect(F.expVectorElements(v1, v2)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+
+                    nTests.forEach(({v1, n, vr}) => {
+                        it(`should correctly raise vector ${strVector(v1)} to a power ${n}`, () => {
+                            expect(F.expVectorElements(v1, n)).to.deep.equal(vr.map(n => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('combineVectors();', () => {
+            const tests = [
+                { v1: [1n],                 v2: [2n],                 r: 2n },
+                { v1: [1n, 0n, 5n],         v2: [2n, 5n, 3n],         r: 17n },
+                { v1: [0n, 4n, 3n, 0n],     v2: [1n, 0n, 1n, 5n],     r: 3n },
+                { v1: [0n, 1n, 1n, 0n, 0n], v2: [1n, 0n, 1n, 7n, 8n], r: 1n }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                    });
+
+                    tests.forEach(({v1, v2, r}) => {
+                        it(`should correctly combine vectors ${strVector(v1)} and ${strVector(v2)}`, () => {
+                            expect(F.combineVectors(v1, v2)).to.equal(F.mod(r));
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    describe('Matrix operations;', () => {
+        const normalize = (F: PrimeField): (m: bigint[][]) => bigint[][] => (m: bigint[][]): bigint[][] => m.map(n1 => n1.map(n2 => F.mod(n2)));
+        let normF: (m: bigint[][]) => bigint[][];
+
+        describe('addMatrixElements();', () => {
+            const mTests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: [[3n]]
+                },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    m2: [[2n, 5n], [3n, 7n]],
+                    mr: [[3n, 7n], [5n, 12n]] },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n],  [3n, 2n, 1n]],
+                    m2: [[5n, 0n, 1n], [7n, 3n, 1n],  [2n, 9n, 0n]],
+                    mr: [[6n, 2n, 4n], [10n, 3n, 1n], [5n, 11n, 1n]]
+                }
+            ];
+
+            const nTests = [
+                {
+                    m1: [[1n]],
+                    n : 2n,
+                    mr: [[3n]] },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    n : 3n,
+                    mr: [[4n, 5n], [5n, 8n]]
+                },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n],  [3n, 2n, 1n]],
+                    n : 2n,
+                    mr: [[3n, 4n, 5n], [5n, 2n, 2n],  [5n, 4n, 3n]]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    mTests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly add matrices ${strMatrix(m1)} and ${strMatrix(m2)}`, () => {
+                            expect(F.addMatrixElements(m1, m2)).to.deep.equal(normF(mr));
+                        });
+                    });
+
+                    nTests.forEach(({m1, n, mr}) => {
+                        it(`should correctly add matrix ${strMatrix(m1)} and number ${n}`, () => {
+                            expect(F.addMatrixElements(m1, n)).to.deep.equal(normF(mr));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('subMatrixElements();', () => {
+            const mTests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: [[-1n]]
+                },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    m2: [[2n, 5n], [3n, 7n]],
+                    mr: [[-1n, -3n], [-1n, -2n]] },
+                {
+                    m1: [[1n, 2n, 3n],  [3n, 0n, 0n],    [3n, 2n, 1n]],
+                    m2: [[5n, 0n, 1n],  [7n, 3n, 1n],    [2n, 9n, 0n]],
+                    mr: [[-4n, 2n, 2n], [-4n, -3n, -1n], [1n, -7n, 1n]]
+                }
+            ];
+
+            const nTests = [
+                {
+                    m1: [[1n]],
+                    n : 2n,
+                    mr: [[-1n]] },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    n : 3n,
+                    mr: [[-2n, -1n], [-1n, 2n]]
+                },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n], [3n, 2n, 1n]],
+                    n : 2n,
+                    mr: [[-1n, 0n, 1n], [1n, -2n, -2n], [1n, 0n, -1n]]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    mTests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly subtract matrices ${strMatrix(m1)} and ${strMatrix(m2)}`, () => {
+                            expect(F.subMatrixElements(m1, m2)).to.deep.equal(normF(mr));
+                        });
+                    });
+
+                    nTests.forEach(({m1, n, mr}) => {
+                        it(`should correctly subtract number ${n} from matrix ${strMatrix(m1)}`, () => {
+                            expect(F.subMatrixElements(m1, n)).to.deep.equal(normF(mr));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('mulMatrixElements();', () => {
+            const mTests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: [[2n]]
+                },
+                {
+                    m1: [[1n, 2n],  [2n, 5n]],
+                    m2: [[2n, 5n],  [3n, 7n]],
+                    mr: [[2n, 10n], [6n, 35n]] },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n],  [3n, 2n, 1n]],
+                    m2: [[5n, 0n, 1n], [7n, 3n, 1n],  [2n, 9n, 0n]],
+                    mr: [[5n, 0n, 3n], [21n, 0n, 0n], [6n, 18n, 0n]]
+                }
+            ];
+
+            const nTests = [
+                {
+                    m1: [[1n]],
+                    n : 2n,
+                    mr: [[2n]] },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    n : 3n,
+                    mr: [[3n, 6n], [6n, 15n]]
+                },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n],  [3n, 2n, 1n]],
+                    n : 2n,
+                    mr: [[2n, 4n, 6n], [6n, 0n, 0n],  [6n, 4n, 2n]]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    mTests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly multiply matrices ${strMatrix(m1)} and ${strMatrix(m2)}`, () => {
+                            expect(F.mulMatrixElements(m1, m2)).to.deep.equal(normF(mr));
+                        });
+                    });
+
+                    nTests.forEach(({m1, n, mr}) => {
+                        it(`should correctly multiply matrix ${strMatrix(m1)} and number ${n}`, () => {
+                            expect(F.mulMatrixElements(m1, n)).to.deep.equal(normF(mr));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('divMatrixElements();', () => {
+            const mTests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: {
+                        3  : [[2n]], // * [2n]
+                        11 : [[6n]], // * [6n]
+                        101: [[51n]] // * [51n]
+                    }
+                },
+                {
+                    m1: [[1n, 0n], [5n, 2n]],
+                    m2: [[2n, 5n], [25n, 2n]],
+                    mr: {
+                        3  : [[2n, 0n], [5n, 4n]],     // * [[2n, 2n], [1n, 2n]]
+                        11 : [[6n, 0n], [20n, 12n]],   // * [[6n, 9n], [4n, 6n]]
+                        101: [[51n, 0n], [485n, 102n]] // * [[51n, 81n], [97n, 51n]]
+                    }
+                },
+                {
+                    m1: [[0n, 4n, 3n], [0n, 5n, 2n], [1n, 2n, 4n]],
+                    m2: [[1n, 5n, 2n], [4n, 7n, 3n], [1n, 0n, 3n]],
+                    mr: {
+                        3  : [[0n, 8n, 6n],     [0n, 5n, 2n],    [1n, 0n, 4n]],  // * [[1n, 2n, 2n], [1n, 1n, 1n], [1n, 0n, 1n]]
+                        11 : [[0n, 36n, 18n],   [0n, 40n, 8n],   [1n, 0n, 16n]], // * [[1n, 9n, 6n], [3n, 8n, 4n], [1n, 0n, 4n]]
+                        101: [[0n, 324n, 153n], [0n, 145n, 68n], [1n, 0n, 136n]] // * [[1n, 81n, 51n], [76n, 29n, 34n], [1n, 0n, 34n]]
+                    }
+                }
+            ];
+            const nTests = [
+                {
+                    m1: [[1n]],
+                    n: 2n,
+                    mr: {
+                        3  : [[2n]], // * 2n
+                        11 : [[6n]], // * 6n
+                        101: [[51n]] // * 51n
+                    }
+                },
+                {
+                    m1: [[1n, 0n], [5n, 2n]],
+                    n : 3n,
+                    mr: {
+                        3  : [[1n, 0n],  [5n, 2n]],   // * 1n
+                        11 : [[4n, 0n],  [20n, 8n]],  // * 4n
+                        101: [[34n, 0n], [170n, 68n]] // * 34n
+                    }
+                },
+                {
+                    m1: [[0n, 4n, 3n], [0n, 5n, 2n], [1n, 2n, 4n]],
+                    n: 5n,
+                    mr: {
+                        3  : [[0n, 8n, 6n],     [0n, 10n, 4n],    [2n, 4n, 8n]],     // * 2n
+                        11 : [[0n, 36n, 27n],   [0n, 45n, 18n],   [9n, 18n, 36n]],   // * 9n
+                        101: [[0n, 324n, 243n], [0n, 405n, 162n], [81n, 162n, 324n]] // * 81n
+                    }
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                const resultKey = String(modulus);
+
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    mTests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly divide matrices ${strMatrix(m1)} and ${strMatrix(m2)}`, () => {
+                            expect(F.divMatrixElements(m1, m2)).to.deep.equal(normF((mr as any)[resultKey]));
+                        });
+                    });
+
+                    nTests.forEach(({m1, n, mr}) => {
+                        it(`should correctly divide matrix ${strMatrix(m1)} on number ${n}`, () => {
+                            expect(F.divMatrixElements(m1, n)).to.deep.equal(normF((mr as any)[resultKey]));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('expMatrixElements();', () => {
+            const mTests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: [[1n]]
+                },
+                {
+                    m1: [[1n, 2n],  [2n, 5n]],
+                    m2: [[2n, 5n],  [3n, 7n]],
+                    mr: [[1n, 32n], [8n, 78125n]] },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n],    [3n, 2n, 1n]],
+                    m2: [[5n, 0n, 1n], [7n, 3n, 1n],    [2n, 9n, 0n]],
+                    mr: [[1n, 1n, 3n], [2187n, 0n, 0n], [9n, 512n, 1n]]
+                }
+            ];
+
+            const nTests = [
+                {
+                    m1: [[1n]],
+                    n : 2n,
+                    mr: [[1n]]
+                },
+                {
+                    m1: [[1n, 2n], [2n, 5n]],
+                    n : 3n,
+                    mr: [[1n, 8n], [8n, 125n]]
+                },
+                {
+                    m1: [[1n, 2n, 3n], [3n, 0n, 0n], [3n, 2n, 1n]],
+                    n : 2n,
+                    mr: [[1n, 4n, 9n], [9n, 0n, 0n], [9n, 4n, 1n]]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    mTests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly raise matrix ${strMatrix(m1)} to a power ${strMatrix(m2)}`, () => {
+                            expect(F.expMatrixElements(m1, m2)).to.deep.equal(normF(mr));
+                        });
+                    });
+
+                    nTests.forEach(({m1, n, mr}) => {
+                        it(`should correctly raise matrix ${strMatrix(m1)} to a power ${n}`, () => {
+                            expect(F.expMatrixElements(m1, n)).to.deep.equal(normF(mr));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('mulMatrixes();', () => {
+            const tests = [
+                {
+                    m1: [[1n]],
+                    m2: [[2n]],
+                    mr: [[2n]]
+                },
+                {
+                    m1: [
+                        [1n, 2n],
+                        [2n, 5n]
+                    ],
+                    m2: [
+                        [2n, 5n],
+                        [3n, 7n]
+                    ],
+                    mr: [
+                        [1n * 2n + 2n * 3n, 1n * 5n + 2n * 7n],
+                        [2n * 2n + 5n * 3n, 2n * 5n + 5n * 7n]
+                    ]
+                },
+                {
+                    m1: [
+                        [1n, 2n, 3n],
+                        [3n, 0n, 0n],
+                        [3n, 2n, 1n]
+                    ],
+                    m2: [
+                        [5n, 0n, 1n],
+                        [7n, 3n, 1n],
+                        [2n, 9n, 0n]
+                    ],
+                    mr: [
+                        [1n * 5n + 2n * 7n + 3n * 2n, 1n * 0n + 2n * 3n + 3n * 9n, 1n * 1n + 2n * 1n + 3n * 0n],
+                        [3n * 5n + 0n * 7n + 0n * 2n, 3n * 0n + 0n * 3n + 0n * 9n, 3n * 1n + 0n * 1n + 0n * 0n],
+                        [3n * 5n + 2n * 7n + 1n * 2n, 3n * 0n + 2n * 3n + 1n * 9n, 3n * 1n + 2n * 1n + 1n * 0n]
+                    ]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    tests.forEach(({m1, m2, mr}) => {
+                        it(`should correctly multiple matrices ${strMatrix(m1)} and ${strMatrix(m2)}`, () => {
+                            expect(F.mulMatrixes(m1, m2)).to.deep.equal(normF(mr));
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('mulMatrixByVector();', () => {
+            const tests = [
+                {
+                    m: [[1n]],
+                    v: [2n],
+                    r: [2n]
+                },
+                {
+                    m: [
+                        [1n, 2n],
+                        [2n, 5n]
+                    ],
+                    v: [1n, 3n],
+                    r: [
+                        1n * 1n + 2n * 3n,
+                        2n * 1n + 5n * 3n
+                    ]
+                },
+                {
+                    m: [
+                        [1n, 2n, 3n],
+                        [3n, 0n, 0n],
+                        [3n, 2n, 1n]
+                    ],
+                    v: [5n, 3n, 0n],
+                    r: [
+                        1n * 5n + 2n * 3n + 3n * 0n,
+                        3n * 5n + 0n * 3n + 0n * 0n,
+                        3n * 5n + 2n * 3n + 1n * 0n
+                    ]
+                }
+            ];
+
+            [3n, 11n, 101n].forEach(modulus => {
+                describe(`modulus ${modulus}n;`, () => {
+                    beforeEach(() => {
+                        F = new PrimeField(modulus);
+                        normF = normalize(F);
+                    });
+
+                    tests.forEach(({m, v, r}) => {
+                        it(`should correctly multiple matrix ${strMatrix(m)} and vector${strVector(v)}`, () => {
+                            expect(F.mulMatrixByVector(m, v)).to.deep.equal(r.map(n => F.mod(n)));
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    describe('Basic polynomial operations;', () => {
         const poly: bigint[] = [3n, -2n, 1n, -2n, 3n];
 
         const fn = (x: bigint): bigint => {
@@ -415,7 +1121,7 @@ describe('PrimeField;', () => {
                     });
 
                     tests.forEach(({p1, p2, pr}) => {
-                        it('should correctly multiply two polynomials', () => {
+                        it('should correctly divide two polynomials', () => {
                             expect(F.divPolys(p1, p2)).to.deep.equal(pr.map(n => F.mod(n)));
                         });
                     });
@@ -481,7 +1187,7 @@ describe('PrimeField;', () => {
                 [5n,   70n, 2n,  1n,  2n, 3n, 5n, 0n],
                 [-13n, 18n, -2n, 1n, -2n, 3n, 5n, 12n]
             ].forEach(poly => {
-                describe(`for polynom [${poly.map(n => n.toString() + 'n').join(', ')}];`, () => {
+                describe(`for polynom ${JSON.stringify(poly).replace(/"/g, '')};`, () => {
                     beforeEach(() => {
                         F = new PrimeField(modulus);
 
