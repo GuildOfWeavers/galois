@@ -176,19 +176,19 @@ export class PrimeField implements FiniteField {
             : this.vectorElementsOp(this.exp, a, b);
     }
 
-    invVectorElements(values: Vector): Vector {
+    invVectorElements(source: Vector): Vector {
 
-        const result = new Array<bigint>(values.length);
+        const result = new Array<bigint>(source.length);
         let last = 1n;
-        for (let i = 0; i < values.length; i++) {
+        for (let i = 0; i < source.length; i++) {
             result[i] = last;
-            last = this.mod(last * (values[i] || 1n));
+            last = this.mod(last * (source[i] || 1n));
         }
 
         let inv = this.inv(last);
-        for (let i = values.length - 1; i >= 0; i--) {
-            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
-            inv = this.mul(inv, values[i] || 1n);
+        for (let i = source.length - 1; i >= 0; i--) {
+            result[i] = this.mod(source[i] ? result[i] * inv : 0n);
+            inv = this.mul(inv, source[i] || 1n);
         }
         return result;
     }
@@ -339,18 +339,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    // BATCH OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed: bigint, length: number): Vector {
-        const powers = new Array<bigint>(length);
-        powers[0] = 1n;
-        for (let i = 1; i < length; i++) {
-            powers[i] = this.mul(powers[i-1], seed);
-        }
-        return powers;
-    }
-
-    // ROOTS OF UNITY
+    // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {
         if (!isPowerOf2(order)) {
@@ -376,6 +365,15 @@ export class PrimeField implements FiniteField {
             value = this.mul(value, rootOfUnity);
         }
         return result;
+    }
+
+    getPowerSeries(seed: bigint, length: number): Vector {
+        const powers = new Array<bigint>(length);
+        powers[0] = 1n;
+        for (let i = 1; i < length; i++) {
+            powers[i] = this.mul(powers[i-1], seed);
+        }
+        return powers;
     }
 
     // POLYNOMIALS

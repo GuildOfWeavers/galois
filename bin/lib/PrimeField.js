@@ -137,17 +137,17 @@ class PrimeField {
             ? this.vectorScalarOp(this.exp, a, b)
             : this.vectorElementsOp(this.exp, a, b);
     }
-    invVectorElements(values) {
-        const result = new Array(values.length);
+    invVectorElements(source) {
+        const result = new Array(source.length);
         let last = 1n;
-        for (let i = 0; i < values.length; i++) {
+        for (let i = 0; i < source.length; i++) {
             result[i] = last;
-            last = this.mod(last * (values[i] || 1n));
+            last = this.mod(last * (source[i] || 1n));
         }
         let inv = this.inv(last);
-        for (let i = values.length - 1; i >= 0; i--) {
-            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
-            inv = this.mul(inv, values[i] || 1n);
+        for (let i = source.length - 1; i >= 0; i--) {
+            result[i] = this.mod(source[i] ? result[i] * inv : 0n);
+            inv = this.mul(inv, source[i] || 1n);
         }
         return result;
     }
@@ -279,17 +279,7 @@ class PrimeField {
         }
         return result;
     }
-    // BATCH OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed, length) {
-        const powers = new Array(length);
-        powers[0] = 1n;
-        for (let i = 1; i < length; i++) {
-            powers[i] = this.mul(powers[i - 1], seed);
-        }
-        return powers;
-    }
-    // ROOTS OF UNITY
+    // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {
         if (!utils_1.isPowerOf2(order)) {
@@ -313,6 +303,14 @@ class PrimeField {
             value = this.mul(value, rootOfUnity);
         }
         return result;
+    }
+    getPowerSeries(seed, length) {
+        const powers = new Array(length);
+        powers[0] = 1n;
+        for (let i = 1; i < length; i++) {
+            powers[i] = this.mul(powers[i - 1], seed);
+        }
+        return powers;
     }
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------

@@ -40,46 +40,37 @@ These methods are self-explanatory. `inv` computes a modular inverse using the [
 * **exp**(b: `bigint`, p: `bigint`): `bigint`
 * **inv**(a: `bigint`): `bigint`
 
-### Batch operations
-Optimized versions of basic arithmetic methods to provide more efficiency when working with large sets of values:
-
-* **invMany**(values: `bigint[]`): `bigint[]`<br />
-  Computes modular inverses for all passed in values using Montgomery batch inversion.
-
-* **mulMany**(values: `bigint[][]`, m1: `bigint[]`, m2: `bigint[]?`): `bigint[][]`<br />
-  Multiplies values in the matrix by the corresponding values from `m1` and `m2` (when provided). More specifically: `values[column][row] * m1[row] * m2[row]` for all columns.
-
-* **combine**(values: `bigint[]`, coefficients: `bigint[]`): `bigint`<br />
-  Computes a linear combination of values with the specified coefficients. More specifically: `sum(values[i] * coefficients[i])`.
-
-* **combineMany**(values: `bigint[][]`, coefficients: `bigint[]`): `bigint[]`<br />
-  Computes linear combinations for each row in the passed in `values` matrix. More specifically: `sum(values[column][row] * coefficients[column])` for all columns and rows.
-
 ### Vector operations
 Element-wise operations on vectors. For example, `addVectorElements` computes a new vectors `v` such that `v[i] = a[i] + b[i]` for all elements. When the second argument is a scalar, uses that scalar as the second operand in the operation.
 
-* **addVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
-* **subVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
-* **mulVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
-* **divVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
-* **expVectorElements**(a: `bigint[]`, b: `bigint` | `bigint[]`): `bigint[]`
+* **addVectorElements**(a: `Vector`, b: `bigint` | `Vector`): `Vector`
+* **subVectorElements**(a: `Vector`, b: `bigint` | `Vector`): `Vector`
+* **mulVectorElements**(a: `Vector`, b: `bigint` | `Vector`): `Vector`
+* **divVectorElements**(a: `Vector`, b: `bigint` | `Vector`): `Vector`
+* **expVectorElements**(a: `Vector`, b: `bigint` | `Vector`): `Vector`
 
-* **combineVectors**(a: `bigint[]`, b: `bigint[]`): `bigint`<br />
+* **invVectorElements**(v: `Vector`): `Vector`<br />
+  Computes modular inverses of all vector elements using Montgomery batch inversion.
+
+* **combineVectors**(a: `Vector`, b: `Vector`): `bigint`<br />
   Computes a linear combination of two vectors.
 
 ### Matrix operations
 Element-wise operations on matrixes. For example, `addMatrixElements` computes a new matrix `m` such that `m[i][j] = a[i][j] + b[i][j]` for all elements. When the second argument is a scalar, uses that scalar as the second operand in the operation.
 
-* **addMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
-* **subMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
-* **mulMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
-* **divMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
-* **expMatrixElements**(a: `bigint[][]`, b: `bigint` | `bigint[][]`): `bigint[][]`
+* **addMatrixElements**(a: `Matrix`, b: `bigint` | `Matrix`): `Matrix`
+* **subMatrixElements**(a: `Matrix`, b: `bigint` | `Matrix`): `Matrix`
+* **mulMatrixElements**(a: `Matrix`, b: `bigint` | `Matrix`): `Matrix`
+* **divMatrixElements**(a: `Matrix`, b: `bigint` | `Matrix`): `Matrix`
+* **expMatrixElements**(a: `Matrix`, b: `bigint` | `Matrix`): `Matrix`
 
-* **mulMatrixes**(a: `bigint[][]`, b: `bigint[][]`): `bigint[][]`<br />
+* **invMatrixElements**(m: `Matrix`): `Matrix`<br />
+  Computes modular inverses of all matrix elements using Montgomery batch inversion.
+
+* **mulMatrixes**(a: `Matrix`, b: `Matrix`): `Matrix`<br />
   Computes a [product of two matrixes](https://en.wikipedia.org/wiki/Matrix_multiplication) such that given input matrix dimensions [*m*,*p*] and [*p*,*n*], the output matrix will have dimensions of [*m*,*n*].
 
-* **mulMatrixByVector**(a: `bigint[][]`, b: `bigint[]`): `bigint[]`<br />
+* **mulMatrixByVector**(m: `Matrix`, v: `Vector`): `Vector`<br />
   Similar to matrix multiplication but the second parameter is a vector. Given a matrix with dimensions [*m*,*n*] and a vector with length *n*, the output vector will have length *m*.
 
 **Note**: matrixes are assumed to be in row-major form.
@@ -100,16 +91,16 @@ The methods can be used to perform basic polynomial arithmetic:
 * **evaluatePolyAt**(p: `Polynom`, x: `bigint`): `bigint`<br />
   Evaluates a polynomial at the provided x-coordinate.
 
-* **evaluatePolyAtRoots**(p: `Polynom`, rootsOfUnity: `bigint[]`): `bigint[]`<br />
+* **evaluatePolyAtRoots**(p: `Polynom`, rootsOfUnity: `Vector`): `Vector`<br />
   Uses Fast Fourier Transform to evaluate a polynomial at all provided roots of unity.
 
-* **interpolate**(xs: `bigint[]`, ys: `bigint[]`): `Polynom`<br />
+* **interpolate**(xs: `Vector`, ys: `Vector`): `Polynom`<br />
   Uses Lagrange Interpolation to compute a polynomial from the provided points (x and y coordinates).
 
-* **interpolateRoots**(rootsOfUnity: `bigint[]`, ys:`bigint[]`): `Polynom`<br />
+* **interpolateRoots**(rootsOfUnity: `Vector`, ys:`Vector`): `Polynom`<br />
   Uses Fast Fourier Transform to compute a polynomial from the provided points (roots of unity are as x coordinates).
 
-* **interpolateQuarticBatch**(xSets: `bigint[][]`, ySets: `bigint[][]`): `Polynom[]`<br />
+* **interpolateQuarticBatch**(xSets: `Matrix`, ySets: `Matrix`): `Polynom[]`<br />
   Uses an optimized version of Lagrange Interpolation for degree 3 polynomials. x and y coordinates should be provided in matrix with outer array representing "columns" and inner array representing "rows". The rows should have 4 values each.
 
 ### Other miscellaneous operations
@@ -117,16 +108,16 @@ The methods can be used to perform basic polynomial arithmetic:
 * **rand**(): `bigint`<br />
   Generate a cryptographically-secure random field element.
 
-* **prng**(seed: `bigint` | `Buffer`, length?: `number`): `bigint[]` | `bigint`<br />
+* **prng**(seed: `bigint` | `Buffer`, length?: `number`): `Vector` | `bigint`<br />
   Generates pseudorandom field elements from the provided seed. If the `length` parameter is provided, a sequence of elements is returned; otherwise, the returned value is a single field element.
 
 * **getRootOfUnity**(order: `number`): `bigint`<br />
   Computes a primitive root of unity such that `root**order = 1`.
 
-* **getPowerCycle**(rootOfUnity: `bigint`): `bigint[]`<br />
+* **getPowerCycle**(rootOfUnity: `bigint`): `Vector`<br />
   Computes a complete set of roots of unity for the provided primitive root. More specifically: `[1n, rootOfUnity**1, rootOfUnity**2, ..., rootOfUnity**(order - 1)]`.
 
-* **getPowerSeries**(base: `bigint`, length: `number`): `bigint[]`<br />
+* **getPowerSeries**(base: `bigint`, length: `number`): `Vector`<br />
   Computes a series of powers for the provided base element. More specifically: `[1n, base**1, base**2, ..., base**(length - 1)]`.
 
 ## References

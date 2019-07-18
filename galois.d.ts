@@ -104,14 +104,14 @@ declare module '@guildofweavers/galois' {
         expVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes modular inverse for all vector elements using Montgomery batch inversion */
-        invVectorElements(values: Vector): Vector;
+        invVectorElements(v: Vector): Vector;
 
         /** Computes a linear combination of two vectors */
         combineVectors(a: Vector, b: Vector): bigint;
 
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
-        
+
         // creates a new matrix with the specified number of rows and columns
         newMatrix(rows: number, columns: number): Matrix;
 
@@ -146,7 +146,7 @@ declare module '@guildofweavers/galois' {
         expMatrixElements(a: Matrix, b: bigint): Matrix;
 
         /** Computes modular inverse for all matrix elements using Montgomery batch inversion */
-        invMatrixElements(values: Matrix): Matrix;
+        invMatrixElements(m: Matrix): Matrix;
 
         /**
          * Computes a matrix with dimensions [m,n] which is a product of matrixes a and b
@@ -160,17 +160,7 @@ declare module '@guildofweavers/galois' {
          * @param a Matrix with dimensions [m,n]
          * @param b Vector of length n
          */
-        mulMatrixByVector(a: Matrix, b: Vector): Vector;
-
-        // BATCH OPERATIONS
-        // ----------------------------------------------------------------------------------------
-
-        /**
-         * Computes a series of powers for the provided base element
-         * @param base Field element to exponentiate
-         * @param length Length of the series to return
-         */
-        getPowerSeries(base: bigint, length: number): Vector;
+        mulMatrixByVector(m: Matrix, v: Vector): Vector;
         
         // RANDOMNESS
         // ----------------------------------------------------------------------------------------
@@ -193,7 +183,7 @@ declare module '@guildofweavers/galois' {
          */
         prng(seed: bigint | Buffer): bigint;
 
-        // ROOTS OF UNITY
+        // OTHER OPERATIONS
         // ----------------------------------------------------------------------------------------
 
         /**
@@ -207,6 +197,13 @@ declare module '@guildofweavers/galois' {
          * @param rootOfUnity Primitive root of unity
          */
         getPowerCycle(rootOfUnity: bigint): Vector;
+
+        /**
+         * Computes a series of powers for the provided base element
+         * @param base Field element to exponentiate
+         * @param length Length of the series to return
+         */
+        getPowerSeries(base: bigint, length: number): Vector;
 
         // BASIC POLYNOMIAL OPERATIONS
         // ----------------------------------------------------------------------------------------
