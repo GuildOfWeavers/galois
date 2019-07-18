@@ -1,6 +1,6 @@
 // IMPORTS
 // ================================================================================================
-import { FiniteField, Polynom } from '@guildofweavers/galois';
+import { FiniteField, Polynom, Vector, Matrix } from '@guildofweavers/galois';
 
 // CLASS DEFINITION
 // ================================================================================================
@@ -104,86 +104,86 @@ export class BinaryField implements FiniteField {
     }
 
     prng(seed: bigint | Buffer): bigint
-    prng(seed: bigint | Buffer, length?: number): bigint[];
-    prng(seed: bigint | Buffer, length?: number): bigint[] | bigint {
+    prng(seed: bigint | Buffer, length?: number): Vector;
+    prng(seed: bigint | Buffer, length?: number): Vector | bigint {
         throw new Error('Not implemented');
     }
 
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
-    addVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    newVector(length: number): Vector {
         throw new Error('Not implemented');
     }
 
-    subVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    addVectorElements(a: Vector, b: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    mulVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    subVectorElements(a: Vector, b: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    divVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    mulVectorElements(a: Vector, b: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    expVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    divVectorElements(a: Vector, b: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    combineVectors(a: bigint[], b: bigint[]): bigint {
+    expVectorElements(a: Vector, b: bigint | Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
+    invVectorElements(values: Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
+    combineVectors(a: Vector, b: Vector): bigint {
         throw new Error('Not implemented');
     }
 
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
-    addMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    newMatrix(rows: number, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    addMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         throw new Error('Not implemented');
     }
     
-    subMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    subMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         throw new Error('Not implemented');
     }
 
-    mulMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    mulMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         throw new Error('Not implemented');
     }
 
-    divMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    divMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         throw new Error('Not implemented');
     }
 
-    expMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    expMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         throw new Error('Not implemented');
     }
 
-    mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][] {
+    invMatrixElements(values: Matrix): Matrix {
         throw new Error('Not implemented');
     }
 
-    mulMatrixByVector(m: bigint[][], v: bigint[]): bigint[] {
+    mulMatrixes(a: Matrix, b: Matrix): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    mulMatrixByVector(m: Matrix, v: Vector): Vector {
         throw new Error('Not implemented');
     }
 
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    invMany(values: bigint[]): bigint[] {
-        throw new Error('Not implemented');
-    }
-
-    mulMany(values: bigint[][], m1: bigint[], m2?: bigint[]): bigint[][] {
-        throw new Error('Not implemented');
-    }
-
-    combine(values: bigint[], coefficients: bigint[]): bigint {
-        throw new Error('Not implemented');
-    }
-
-    combineMany(values: bigint[][], coefficients: bigint[]): bigint[] {
-        throw new Error('Not implemented');
-    }
-
-    getPowerSeries(seed: bigint, length: number): bigint[] {
+    getPowerSeries(seed: bigint, length: number): Vector {
         throw new Error('Not implemented');
     }
 
@@ -193,7 +193,7 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    getPowerCycle(rootOfUnity: bigint): bigint[] {
+    getPowerCycle(rootOfUnity: bigint): Vector {
         throw new Error('Not implemented');
     }
 
@@ -223,19 +223,19 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    evalPolyAtRoots(p: Polynom, rootsOfUnity: bigint[]): bigint[] {
+    evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    interpolate(xs: bigint[], ys: bigint[]): Polynom {
+    interpolate(xs: Vector, ys: Vector): Polynom {
         throw new Error('Not implemented');
     }
 
-    interpolateRoots(rootsOfUnity: bigint[], ys: bigint[]): Polynom {
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom {
         throw new Error('Not implemented');
     }
 
-    interpolateQuarticBatch(xSets: bigint[][], ySets: bigint[][]): Polynom[] {
+    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[] {
         throw new Error('Not implemented');
     }
 }

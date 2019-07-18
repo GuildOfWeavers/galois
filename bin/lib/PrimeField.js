@@ -109,6 +109,9 @@ class PrimeField {
     }
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
+    newVector(length) {
+        return new Array(length);
+    }
     addVectorElements(a, b) {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.add, a, b)
@@ -134,6 +137,20 @@ class PrimeField {
             ? this.vectorScalarOp(this.exp, a, b)
             : this.vectorElementsOp(this.exp, a, b);
     }
+    invVectorElements(values) {
+        const result = new Array(values.length);
+        let last = 1n;
+        for (let i = 0; i < values.length; i++) {
+            result[i] = last;
+            last = this.mod(last * (values[i] || 1n));
+        }
+        let inv = this.inv(last);
+        for (let i = values.length - 1; i >= 0; i--) {
+            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
+            inv = this.mul(inv, values[i] || 1n);
+        }
+        return result;
+    }
     combineVectors(a, b) {
         let result = 0n;
         for (let i = 0; i < a.length; i++) {
@@ -157,6 +174,13 @@ class PrimeField {
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
+    newMatrix(rows, columns) {
+        const result = new Array(rows);
+        for (let i = 0; i < rows; i++) {
+            result[i] = new Array(columns);
+        }
+        return result;
+    }
     addMatrixElements(a, b) {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.add, a, b)
@@ -181,6 +205,29 @@ class PrimeField {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.exp, a, b)
             : this.matrixElementsOp(this.exp, a, b);
+    }
+    invMatrixElements(source) {
+        const result = new Array(source.length);
+        let last = 1n;
+        for (let i = 0; i < source.length; i++) {
+            let sRow = source[i];
+            let rRow = new Array(sRow.length);
+            for (let j = 0; j < sRow.length; j++) {
+                rRow[j] = last;
+                last = this.mod(last * (sRow[j] || 1n));
+            }
+            result[i] = rRow;
+        }
+        let inv = this.inv(last);
+        for (let i = source.length - 1; i >= 0; i--) {
+            let sRow = source[i];
+            let rRow = result[i];
+            for (let j = sRow.length - 1; j >= 0; j--) {
+                rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
+                inv = this.mul(inv, sRow[j] || 1n);
+            }
+        }
+        return result;
     }
     mulMatrixes(a, b) {
         const n = a.length;
@@ -234,55 +281,6 @@ class PrimeField {
     }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    invMany(values) {
-        const result = new Array(values.length);
-        let last = 1n;
-        for (let i = 0; i < values.length; i++) {
-            result[i] = last;
-            last = this.mod(last * (values[i] || 1n));
-        }
-        let inv = this.inv(last);
-        for (let i = values.length - 1; i >= 0; i--) {
-            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
-            inv = this.mul(inv, values[i] || 1n);
-        }
-        return result;
-    }
-    mulMany(values, m1, m2) {
-        const colCount = values.length;
-        const rowCount = values[0].length;
-        const result = new Array(colCount);
-        for (let i = 0; i < colCount; i++) {
-            result[i] = new Array(rowCount);
-        }
-        for (let r = 0; r < rowCount; r++) {
-            let mv1 = m1[r], mv2 = m2 ? m2[r] : 1n;
-            for (let c = 0; c < colCount; c++) {
-                result[c][r] = this.mod(values[c][r] * mv1 * mv2);
-            }
-        }
-        return result;
-    }
-    combine(values, coefficients) {
-        let result = 0n;
-        for (let i = 0; i < values.length; i++) {
-            result = this.mod(result + values[i] * coefficients[i]);
-        }
-        return result;
-    }
-    combineMany(values, coefficients) {
-        const colCount = values.length;
-        const rowCount = values[0].length;
-        const result = new Array(rowCount);
-        for (let r = 0; r < rowCount; r++) {
-            let v = 0n;
-            for (let c = 0; c < colCount; c++) {
-                v = this.mod(v + values[c][r] * coefficients[c]);
-            }
-            result[r] = v;
-        }
-        return result;
-    }
     getPowerSeries(seed, length) {
         const powers = new Array(length);
         powers[0] = 1n;
@@ -432,7 +430,7 @@ class PrimeField {
         for (let i = 0; i < xs.length; i++) {
             denominators[i] = this.evalPolyAt(numerators[i], xs[i]);
         }
-        const invertedDenominators = this.invMany(denominators);
+        const invertedDenominators = this.invVectorElements(denominators);
         const result = new Array(ys.length).fill(0n);
         for (let i = 0; i < xs.length; i++) {
             let ySlice = this.mod(ys[i] * invertedDenominators[i]);
@@ -489,7 +487,7 @@ class PrimeField {
             inverseTargets[i * 4 + 3] = e3;
             data[i] = [ys, eq0, eq1, eq2, eq3];
         }
-        const inverseValues = this.invMany(inverseTargets);
+        const inverseValues = this.invVectorElements(inverseTargets);
         const result = new Array(data.length);
         for (let i = 0; i < data.length; i++) {
             let [ys, eq0, eq1, eq2, eq3] = data[i];

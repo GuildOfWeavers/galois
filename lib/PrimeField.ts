@@ -1,6 +1,6 @@
 // IMPORTS
 // ================================================================================================
-import { FiniteField, Polynom } from '@guildofweavers/galois';
+import { FiniteField, Polynom, Vector, Matrix } from '@guildofweavers/galois';
 import * as crypto from 'crypto';
 import { isPowerOf2, sha256 } from './utils';
 
@@ -124,8 +124,8 @@ export class PrimeField implements FiniteField {
     }
 
     prng(seed: bigint | Buffer): bigint
-    prng(seed: bigint | Buffer, length?: number): bigint[];
-    prng(seed: bigint | Buffer, length?: number): bigint[] | bigint {
+    prng(seed: bigint | Buffer, length?: number): Vector;
+    prng(seed: bigint | Buffer, length?: number): Vector | bigint {
         if (length === undefined) {
             // if length is not specified, return just a single element
             return this.mod(sha256(seed));
@@ -142,37 +142,58 @@ export class PrimeField implements FiniteField {
 
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
-    addVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    newVector(length: number): Vector {
+        return new Array<bigint>(length);
+    }
+
+    addVectorElements(a: Vector, b: bigint | Vector): Vector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.add, a, b)
             : this.vectorElementsOp(this.add, a, b);
     }
 
-    subVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    subVectorElements(a: Vector, b: bigint | Vector): Vector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.sub, a, b)
             : this.vectorElementsOp(this.sub, a, b);
     }
 
-    mulVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    mulVectorElements(a: Vector, b: bigint | Vector): Vector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.mul, a, b)
             : this.vectorElementsOp(this.mul, a, b);
     }
 
-    divVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    divVectorElements(a: Vector, b: bigint | Vector): Vector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.mul, a, this.inv(b))
             : this.vectorElementsOp(this.div, a, b);
     }
 
-    expVectorElements(a: bigint[], b: bigint | bigint[]): bigint[] {
+    expVectorElements(a: Vector, b: bigint | Vector): Vector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.exp, a, b)
             : this.vectorElementsOp(this.exp, a, b);
     }
 
-    combineVectors(a: bigint[], b: bigint[]): bigint {
+    invVectorElements(values: Vector): Vector {
+
+        const result = new Array<bigint>(values.length);
+        let last = 1n;
+        for (let i = 0; i < values.length; i++) {
+            result[i] = last;
+            last = this.mod(last * (values[i] || 1n));
+        }
+
+        let inv = this.inv(last);
+        for (let i = values.length - 1; i >= 0; i--) {
+            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
+            inv = this.mul(inv, values[i] || 1n);
+        }
+        return result;
+    }
+
+    combineVectors(a: Vector, b: Vector): bigint {
         let result = 0n;
         for (let i = 0; i < a.length; i++) {
             result = this.mod(result + a[i] * b[i]);
@@ -180,7 +201,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    private vectorElementsOp(op: ArithmeticOperation, a: bigint[], b: bigint[]) {
+    private vectorElementsOp(op: ArithmeticOperation, a: Vector, b: Vector) {
         const result = new Array<bigint>(a.length);
         for (let i = 0; i < result.length; i++) {
             result[i] = op.call(this, a[i], b[i]);
@@ -188,7 +209,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    private vectorScalarOp(op: ArithmeticOperation, a: bigint[], b: bigint) {
+    private vectorScalarOp(op: ArithmeticOperation, a: Vector, b: bigint) {
         const result = new Array<bigint>(a.length);
         for (let i = 0; i < result.length; i++) {
             result[i] = op.call(this, a[i], b);
@@ -198,37 +219,72 @@ export class PrimeField implements FiniteField {
 
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
-    addMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    newMatrix(rows: number, columns: number): Matrix {
+        const result = new Array<bigint[]>(rows);
+        for (let i = 0; i < rows; i++) {
+            result[i] = new Array<bigint>(columns);
+        }
+        return result;
+    }
+
+    addMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.add, a, b)
             : this.matrixElementsOp(this.add, a, b);
     }
     
-    subMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    subMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.sub, a, b)
             : this.matrixElementsOp(this.sub, a, b);
     }
 
-    mulMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    mulMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.mul, a, b)
             : this.matrixElementsOp(this.mul, a, b);
     }
 
-    divMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    divMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.mul, a, this.inv(b))
             : this.matrixElementsOp(this.div, a, b);
     }
 
-    expMatrixElements(a: bigint[][], b: bigint | bigint[][]): bigint[][] {
+    expMatrixElements(a: Matrix, b: bigint | Matrix): Matrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.exp, a, b)
             : this.matrixElementsOp(this.exp, a, b);
     }
 
-    mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][] {
+    invMatrixElements(source: Matrix): Matrix {
+        const result = new Array<bigint[]>(source.length);
+
+        let last = 1n;
+        for (let i = 0; i < source.length; i++) {
+            let sRow = source[i];
+            let rRow = new Array<bigint>(sRow.length);
+            for (let j = 0; j < sRow.length; j++) {
+                rRow[j] = last;
+                last = this.mod(last * (sRow[j] || 1n));
+            }
+            result[i] = rRow;
+        }
+
+        let inv = this.inv(last);
+
+        for (let i = source.length - 1; i >= 0; i--) {
+            let sRow = source[i];
+            let rRow = result[i];
+            for (let j = sRow.length - 1; j >= 0; j--) {
+                rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
+                inv = this.mul(inv, sRow[j] || 1n);
+            }
+        }
+        return result;
+    }
+
+    mulMatrixes(a: Matrix, b: Matrix): Matrix {
         const n = a.length;
         const m = a[0].length;
         const p = b[0].length;
@@ -247,7 +303,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    mulMatrixByVector(m: bigint[][], v: bigint[]): bigint[] {
+    mulMatrixByVector(m: Matrix, v: Vector): Vector {
         const result = new Array<bigint>(m.length);
         for (let i = 0; i < result.length; i++) {
             let s = 0n;
@@ -260,7 +316,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    private matrixElementsOp(op: ArithmeticOperation, a: bigint[][], b: bigint[][]): bigint[][] {
+    private matrixElementsOp(op: ArithmeticOperation, a: Matrix, b: Matrix): Matrix {
         const result = new Array<bigint[]>(a.length);
         for (let i = 0; i < result.length; i++) {
             let r1 = a[i], r2 = b[i];
@@ -272,7 +328,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    private matrixScalarOp(op: ArithmeticOperation, a: bigint[][], b: bigint): bigint[][] {
+    private matrixScalarOp(op: ArithmeticOperation, a: Matrix, b: bigint): Matrix {
         const result = new Array<bigint[]>(a.length);
         for (let i = 0; i < result.length; i++) {
             let row = result[i] = new Array<bigint>(a[i].length);
@@ -285,67 +341,7 @@ export class PrimeField implements FiniteField {
 
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    invMany(values: bigint[]): bigint[] {
-
-        const result = new Array<bigint>(values.length);
-        let last = 1n;
-        for (let i = 0; i < values.length; i++) {
-            result[i] = last;
-            last = this.mod(last * (values[i] || 1n));
-        }
-
-        let inv = this.inv(last);
-        for (let i = values.length - 1; i >= 0; i--) {
-            result[i] = this.mod(values[i] ? result[i] * inv : 0n);
-            inv = this.mul(inv, values[i] || 1n);
-        }
-        return result;
-    }
-
-    mulMany(values: bigint[][], m1: bigint[], m2?: bigint[]): bigint[][] {
-        const colCount = values.length;
-        const rowCount = values[0].length;
-
-        const result = new Array<bigint[]>(colCount);
-        for (let i = 0; i < colCount; i++) {
-            result[i] = new Array<bigint>(rowCount);
-        }
-
-        for (let r = 0; r < rowCount; r++) {
-            let mv1 = m1[r], mv2 = m2 ? m2[r] : 1n;
-            for (let c = 0; c < colCount; c++) {
-                result[c][r] = this.mod(values[c][r] * mv1 * mv2);
-            }
-        }
-
-        return result;
-    }
-
-    combine(values: bigint[], coefficients: bigint[]): bigint {
-        let result = 0n;
-        for (let i = 0; i < values.length; i++) {
-            result = this.mod(result + values[i] * coefficients[i]);
-        }
-        return result;
-    }
-
-    combineMany(values: bigint[][], coefficients: bigint[]): bigint[] {
-        const colCount = values.length;
-        const rowCount = values[0].length;
-        const result = new Array<bigint>(rowCount);
-
-        for (let r = 0; r < rowCount; r++) {
-            let v = 0n;
-            for (let c = 0; c < colCount; c++) {
-                v = this.mod(v + values[c][r] * coefficients[c]);
-            }
-            result[r] = v;
-        }
-
-        return result;
-    }
-
-    getPowerSeries(seed: bigint, length: number): bigint[] {
+    getPowerSeries(seed: bigint, length: number): Vector {
         const powers = new Array<bigint>(length);
         powers[0] = 1n;
         for (let i = 1; i < length; i++) {
@@ -372,7 +368,7 @@ export class PrimeField implements FiniteField {
         throw new Error(`Root of Unity for order ${order} was not found`);
     }
 
-    getPowerCycle(rootOfUnity: bigint): bigint[] {
+    getPowerCycle(rootOfUnity: bigint): Vector {
         const result = [1n];
         let value = rootOfUnity;
         while (value !== 1n) {
@@ -476,7 +472,7 @@ export class PrimeField implements FiniteField {
         }
     }
 
-    evalPolyAtRoots(p: Polynom, rootsOfUnity: bigint[]): bigint[] {
+    evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector {
         if (p.length > rootsOfUnity.length) {
             throw new Error('Number of roots of unity cannot be smaller than number of values');
         }
@@ -501,13 +497,13 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    interpolate(xs: bigint[], ys: bigint[]): Polynom {
+    interpolate(xs: Vector, ys: Vector): Polynom {
         if (xs.length !== ys.length) {
             throw new Error('Number of x coordinates must be the same as number of y coordinates');
         }
 
         const root = zpoly(xs, this);
-        const numerators = new Array<bigint[]>(xs.length);
+        const numerators = new Array<Vector>(xs.length);
         for (let i = 0; i < xs.length; i++) {
             numerators[i] = this.divPolys(root, [-xs[i], 1n]);
         }
@@ -516,7 +512,7 @@ export class PrimeField implements FiniteField {
         for (let i = 0; i < xs.length; i++) {
             denominators[i] = this.evalPolyAt(numerators[i], xs[i]);
         }
-        const invertedDenominators = this.invMany(denominators);
+        const invertedDenominators = this.invVectorElements(denominators);
 
         const result: Polynom = new Array(ys.length).fill(0n);
         for (let i = 0; i < xs.length; i++) {
@@ -531,7 +527,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    interpolateRoots(rootsOfUnity: bigint[], ys: bigint[]): Polynom {
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom {
         if (rootsOfUnity.length !== ys.length) {
             throw new Error('Number of roots of unity must be the same as number of y coordinates');
         }
@@ -553,8 +549,8 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    interpolateQuarticBatch(xSets: bigint[][], ySets: bigint[][]): Polynom[] {
-        const data = new Array<[bigint[], Polynom, Polynom, Polynom, Polynom]>(xSets.length);
+    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[] {
+        const data = new Array<[Vector, Polynom, Polynom, Polynom, Polynom]>(xSets.length);
         const inverseTargets = new Array<bigint>(xSets.length * 4);
 
         for (let i = 0; i < xSets.length; i++) {
@@ -586,7 +582,7 @@ export class PrimeField implements FiniteField {
             data[i] = [ys, eq0, eq1, eq2, eq3];
         }
 
-        const inverseValues = this.invMany(inverseTargets);
+        const inverseValues = this.invVectorElements(inverseTargets);
         const result = new Array<bigint[]>(data.length);
         for (let i = 0; i < data.length; i++) {
             let [ys, eq0, eq1, eq2, eq3] = data[i];

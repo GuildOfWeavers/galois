@@ -2,6 +2,9 @@ declare module '@guildofweavers/galois' {
 
     /** Polynomial represented in reverse-coefficient form */
     export type Polynom = bigint[];
+    
+    export type Vector = bigint[];
+    export type Matrix = bigint[][];
 
     export interface FiniteField {
 
@@ -66,121 +69,108 @@ declare module '@guildofweavers/galois' {
 
         // VECTOR OPERATIONS
         // ----------------------------------------------------------------------------------------
+
+        /** Creates a new vector of the specified length */
+        newVector(length: number): Vector;
+
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
-        addVectorElements(a: bigint[], b: bigint[]): bigint[];
+        addVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] + b for all i */
-        addVectorElements(a: bigint[], b: bigint): bigint[];
+        addVectorElements(a: Vector, b: bigint): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] - b[i] for all i */
-        subVectorElements(a: bigint[], b: bigint[]): bigint[];
+        subVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] - b for all i */
-        subVectorElements(a: bigint[], b: bigint): bigint[];
+        subVectorElements(a: Vector, b: bigint): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] * b[i] for all i */
-        mulVectorElements(a: bigint[], b: bigint[]): bigint[];
+        mulVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] * b for all i */
-        mulVectorElements(a: bigint[], b: bigint): bigint[];
+        mulVectorElements(a: Vector, b: bigint): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] * inv(b[i]) for all i */
-        divVectorElements(a: bigint[], b: bigint[]): bigint[];
+        divVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] * inv(b) for all i */
-        divVectorElements(a: bigint[], b: bigint): bigint[];
+        divVectorElements(a: Vector, b: bigint): Vector;
 
         /** Computes a new vector v such that v[i] = a[i]^b[i] for all i */
-        expVectorElements(a: bigint[], b: bigint[]): bigint[];
+        expVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i]^b for all i */
-        expVectorElements(a: bigint[], b: bigint[]): bigint[];
+        expVectorElements(a: Vector, b: Vector): Vector;
+
+        /** Computes modular inverse for all vector elements using Montgomery batch inversion */
+        invVectorElements(values: Vector): Vector;
 
         /** Computes a linear combination of two vectors */
-        combineVectors(a: bigint[], b: bigint[]): bigint;
+        combineVectors(a: Vector, b: Vector): bigint;
 
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
+        
+        // creates a new matrix with the specified number of rows and columns
+        newMatrix(rows: number, columns: number): Matrix;
+
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
-        addMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+        addMatrixElements(a: Matrix, b: Matrix): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b for all i and j */
-        addMatrixElements(a: bigint[][], b: bigint): bigint[][];
+        addMatrixElements(a: Matrix, b: bigint): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] - b[i,j] for all i and j */
-        subMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+        subMatrixElements(a: Matrix, b: Matrix): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] - b for all i and j */
-        subMatrixElements(a: bigint[][], b: bigint): bigint[][];
+        subMatrixElements(a: Matrix, b: bigint): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] * b[i,j] for all i and j */
-        mulMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+        mulMatrixElements(a: Matrix, b: Matrix): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] * b for all i and j */
-        mulMatrixElements(a: bigint[][], b: bigint): bigint[][];
+        mulMatrixElements(a: Matrix, b: bigint): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] * inv(b[i,j]) for all i and j */
-        divMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+        divMatrixElements(a: Matrix, b: Matrix): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] * inv(b) for all i and j */
-        divMatrixElements(a: bigint[][], b: bigint): bigint[][];
+        divMatrixElements(a: Matrix, b: bigint): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j]^b[i,j] for all i and j */
-        expMatrixElements(a: bigint[][], b: bigint[][]): bigint[][];
+        expMatrixElements(a: Matrix, b: Matrix): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j]^b for all i and j */
-        expMatrixElements(a: bigint[][], b: bigint): bigint[][];
+        expMatrixElements(a: Matrix, b: bigint): Matrix;
+
+        /** Computes modular inverse for all matrix elements using Montgomery batch inversion */
+        invMatrixElements(values: Matrix): Matrix;
 
         /**
          * Computes a matrix with dimensions [m,n] which is a product of matrixes a and b
          * @param a Matrix with dimensions [m,p]
          * @param b Matrix with dimensions [p,n]
          */
-        mulMatrixes(a: bigint[][], b: bigint[][]): bigint[][];
+        mulMatrixes(a: Matrix, b: Matrix): Matrix;
 
         /**
          * Computes a vector of length m which is a product of matrix a and vector b
          * @param a Matrix with dimensions [m,n]
          * @param b Vector of length n
          */
-        mulMatrixByVector(a: bigint[][], b: bigint[]): bigint[];
+        mulMatrixByVector(a: Matrix, b: Vector): Vector;
 
         // BATCH OPERATIONS
         // ----------------------------------------------------------------------------------------
-        /**
-         * Computes modular inverse for all passed-in values using Montgomery batch inversion
-         * @param values Field elements
-         */
-        invMany(values: bigint[]): bigint[];
-
-        /**
-         * Computes a matrix with values[column][row] * m1[row] * m2[row] for all columns
-         * @param values Matrix of field elements with outer array representing columns, and inner array representing rows
-         * @param m1 An array of values for each row in the matrix
-         * @param m2 An array of values for each row in the matrix
-         */
-        mulMany(values: bigint[][], m1: bigint[], m2?: bigint[]): bigint[][];
-
-        /**
-         * Computes a linear combination of values
-         * @param values Filed elements to combine
-         * @param coefficients Coefficients to apply
-         */
-        combine(values: bigint[], coefficients: bigint[]): bigint;
-
-        /**
-         * Computes a linear combination for all rows
-         * @param values A matrix of field elements with outer array representing columns, and inner array representing rows
-         * @param coefficients Coefficients to apply
-         */
-        combineMany(values: bigint[][], coefficients: bigint[]): bigint[];
 
         /**
          * Computes a series of powers for the provided base element
          * @param base Field element to exponentiate
          * @param length Length of the series to return
          */
-        getPowerSeries(base: bigint, length: number): bigint[];
+        getPowerSeries(base: bigint, length: number): Vector;
         
         // RANDOMNESS
         // ----------------------------------------------------------------------------------------
@@ -195,7 +185,7 @@ declare module '@guildofweavers/galois' {
          * @param seed Seed for the PRNG
          * @param length Length of sequence to generate
          */
-        prng(seed: bigint | Buffer, length: number): bigint[];
+        prng(seed: bigint | Buffer, length: number): Vector;
 
         /**
          * Generates a single pseudorandom field element from the provided seed
@@ -216,7 +206,7 @@ declare module '@guildofweavers/galois' {
          * Computes an array containing a full cycle of roots of unity generated by the primitive root
          * @param rootOfUnity Primitive root of unity
          */
-        getPowerCycle(rootOfUnity: bigint): bigint[];
+        getPowerCycle(rootOfUnity: bigint): Vector;
 
         // BASIC POLYNOMIAL OPERATIONS
         // ----------------------------------------------------------------------------------------
@@ -271,7 +261,7 @@ declare module '@guildofweavers/galois' {
          * @param p Polynomial to evaluate
          * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
          */
-        evalPolyAtRoots(p: Polynom, rootsOfUnity: bigint[]): bigint[];
+        evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector;
 
         // POLYNOMIAL INTERPOLATION
         // ----------------------------------------------------------------------------------------
@@ -281,21 +271,21 @@ declare module '@guildofweavers/galois' {
          * @param xs x coordinates of points
          * @param ys y coordinates of points
          */
-        interpolate(xs: bigint[], ys: bigint[]): Polynom;
+        interpolate(xs: Vector, ys: Vector): Polynom;
 
         /**
          * Uses Fast Fourier Transform to compute a polynomial from provided points
          * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
          * @param ys y coordinates of points to interpolate
          */
-        interpolateRoots(rootsOfUnity: bigint[], ys: bigint[]): Polynom;
+        interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom;
 
         /**
          * Uses an optimized version of Lagrange Interpolation for degree 3 polynomials
          * @param xSets A matrix of X coordinates (4 values per row)
          * @param ySets A matrix of Y coordinates (4 values per row)
          */
-        interpolateQuarticBatch(xSets: bigint[][], ySets: bigint[][]): Polynom[];
+        interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[];
     }
 
     // FINITE FIELD IMPLEMENTATIONS

@@ -1,6 +1,6 @@
 {
   "name": "@guildofweavers/galois",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Arithmetic and polynomial operations in finite fields",
   "main": "index.js",
   "typings": "galois.d.ts",
@@ -20,12 +20,12 @@
     "url": "https://github.com/GuildOfWeavers/galois.git"
   },
   "engines": {
-    "node": "12.3.x"
+    "node": "12.6.x"
   },
   "devDependencies": {
     "@types/chai": "4.1.x",
     "@types/mocha": "5.2.x",
-    "@types/node": "12.0.x",
+    "@types/node": "12.6.x",
     "chai": "4.2.x",
     "del": "4.1.x",
     "gulp": "4.0.x",

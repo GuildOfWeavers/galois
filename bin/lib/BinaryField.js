@@ -85,6 +85,9 @@ class BinaryField {
     }
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
+    newVector(length) {
+        throw new Error('Not implemented');
+    }
     addVectorElements(a, b) {
         throw new Error('Not implemented');
     }
@@ -100,11 +103,17 @@ class BinaryField {
     expVectorElements(a, b) {
         throw new Error('Not implemented');
     }
+    invVectorElements(values) {
+        throw new Error('Not implemented');
+    }
     combineVectors(a, b) {
         throw new Error('Not implemented');
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
+    newMatrix(rows, columns) {
+        throw new Error('Not implemented');
+    }
     addMatrixElements(a, b) {
         throw new Error('Not implemented');
     }
@@ -120,6 +129,9 @@ class BinaryField {
     expMatrixElements(a, b) {
         throw new Error('Not implemented');
     }
+    invMatrixElements(values) {
+        throw new Error('Not implemented');
+    }
     mulMatrixes(a, b) {
         throw new Error('Not implemented');
     }
@@ -128,18 +140,6 @@ class BinaryField {
     }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    invMany(values) {
-        throw new Error('Not implemented');
-    }
-    mulMany(values, m1, m2) {
-        throw new Error('Not implemented');
-    }
-    combine(values, coefficients) {
-        throw new Error('Not implemented');
-    }
-    combineMany(values, coefficients) {
-        throw new Error('Not implemented');
-    }
     getPowerSeries(seed, length) {
         throw new Error('Not implemented');
     }
