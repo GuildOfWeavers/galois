@@ -132,10 +132,10 @@ export class PrimeField implements FiniteField {
         }
 
         const result = new Array<bigint>(length);
-        let numseed = sha256(seed);
+        let state = sha256(seed);
         for (let i = 0; i < length; i++) {
-            result[i] = this.mod(numseed);
-            numseed = sha256(numseed);
+            result[i] = this.mod(state);
+            state = sha256(state);
         }
         return result;
     }

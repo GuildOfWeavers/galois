@@ -100,10 +100,10 @@ class PrimeField {
             return this.mod(utils_1.sha256(seed));
         }
         const result = new Array(length);
-        let numseed = utils_1.sha256(seed);
+        let state = utils_1.sha256(seed);
         for (let i = 0; i < length; i++) {
-            result[i] = this.mod(numseed);
-            numseed = utils_1.sha256(numseed);
+            result[i] = this.mod(state);
+            state = utils_1.sha256(state);
         }
         return result;
     }
