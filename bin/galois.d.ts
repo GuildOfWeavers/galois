@@ -101,7 +101,7 @@ declare module '@guildofweavers/galois' {
         expVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i]^b for all i */
-        expVectorElements(a: Vector, b: Vector): Vector;
+        expVectorElements(a: Vector, b: bigint): Vector;
 
         /** Computes modular inverse for all vector elements using Montgomery batch inversion */
         invVectorElements(v: Vector): Vector;
@@ -283,6 +283,16 @@ declare module '@guildofweavers/galois' {
          * @param ySets A matrix of Y coordinates (4 values per row)
          */
         interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[];
+    }
+
+    // DATA TYPES
+    // ----------------------------------------------------------------------------------------
+    export interface Vector2 {
+        readonly length     : number;
+        readonly byteLength : number;
+
+        getValue(index: number): bigint;
+        setValue(index: number, value: bigint): void;
     }
 
     // FINITE FIELD IMPLEMENTATIONS
