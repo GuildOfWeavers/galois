@@ -121,6 +121,23 @@ class Wasm128 {
     combineVectors(a, b) {
         throw new Error('Not implemented');
     }
+    // BASIC POLYNOMIAL OPERATIONS
+    // ----------------------------------------------------------------------------------------
+    addPolys(a, b) {
+        throw new Error('Not implemented');
+    }
+    subPolys(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulPolys(a, b) {
+        throw new Error('Not implemented');
+    }
+    divPolys(a, b) {
+        throw new Error('Not implemented');
+    }
+    mulPolyByConstant(a, b) {
+        return this.mulVectorElements(a, b);
+    }
 }
 exports.Wasm128 = Wasm128;
 // VECTOR CLASS

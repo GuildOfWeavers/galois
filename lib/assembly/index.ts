@@ -157,6 +157,28 @@ export class Wasm128 {
     combineVectors(a: WasmVector, b: WasmVector): bigint {
         throw new Error('Not implemented');
     }
+
+    // BASIC POLYNOMIAL OPERATIONS
+    // ----------------------------------------------------------------------------------------
+    addPolys(a: WasmVector, b: WasmVector): WasmVector {
+        throw new Error('Not implemented');
+    }
+
+    subPolys(a: WasmVector, b: WasmVector): WasmVector {
+        throw new Error('Not implemented');
+    }
+
+    mulPolys(a: WasmVector, b: WasmVector): WasmVector {
+        throw new Error('Not implemented');
+    }
+
+    divPolys(a: WasmVector, b: WasmVector): WasmVector {
+        throw new Error('Not implemented');
+    }
+
+    mulPolyByConstant(a: WasmVector, b: bigint): WasmVector {
+        return this.mulVectorElements(a, b);
+    }
 }
 
 // VECTOR CLASS
