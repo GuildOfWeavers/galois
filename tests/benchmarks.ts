@@ -44,6 +44,10 @@ start = Date.now();
 let vExp = f1.expVectorElements(v1, v2);
 console.log(`Computed ${elements} exponents in ${Date.now() - start} ms`);
 
+start = Date.now();
+let vComb = f1.combineVectors(v1, v2);
+console.log(`Computed linear combination of ${elements} elements in ${Date.now() - start} ms`);
+
 console.log('-'.repeat(100));
 
 // 128 BIT FIELD WASM
@@ -123,6 +127,14 @@ for (let i = 0; i < elements; i++) {
         console.log(`> Exponentiation error in WASM at index ${i}!`);
         break;
     }
+}
+
+start = Date.now();
+let wComb = wasm128.combineVectors(w1, w2);
+console.log(`Computed linear combination of ${elements} elements in ${Date.now() - start} ms`);
+
+if (vComb !== wComb) {
+    console.log(`> Linear combination error!`);
 }
 
 console.log('-'.repeat(100));

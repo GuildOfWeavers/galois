@@ -23,6 +23,7 @@ class Wasm128 {
         this.wasm = wasm;
         this.modulus = modulus;
         this.inputsIdx = (this.wasm.getInputsPtr()) >>> 3;
+        this.outputsIdx = (this.wasm.getOutputsPtr()) >>> 3;
         // set modulus in WASM module
         const mLo2 = Number.parseInt((modulus & 0xffffffffn));
         const mLo1 = Number.parseInt(((modulus >> 32n) & 0xffffffffn));
@@ -103,7 +104,7 @@ class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.addVectorElements2(a.base, 0);
+            const base = this.wasm.expVectorElements2(a.base, 0);
             return new WasmVector(this.wasm, base, a.length);
         }
         else {
@@ -119,7 +120,13 @@ class Wasm128 {
         return new WasmVector(this.wasm, base, v.length);
     }
     combineVectors(a, b) {
-        throw new Error('Not implemented');
+        if (a.length !== b.length) {
+            throw new Array('Cannot combine vectors: vectors have different lengths');
+        }
+        const outputPos = this.wasm.combineVectors(a.base, b.base);
+        const lo = this.wasm.U64[this.outputsIdx + outputPos];
+        const hi = this.wasm.U64[this.outputsIdx + outputPos + 1];
+        return (hi << 64n) | lo;
     }
     // BASIC POLYNOMIAL OPERATIONS
     // ----------------------------------------------------------------------------------------
@@ -151,7 +158,7 @@ class WasmVector {
     }
     getValue(index) {
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
-        // writes a 128-bit value to WebAssembly memory in little-endian form
+        // reads a 128-bit value from WebAssembly memory (little-endian layout)
         const lo = this.wasm.U64[idx];
         const hi = this.wasm.U64[idx + 1];
         return (hi << 64n) | lo;
@@ -160,7 +167,7 @@ class WasmVector {
         if (value > MAX_VALUE) {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
-        // reads a 128-bit value from WebAssembly memory in little-endian form
+        // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
         this.wasm.U64[idx] = value & 0xffffffffffffffffn;
         this.wasm.U64[idx + 1] = value >> 64n;

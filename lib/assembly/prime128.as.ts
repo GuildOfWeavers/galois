@@ -22,12 +22,17 @@ export function setModulus(mHi1: u32, mHi2: u32, mLo1: u32, mLo2: u32): void {
     mLo = ((<u64>mLo1) << 32) | (<u64>mLo2);
 }
 
-// INPUTS
+// INPUTS / OUTPUTS
 // ================================================================================================
 let _inputs = new ArrayBuffer(8 * VALUE_SIZE);
+let _outputs = new ArrayBuffer(8 * VALUE_SIZE);
 
 export function getInputsPtr(): usize {
     return changetype<usize>(_inputs);
+}
+
+export function getOutputsPtr(): usize {
+    return changetype<usize>(_outputs);
 }
 
 // VECTOR FUNCTIONS
@@ -320,6 +325,34 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
     }
 
     return result;
+}
+
+export function combineVectors(a: ArrayBuffer, b: ArrayBuffer): u32 {
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(b);
+    let rRef = changetype<usize>(_outputs);
+
+    let rLo: u64, rHi: u64 = 0;
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        let bLo = load<u64>(bRef + i);
+        let bHi = load<u64>(bRef + i + HALF_OFFSET);
+
+        // r = r + a * b
+        modMul(aHi, aLo, bHi, bLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rHi = _rHi; rLo = _rLo;
+    }
+    
+    // save the result into the 0 slot of the output buffer
+    store<u64>(rRef, _rLo);
+    store<u64>(rRef + HALF_OFFSET, _rHi);
+
+    return 0;
 }
 
 // MODULAR ARITHMETIC FUNCTIONS
