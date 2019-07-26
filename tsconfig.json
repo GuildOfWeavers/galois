@@ -7,5 +7,9 @@
         "sourceMap": true,
         "rootDir": ".",
         "outDir": "bin"
-    }
+    },
+    "exclude": [
+        "bin/*",
+        "lib/assembly/*.as.ts"
+    ]
 }
