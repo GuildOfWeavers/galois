@@ -326,22 +326,22 @@ function modSub(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
 function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
 
     // iteration 1
-    mul128x64(aHi, aLo, bHi);                           // ab = a * b1
-    let z0 = _rLo, z1 = _rHi, z2 = _rEx;       // z = ab
-    let q0 = _rEx;                                   // q = z >> n
+    mul128x64(aHi, aLo, bHi);                       // ab = a * b1
+    let z0 = _rLo, z1 = _rHi, z2 = _rEx;            // z = ab
+    let q0 = _rEx;                                  // q = z >> n
 
-    mul128x64(mHi, mLo, q0);                            // qm = q * m
+    mul128x64(mHi, mLo, q0);                        // qm = q * m
     let qm0 = _rLo, qm1 = _rHi, qm2 = _rEx;
 
-    sub192x192(z2, z1, z0, qm2, qm1, qm0);              // z = z - qm
+    sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
     z0 = _rLo; z1 = _rHi, z2 = _rEx;
 
     // iteration 2
     assert(z2 == 0, 'z2 must be 0');
-    let z3: u32 = 0;                                    // potential overflow bit
-    z2 = z1, z1 = z0; z0 = 0;                           // z << w
-    mul128x64(aHi, aLo, bLo);                           // ab = a * b0
-    z0 = _rLo; z1 = z1 + _rHi, z2 = z2 + _rEx; // z = z + ab
+    let z3: u32 = 0;                                // potential overflow bit
+    z2 = z1, z1 = z0; z0 = 0;                       // z << w
+    mul128x64(aHi, aLo, bLo);                       // ab = a * b0
+    z0 = _rLo; z1 = z1 + _rHi, z2 = z2 + _rEx;      // z = z + ab
     if (z1 < _rHi) {
         if (z2 < _rEx) {
             z2++;
@@ -356,27 +356,27 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
         if (z2 < _rEx) z3 = 1;
     }
 
-    q0 = z2;                                            // q = z >> n
+    q0 = z2;                                        // q = z >> n
 
     if (z3 == 1) {
-        let t1 = z1;                                    // z = z - (m << w)
+        let t1 = z1;                                // z = z - (m << w)
         z1 = t1 - mLo; z2 = z2 - mHi;
         if (z1 > t1) z2--;
     }
 
-    mul128x64(mHi, mLo, q0);                            // qm = q * m
+    mul128x64(mHi, mLo, q0);                        // qm = q * m
     qm0 = _rLo; qm1 = _rHi; qm2 = _rEx;
     
-    sub192x192(z2, z1, z0, qm2, qm1, qm0);              // z = z - qm
+    sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
     z0 = _rLo; z1 = _rHi, z2 = _rEx;
 
-    if (z2 > 0 || lt(mHi, mLo, z1, z0)) {               // if m < z
-        let t0 = z0;                                    // z = z - m
+    if (z2 > 0 || lt(mHi, mLo, z1, z0)) {           // if m < z
+        let t0 = z0;                                // z = z - m
         z0 = t0 - mLo; z1 = z1 - mHi;
         if (z0 > t0) z1--;
     }
 
-    _rLo = z0; _rHi = z1;                         // return the result
+    _rLo = z0; _rHi = z1;                           // return the result
 }
 
 function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {

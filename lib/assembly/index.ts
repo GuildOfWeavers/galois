@@ -19,15 +19,15 @@ interface Wasm {
     newArray(elementCount: number): number;
 
     addArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    addArrayElements2(aRef: number, bIdx: number): number;
+    addArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     subArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    subArrayElements2(aRef: number, bIdx: number): number;
+    subArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     mulArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    mulArrayElements2(aRef: number, bIdx: number): number;
+    mulArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     divArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    divArrayElements2(aRef: number, bIdx: number): number;
+    divArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     expArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    expArrayElements2(aRef: number, bIdx: number): number;
+    expArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     invArrayElements(sourceRef: number, elementCount: number): number;
 
     combineVectors(aRef: number, bRef: number): number;
@@ -77,12 +77,12 @@ export class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.addArrayElements2(a.base, 0);
+            const base = this.wasm.addArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
-                throw new Array('Cannot add vector elements: vectors have different lengths');
+                throw new Error('Cannot add vector elements: vectors have different lengths');
             }
             const base = this.wasm.addArrayElements(a.base, b.base, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -93,12 +93,12 @@ export class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.subArrayElements2(a.base, 0);
+            const base = this.wasm.subArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
-                throw new Array('Cannot subtract vector elements: vectors have different lengths');
+                throw new Error('Cannot subtract vector elements: vectors have different lengths');
             }
             const base = this.wasm.subArrayElements(a.base, b.base, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -109,12 +109,12 @@ export class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.mulArrayElements2(a.base, 0);
+            const base = this.wasm.mulArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
-                throw new Array('Cannot multiply vector elements: vectors have different lengths');
+                throw new Error('Cannot multiply vector elements: vectors have different lengths');
             }
             const base = this.wasm.mulArrayElements(a.base, b.base, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -125,12 +125,12 @@ export class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.divArrayElements2(a.base, 0);
+            const base = this.wasm.divArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
-                throw new Array('Cannot divide vector elements: vectors have different lengths');
+                throw new Error('Cannot divide vector elements: vectors have different lengths');
             }
             const base = this.wasm.divArrayElements(a.base, b.base, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -141,12 +141,12 @@ export class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.expArrayElements2(a.base, 0);
+            const base = this.wasm.expArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
-                throw new Array('Cannot exponentiate vector elements: vectors have different lengths');
+                throw new Error('Cannot exponentiate vector elements: vectors have different lengths');
             }
             const base = this.wasm.expArrayElements(a.base, b.base, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -160,12 +160,107 @@ export class Wasm128 {
 
     combineVectors(a: WasmVector, b: WasmVector): bigint {
         if (a.length !== b.length) {
-            throw new Array('Cannot combine vectors: vectors have different lengths');
+            throw new Error('Cannot combine vectors: vectors have different lengths');
         }
         const outputPos = this.wasm.combineVectors(a.base, b.base);
         const lo = this.wasm.U64[this.outputsIdx + outputPos];
         const hi = this.wasm.U64[this.outputsIdx + outputPos + 1];
         return (hi << 64n) | lo;
+    }
+
+    // MATRIX OPERATIONS
+    // ----------------------------------------------------------------------------------------
+    newMatrix(rows: number, columns: number): WasmMatrix {
+        return new WasmMatrix(this.wasm, rows, columns);
+    }
+
+    destroyMatrix(v: WasmMatrix): void {
+        throw new Error('Not implemented');
+    }
+
+    addMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.addArrayElements2(a.base, 0, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+        else {
+            if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
+                throw new Error('Cannot add matrix elements: matrixes have different dimensions');
+            }
+            const base = this.wasm.addArrayElements(a.base, b.base, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+    }
+
+    subMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.subArrayElements2(a.base, 0, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+        else {
+            if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
+                throw new Error('Cannot subtract matrix elements: matrixes have different dimensions');
+            }
+            const base = this.wasm.subArrayElements(a.base, b.base, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+    }
+
+    mulMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.mulArrayElements2(a.base, 0, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+        else {
+            if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
+                throw new Error('Cannot multiply matrix elements: matrixes have different dimensions');
+            }
+            const base = this.wasm.mulArrayElements(a.base, b.base, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+    }
+
+    divMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.divArrayElements2(a.base, 0, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+        else {
+            if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
+                throw new Error('Cannot divide matrix elements: matrixes have different dimensions');
+            }
+            const base = this.wasm.divArrayElements(a.base, b.base, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+    }
+
+    expMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.expArrayElements2(a.base, 0, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+        else {
+            if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
+                throw new Error('Cannot exponentiate matrix elements: matrixes have different dimensions');
+            }
+            const base = this.wasm.expArrayElements(a.base, b.base, a.elementCount);
+            return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
+        }
+    }
+
+    invMatrixElements(v: WasmMatrix): WasmMatrix {
+        const base = this.wasm.invArrayElements(v.base, v.elementCount);
+        return new WasmMatrix(this.wasm, v.rowCount, v.colCount, base);
     }
 
     // BASIC POLYNOMIAL OPERATIONS
@@ -236,12 +331,14 @@ export class WasmMatrix {
 
     readonly rowCount       : number;
     readonly colCount       : number;
+    readonly elementCount   : number;
     readonly byteLength     : number;
     readonly rowSze         : number;
 
     constructor(wasm: Wasm & loader.ASUtil, rows: number, columns: number, base?: number) {
         this.wasm = wasm;
-        this.base = base === undefined ? this.wasm.newArray(rows * columns) : base;
+        this.elementCount = rows * columns;
+        this.base = base === undefined ? this.wasm.newArray(this.elementCount) : base;
         this.rowCount = rows;
         this.colCount = columns;
         this.rowSze = columns * VALUE_SIZE;
