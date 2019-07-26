@@ -129,8 +129,9 @@ export class WasmVector {
 
     getValue(index: number): bigint {
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
-        const hi = this.wasm.U64[idx];
-        const lo = this.wasm.U64[idx + 1];
+        // writes a 128-bit value to WebAssembly memory in little-endian form
+        const lo = this.wasm.U64[idx];
+        const hi = this.wasm.U64[idx + 1];
         return (hi << 64n) | lo;
     }
 
@@ -138,8 +139,9 @@ export class WasmVector {
         if (value > MAX_VALUE) {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
+        // reads a 128-bit value from WebAssembly memory in little-endian form
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value >> 64n;
-        this.wasm.U64[idx + 1] = value & 0xFFFFFFFFFFFFFFFFn;
+        this.wasm.U64[idx] = value & 0xFFFFFFFFFFFFFFFFn;
+        this.wasm.U64[idx + 1] = value >> 64n;
     }
 }
