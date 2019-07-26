@@ -1,4 +1,4 @@
-/// <reference no-default-lib="true"/>
+// <reference no-default-lib="true"/>
 /// <reference path="../../node_modules/assemblyscript/std/assembly/index.d.ts" />
 
 // MODULE VARIABLES
@@ -8,9 +8,9 @@ const HALF_OFFSET = VALUE_SIZE / 2;
 const U64_MAX = 0xFFFFFFFFFFFFFFFF;
 const MASK32 = 0xFFFFFFFF;
 
-let __resLo: u64;
-let __resHi: u64;
-let __resEx: u64;
+let _rLo: u64;
+let _rHi: u64;
+let _rEx: u64;
 
 // MODULUS
 // ================================================================================================
@@ -20,6 +20,14 @@ let mLo: u64;
 export function setModulus(mHi1: u32, mHi2: u32, mLo1: u32, mLo2: u32): void {
     mHi = ((<u64>mHi1) << 32) | (<u64>mHi2);
     mLo = ((<u64>mLo1) << 32) | (<u64>mLo2);
+}
+
+// INPUTS
+// ================================================================================================
+let _inputs = new ArrayBuffer(8 * VALUE_SIZE);
+
+export function getInputsPtr(): usize {
+    return changetype<usize>(_inputs);
 }
 
 // VECTOR FUNCTIONS
@@ -44,8 +52,31 @@ export function addVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
 
         modAdd(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, __resLo);
-        store<u64>(rRef + i + HALF_OFFSET, __resHi);
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+export function addVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
+    let result = new ArrayBuffer(a.byteLength);
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(_inputs);
+    let rRef = changetype<usize>(result);
+
+    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
+    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        modAdd(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
     }
 
     return result;
@@ -67,8 +98,31 @@ export function subVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
 
         modSub(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, __resLo);
-        store<u64>(rRef + i + HALF_OFFSET, __resHi);
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+export function subVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
+    let result = new ArrayBuffer(a.byteLength);
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(_inputs);
+    let rRef = changetype<usize>(result);
+
+    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
+    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        modSub(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
     }
 
     return result;
@@ -90,8 +144,31 @@ export function mulVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
 
         modMul(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, __resLo);
-        store<u64>(rRef + i + HALF_OFFSET, __resHi);
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+export function mulVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
+    let result = new ArrayBuffer(a.byteLength);
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(_inputs);
+    let rRef = changetype<usize>(result);
+
+    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
+    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        modMul(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
     }
 
     return result;
@@ -112,8 +189,34 @@ export function divVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
 
         modMul(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, __resLo);
-        store<u64>(rRef + i + HALF_OFFSET, __resHi);
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+export function divVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
+    let result = new ArrayBuffer(a.byteLength);
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(_inputs);
+    let rRef = changetype<usize>(result);
+
+    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
+    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+
+    modInv(bHi, bLo);
+    bLo = _rLo, bHi = _rHi;
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        modMul(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
     }
 
     return result;
@@ -135,8 +238,31 @@ export function expVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
 
         modExp(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, __resLo);
-        store<u64>(rRef + i + HALF_OFFSET, __resHi);
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+export function expVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
+    let result = new ArrayBuffer(a.byteLength);
+
+    let aRef = changetype<usize>(a);
+    let bRef = changetype<usize>(_inputs);
+    let rRef = changetype<usize>(result);
+
+    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
+    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+
+    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        modExp(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
     }
 
     return result;
@@ -164,11 +290,11 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
         if (sHi == 0 && sLo == 0) sLo++;
 
         modMul(sHi, sLo, lastHi, lastLo);
-        lastLo = __resLo; lastHi = __resHi;
+        lastLo = _rLo; lastHi = _rHi;
     }
 
     modInv(lastHi, lastLo);
-    let invHi = __resHi, invLo = __resLo;
+    let invHi = _rHi, invLo = _rLo;
 
     for (let i = source.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
         sLo = load<u64>(sRef + i);
@@ -183,14 +309,14 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
             rLo = load<u64>(rRef + i);
             rHi = load<u64>(rRef + i + HALF_OFFSET);
             modMul(rHi, rLo, invHi, invLo);
-            rHi = __resHi; rLo = __resLo;
+            rHi = _rHi; rLo = _rLo;
         }
         store<u64>(rRef + i, rLo);
         store<u64>(rRef + i + HALF_OFFSET, rHi);
 
         // inv = mul(inv, source[i] || 1n);
         modMul(invHi, invLo, sHi, sLo);
-        invHi = __resHi; invLo = __resLo;
+        invHi = _rHi; invLo = _rLo;
     }
 
     return result;
@@ -211,7 +337,7 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
  */
 function modAdd(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     if (bHi == 0 && bLo == 0) {
-        __resLo = 0; __resHi = 0;
+        _rLo = 0; _rHi = 0;
     }
     else {
         let rLo: u64, rHi: u64;
@@ -236,7 +362,7 @@ function modAdd(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
         }
   
         // return the result
-        __resLo = rLo; __resHi = rHi;
+        _rLo = rLo; _rHi = rHi;
     }
 }
 
@@ -266,7 +392,7 @@ function modSub(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     }
 
     // return the result
-    __resLo = rLo; __resHi = rHi;
+    _rLo = rLo; _rHi = rHi;
 }
 
 /**
@@ -284,23 +410,23 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
 
     // iteration 1
     mul128x64(aHi, aLo, bHi);                           // ab = a * b1
-    let z0 = __resLo, z1 = __resHi, z2 = __resEx;       // z = ab
-    let q0 = __resEx;                                   // q = z >> n
+    let z0 = _rLo, z1 = _rHi, z2 = _rEx;       // z = ab
+    let q0 = _rEx;                                   // q = z >> n
 
     mul128x64(mHi, mLo, q0);                            // qm = q * m
-    let qm0 = __resLo, qm1 = __resHi, qm2 = __resEx;
+    let qm0 = _rLo, qm1 = _rHi, qm2 = _rEx;
 
     sub192x192(z2, z1, z0, qm2, qm1, qm0);              // z = z - qm
-    z0 = __resLo; z1 = __resHi, z2 = __resEx;
+    z0 = _rLo; z1 = _rHi, z2 = _rEx;
 
     // iteration 2
     assert(z2 == 0, 'z2 must be 0');
     let z3: u32 = 0;                                    // potential overflow bit
     z2 = z1, z1 = z0; z0 = 0;                           // z << w
     mul128x64(aHi, aLo, bLo);                           // ab = a * b0
-    z0 = __resLo; z1 = z1 + __resHi, z2 = z2 + __resEx; // z = z + ab
-    if (z1 < __resHi) {
-        if (z2 < __resEx) {
+    z0 = _rLo; z1 = z1 + _rHi, z2 = z2 + _rEx; // z = z + ab
+    if (z1 < _rHi) {
+        if (z2 < _rEx) {
             z2++;
             z3 = 1;
         }
@@ -310,7 +436,7 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
         }
     }
     else {
-        if (z2 < __resEx) z3 = 1;
+        if (z2 < _rEx) z3 = 1;
     }
 
     q0 = z2;                                            // q = z >> n
@@ -322,10 +448,10 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     }
 
     mul128x64(mHi, mLo, q0);                            // qm = q * m
-    qm0 = __resLo; qm1 = __resHi; qm2 = __resEx;
+    qm0 = _rLo; qm1 = _rHi; qm2 = _rEx;
     
     sub192x192(z2, z1, z0, qm2, qm1, qm0);              // z = z - qm
-    z0 = __resLo; z1 = __resHi, z2 = __resEx;
+    z0 = _rLo; z1 = _rHi, z2 = _rEx;
 
     if (z2 > 0 || lt(mHi, mLo, z1, z0)) {               // if m < z
         let t0 = z0;                                    // z = z - m
@@ -333,7 +459,7 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
         if (z0 > t0) z1--;
     }
 
-    __resLo = z0; __resHi = z1;                         // return the result
+    _rLo = z0; _rHi = z1;                         // return the result
 }
 
 function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {
@@ -349,7 +475,7 @@ function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {
             if ((expLo & 1) == 1) {
                 // r = (r * base) % m
                 modMul(rHi, rLo, baseHi, baseLo);
-                rHi = __resHi; rLo = __resLo;
+                rHi = _rHi; rLo = _rLo;
             }
     
             // exp = exp / 2
@@ -358,12 +484,12 @@ function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {
     
             // base = (base^2) % m
             modMul(baseHi, baseLo, baseHi, baseLo);
-            baseHi = __resHi; baseLo = __resLo;
+            baseHi = _rHi; baseLo = _rLo;
         }
     }
 
     // return the result
-    __resLo = rLo; __resHi = rHi;
+    _rLo = rLo; _rHi = rHi;
 }
 
 /** 
@@ -399,7 +525,7 @@ function modInv(xHi: u64, xLo: u64): void {
         else {
             // u = x + m
             add192x192(0, xHi, xLo, 0, mHi, mLo);
-            uLo = __resLo; uHi = __resHi; uEx = __resEx;
+            uLo = _rLo; uHi = _rHi; uEx = _rEx;
         }
 
         // v = m
@@ -412,17 +538,17 @@ function modInv(xHi: u64, xLo: u64): void {
             while (uEx > 0 || lt(vHi, vLo, uHi, uLo)) { // v < u
                 // u = u - v;
                 sub192x192(uEx, uHi, uLo, 0, vHi, vLo);
-                uLo = __resLo; uHi = __resHi; uEx = __resEx;
+                uLo = _rLo; uHi = _rHi; uEx = _rEx;
 
                 // d = d + a;
                 add192x192(dEx, dHi, dLo, aEx, aHi, aLo);
-                dLo = __resLo; dHi = __resHi; dEx = __resEx;
+                dLo = _rLo; dHi = _rHi; dEx = _rEx;
 
                 while ((uLo & 1) == 0) {
                     if ((dLo & 1) == 1) {
                         // d = d + m;
                         add192x192(dEx, dHi, dLo, 0, mHi, mLo);
-                        dLo = __resLo; dHi = __resHi; dEx = __resEx;
+                        dLo = _rLo; dHi = _rHi; dEx = _rEx;
                     }
                     // u = u >> 1;
                     uLo = (uLo >> 1) | ((uHi & 1) << 63);
@@ -443,13 +569,13 @@ function modInv(xHi: u64, xLo: u64): void {
 
             //a = a + d;
             add192x192(aEx, aHi, aLo, dEx, dHi, dLo);
-            aLo = __resLo; aHi = __resHi; aEx = __resEx;
+            aLo = _rLo; aHi = _rHi; aEx = _rEx;
 
             while ((vLo & 1) == 0) {
                 if ((aLo & 1) == 1) {
                     // a = a + m;
                     add192x192(aEx, aHi, aLo, 0, mHi, mLo);
-                    aLo = __resLo; aHi = __resHi; aEx = __resEx;
+                    aLo = _rLo; aHi = _rHi; aEx = _rEx;
                 }
 
                 // v = v >> 1;
@@ -467,12 +593,12 @@ function modInv(xHi: u64, xLo: u64): void {
         while (aEx > 0 || lt(mHi, mLo, aHi, aLo)) {
             // a = a - m
             sub192x192(aEx, aHi, aLo, 0, mHi, mLo);
-            aLo = __resLo; aHi = __resHi; aEx = __resEx;
+            aLo = _rLo; aHi = _rHi; aEx = _rEx;
         }
     }
 
     // return the result
-    __resLo = aLo; __resHi = aHi;
+    _rLo = aLo; _rHi = aHi;
 }
 
 // REGULAR ARITHMETIC FUNCTIONS
@@ -480,44 +606,44 @@ function modInv(xHi: u64, xLo: u64): void {
 // @ts-ignore
 @inline
 function add192x192(a2: u64, a1: u64, a0: u64, b2: u64, b1: u64, b0: u64): void {
-    __resLo = a0 + b0;
-    __resHi = a1 + b1;
-    __resEx = a2 + b2;
+    _rLo = a0 + b0;
+    _rHi = a1 + b1;
+    _rEx = a2 + b2;
 
-    if (__resLo < a0) {
-        if (__resHi < a1) {
-            __resEx++;
-            __resHi++;
+    if (_rLo < a0) {
+        if (_rHi < a1) {
+            _rEx++;
+            _rHi++;
         }
         else {
-            __resHi++;
-            if (__resHi == 0) __resEx++;
+            _rHi++;
+            if (_rHi == 0) _rEx++;
         }
     }
     else {
-        if (__resHi < a1) __resEx++;
+        if (_rHi < a1) _rEx++;
     }
 }
 
 // @ts-ignore
 @inline
 function sub192x192(a2: u64, a1: u64, a0: u64, b2: u64, b1: u64, b0: u64): void {
-    __resLo = a0 - b0;
-    __resHi = a1 - b1;
-    __resEx = a2 - b2;
+    _rLo = a0 - b0;
+    _rHi = a1 - b1;
+    _rEx = a2 - b2;
 
-    if (__resLo > a0) {
-        if (__resHi > a1) {
-            __resEx--;
-            __resHi--;
+    if (_rLo > a0) {
+        if (_rHi > a1) {
+            _rEx--;
+            _rHi--;
         }
         else {
-            __resHi--;
-            if (__resHi == U64_MAX) __resEx--;
+            _rHi--;
+            if (_rHi == U64_MAX) _rEx--;
         }
     }
     else {
-        if (__resHi > a1) __resEx--;
+        if (_rHi > a1) _rEx--;
     }
 }
 
@@ -565,9 +691,8 @@ function mul128x64(aHi: u64, aLo: u64, b: u64): void {
     // build the third word
     let r2 = a3 * b1 + carry;
 
-    __resLo = r0;
-    __resHi = r1;
-    __resEx = r2;
+    // return the result
+    _rLo = r0; _rHi = r1; _rEx = r2;
 }
 
 // COMPARISON FUNCTIONS

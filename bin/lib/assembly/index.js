@@ -22,6 +22,7 @@ class Wasm128 {
     constructor(wasm, modulus) {
         this.wasm = wasm;
         this.modulus = modulus;
+        this.inputsIdx = (this.wasm.getInputsPtr()) >>> 3;
         // set modulus in WASM module
         const mLo2 = Number.parseInt((modulus & 0xffffffffn));
         const mLo1 = Number.parseInt(((modulus >> 32n) & 0xffffffffn));
@@ -39,39 +40,79 @@ class Wasm128 {
         throw new Error('Not implemented');
     }
     addVectorElements(a, b) {
-        if (a.length !== b.length) {
-            throw new Array('Cannot add vector elements: vectors have different lengths');
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.addVectorElements2(a.base, 0);
+            return new WasmVector(this.wasm, base, a.length);
         }
-        const base = this.wasm.addVectorElements(a.base, b.base);
-        return new WasmVector(this.wasm, base, a.length);
+        else {
+            if (a.length !== b.length) {
+                throw new Array('Cannot add vector elements: vectors have different lengths');
+            }
+            const base = this.wasm.addVectorElements(a.base, b.base);
+            return new WasmVector(this.wasm, base, a.length);
+        }
     }
     subVectorElements(a, b) {
-        if (a.length !== b.length) {
-            throw new Array('Cannot subtract vector elements: vectors have different lengths');
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.subVectorElements2(a.base, 0);
+            return new WasmVector(this.wasm, base, a.length);
         }
-        const base = this.wasm.subVectorElements(a.base, b.base);
-        return new WasmVector(this.wasm, base, a.length);
+        else {
+            if (a.length !== b.length) {
+                throw new Array('Cannot subtract vector elements: vectors have different lengths');
+            }
+            const base = this.wasm.subVectorElements(a.base, b.base);
+            return new WasmVector(this.wasm, base, a.length);
+        }
     }
     mulVectorElements(a, b) {
-        if (a.length !== b.length) {
-            throw new Array('Cannot multiply vector elements: vectors have different lengths');
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.mulVectorElements2(a.base, 0);
+            return new WasmVector(this.wasm, base, a.length);
         }
-        const base = this.wasm.mulVectorElements(a.base, b.base);
-        return new WasmVector(this.wasm, base, a.length);
+        else {
+            if (a.length !== b.length) {
+                throw new Array('Cannot multiply vector elements: vectors have different lengths');
+            }
+            const base = this.wasm.mulVectorElements(a.base, b.base);
+            return new WasmVector(this.wasm, base, a.length);
+        }
     }
     divVectorElements(a, b) {
-        if (a.length !== b.length) {
-            throw new Array('Cannot divide vector elements: vectors have different lengths');
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.divVectorElements2(a.base, 0);
+            return new WasmVector(this.wasm, base, a.length);
         }
-        const base = this.wasm.divVectorElements(a.base, b.base);
-        return new WasmVector(this.wasm, base, a.length);
+        else {
+            if (a.length !== b.length) {
+                throw new Array('Cannot divide vector elements: vectors have different lengths');
+            }
+            const base = this.wasm.divVectorElements(a.base, b.base);
+            return new WasmVector(this.wasm, base, a.length);
+        }
     }
     expVectorElements(a, b) {
-        if (a.length !== b.length) {
-            throw new Array('Cannot exponentiate vector elements: vectors have different lengths');
+        if (typeof b === 'bigint') {
+            this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
+            this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
+            const base = this.wasm.addVectorElements2(a.base, 0);
+            return new WasmVector(this.wasm, base, a.length);
         }
-        const base = this.wasm.expVectorElements(a.base, b.base);
-        return new WasmVector(this.wasm, base, a.length);
+        else {
+            if (a.length !== b.length) {
+                throw new Array('Cannot exponentiate vector elements: vectors have different lengths');
+            }
+            const base = this.wasm.expVectorElements(a.base, b.base);
+            return new WasmVector(this.wasm, base, a.length);
+        }
     }
     invVectorElements(v) {
         const base = this.wasm.invVectorElements(v.base);
