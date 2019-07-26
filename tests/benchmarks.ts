@@ -101,7 +101,7 @@ let wDiv = wasm128.divVectorElements(w1, w2);
 console.log(`Computed ${elements} quotients in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vMul[i] !== wMul.getValue(i)) {
+    if (vDiv[i] !== wDiv.getValue(i)) {
         console.log(`> Division error in WASM at index ${i}!`);
         break;
     }

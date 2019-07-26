@@ -35,255 +35,98 @@ export function getOutputsPtr(): usize {
     return changetype<usize>(_outputs);
 }
 
-// VECTOR FUNCTIONS
+// ARRAY OPERATIONS
 // ================================================================================================
-export function newVector(length: u32): ArrayBuffer {
-    return new ArrayBuffer(length * VALUE_SIZE);
+type ArithmeticOp = (aHi: u64, aLo: u64, bHi: u64, bLo: u64) => void;
+
+export function newArray(elementCount: u32): ArrayBuffer {
+    return new ArrayBuffer(elementCount * VALUE_SIZE);
 }
 
-export function addVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(b);
-    let rRef = changetype<usize>(result);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
-
-        modAdd(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function addArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modAdd);
     return result;
 }
 
-export function addVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(_inputs);
-    let rRef = changetype<usize>(result);
-
-    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
-    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        modAdd(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function addArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
+    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modAdd);
     return result;
 }
 
-export function subVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(b);
-    let rRef = changetype<usize>(result);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
-
-        modSub(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function subArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modSub);
     return result;
 }
 
-export function subVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(_inputs);
-    let rRef = changetype<usize>(result);
-
-    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
-    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        modSub(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function subArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
+    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modSub);
     return result;
 }
 
-export function mulVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(b);
-    let rRef = changetype<usize>(result);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
-
-        modMul(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function mulArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
     return result;
 }
 
-export function mulVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(_inputs);
-    let rRef = changetype<usize>(result);
-
-    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
-    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        modMul(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function mulArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
+    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
     return result;
 }
 
-export function divVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
-    let result = invVectorElements(b);
-
-    let aRef = changetype<usize>(a);
+export function divArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
+    let result = invArrayElements(bRef, elementCount);
     let rRef = changetype<usize>(result);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        let bLo = load<u64>(rRef + i);
-        let bHi = load<u64>(rRef + i + HALF_OFFSET);
-
-        modMul(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+    arrayElementOp(aRef, rRef, rRef, elementCount, modMul);
     return result;
 }
 
-export function divVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
+export function divArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
 
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(_inputs);
-    let rRef = changetype<usize>(result);
-
-    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
-    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
+    let bLo = load<u64>(bRef);
+    let bHi = load<u64>(bRef + HALF_OFFSET);
 
     modInv(bHi, bLo);
-    bLo = _rLo, bHi = _rHi;
+    store<u64>(bRef, _rLo);
+    store<u64>(bRef + HALF_OFFSET, _rHi);
 
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        modMul(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
+    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
 
     return result;
 }
 
-export function expVectorElements(a: ArrayBuffer, b: ArrayBuffer): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(b);
-    let rRef = changetype<usize>(result);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
-
-        modExp(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function expArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modExp);
     return result;
 }
 
-export function expVectorElements2(a: ArrayBuffer, bIdx: u32): ArrayBuffer {
-    let result = new ArrayBuffer(a.byteLength);
-
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(_inputs);
-    let rRef = changetype<usize>(result);
-
-    let bLo = load<u64>(bRef + bIdx * VALUE_SIZE);
-    let bHi = load<u64>(bRef + bIdx * VALUE_SIZE + HALF_OFFSET);
-
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
-
-        modExp(aHi, aLo, bHi, bLo);
-
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
-    }
-
+export function expArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
+    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modExp);
     return result;
 }
 
-export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
-    let result = new ArrayBuffer(source.byteLength);
-
-    let sRef = changetype<usize>(source);
+export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
     let rRef = changetype<usize>(result);
 
     let sHi: u64, sLo: u64, rHi: u64, rLo: u64;
 
     let lastHi: u64 = 0;
     let lastLo: u64 = 1;
-    for (let i = 0; i < source.byteLength; i += VALUE_SIZE) {
+    for (let i = 0; i < result.byteLength; i += VALUE_SIZE) {
         // result[i] = last;
         store<u64>(rRef + i, lastLo);
         store<u64>(rRef + i + HALF_OFFSET, lastHi);
@@ -301,7 +144,7 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
     modInv(lastHi, lastLo);
     let invHi = _rHi, invLo = _rLo;
 
-    for (let i = source.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
+    for (let i = result.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
         sLo = load<u64>(sRef + i);
         sHi = load<u64>(sRef + i + HALF_OFFSET);
 
@@ -327,6 +170,44 @@ export function invVectorElements(source: ArrayBuffer): ArrayBuffer {
     return result;
 }
 
+function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
+
+    let length = count * this.VALUE_SIZE;
+    
+    for (let i = 0; i < length; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        let bLo = load<u64>(bRef + i);
+        let bHi = load<u64>(bRef + i + HALF_OFFSET);
+
+        op(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+}
+
+function arrayScalarOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
+
+    let bLo = load<u64>(bRef);
+    let bHi = load<u64>(bRef + HALF_OFFSET);
+
+    let length = count * this.VALUE_SIZE;
+
+    for (let i = 0; i < length; i += VALUE_SIZE) {
+        let aLo = load<u64>(aRef + i);
+        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+
+        op(aHi, aLo, bHi, bLo);
+
+        store<u64>(rRef + i, _rLo);
+        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+    }
+}
+
+// VECTOR FUNCTIONS
+// ================================================================================================
 export function combineVectors(a: ArrayBuffer, b: ArrayBuffer): u32 {
 
     let aRef = changetype<usize>(a);
@@ -354,6 +235,9 @@ export function combineVectors(a: ArrayBuffer, b: ArrayBuffer): u32 {
 
     return 0;
 }
+
+// MATRIX FUNCTIONS
+// ================================================================================================
 
 // MODULAR ARITHMETIC FUNCTIONS
 // ================================================================================================

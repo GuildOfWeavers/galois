@@ -34,8 +34,7 @@ class Wasm128 {
     // VECTOR OPERATIONS
     // ----------------------------------------------------------------------------------------
     newVector(length) {
-        const base = this.wasm.newVector(length);
-        return new WasmVector(this.wasm, base, length);
+        return new WasmVector(this.wasm, length);
     }
     destroyVector(v) {
         throw new Error('Not implemented');
@@ -44,80 +43,80 @@ class Wasm128 {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.addVectorElements2(a.base, 0);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.addArrayElements2(a.base, 0);
+            return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Array('Cannot add vector elements: vectors have different lengths');
             }
-            const base = this.wasm.addVectorElements(a.base, b.base);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.addArrayElements(a.base, b.base, a.length);
+            return new WasmVector(this.wasm, a.length, base);
         }
     }
     subVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.subVectorElements2(a.base, 0);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.subArrayElements2(a.base, 0);
+            return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Array('Cannot subtract vector elements: vectors have different lengths');
             }
-            const base = this.wasm.subVectorElements(a.base, b.base);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.subArrayElements(a.base, b.base, a.length);
+            return new WasmVector(this.wasm, a.length, base);
         }
     }
     mulVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.mulVectorElements2(a.base, 0);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.mulArrayElements2(a.base, 0);
+            return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Array('Cannot multiply vector elements: vectors have different lengths');
             }
-            const base = this.wasm.mulVectorElements(a.base, b.base);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.mulArrayElements(a.base, b.base, a.length);
+            return new WasmVector(this.wasm, a.length, base);
         }
     }
     divVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.divVectorElements2(a.base, 0);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.divArrayElements2(a.base, 0);
+            return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Array('Cannot divide vector elements: vectors have different lengths');
             }
-            const base = this.wasm.divVectorElements(a.base, b.base);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.divArrayElements(a.base, b.base, a.length);
+            return new WasmVector(this.wasm, a.length, base);
         }
     }
     expVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & 0xffffffffffffffffn;
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
-            const base = this.wasm.expVectorElements2(a.base, 0);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.expArrayElements2(a.base, 0);
+            return new WasmVector(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Array('Cannot exponentiate vector elements: vectors have different lengths');
             }
-            const base = this.wasm.expVectorElements(a.base, b.base);
-            return new WasmVector(this.wasm, base, a.length);
+            const base = this.wasm.expArrayElements(a.base, b.base, a.length);
+            return new WasmVector(this.wasm, a.length, base);
         }
     }
     invVectorElements(v) {
-        const base = this.wasm.invVectorElements(v.base);
-        return new WasmVector(this.wasm, base, v.length);
+        const base = this.wasm.invArrayElements(v.base, v.length);
+        return new WasmVector(this.wasm, v.length, base);
     }
     combineVectors(a, b) {
         if (a.length !== b.length) {
@@ -150,9 +149,9 @@ exports.Wasm128 = Wasm128;
 // VECTOR CLASS
 // ================================================================================================
 class WasmVector {
-    constructor(wasm, base, length) {
+    constructor(wasm, length, base) {
         this.wasm = wasm;
-        this.base = base;
+        this.base = base === undefined ? this.wasm.newArray(length) : base;
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
     }
@@ -174,4 +173,33 @@ class WasmVector {
     }
 }
 exports.WasmVector = WasmVector;
+// MATRIX CLASS
+// ================================================================================================
+class WasmMatrix {
+    constructor(wasm, rows, columns, base) {
+        this.wasm = wasm;
+        this.base = base === undefined ? this.wasm.newArray(rows * columns) : base;
+        this.rowCount = rows;
+        this.colCount = columns;
+        this.rowSze = columns * VALUE_SIZE;
+        this.byteLength = rows * this.rowSze;
+    }
+    getValue(row, column) {
+        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        // reads a 128-bit value from WebAssembly memory (little-endian layout)
+        const lo = this.wasm.U64[idx];
+        const hi = this.wasm.U64[idx + 1];
+        return (hi << 64n) | lo;
+    }
+    setValue(row, column, value) {
+        if (value > MAX_VALUE) {
+            throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
+        }
+        // writes a 128-bit value to WebAssembly memory (little-endian layout)
+        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        this.wasm.U64[idx] = value & 0xffffffffffffffffn;
+        this.wasm.U64[idx + 1] = value >> 64n;
+    }
+}
+exports.WasmMatrix = WasmMatrix;
 //# sourceMappingURL=index.js.map

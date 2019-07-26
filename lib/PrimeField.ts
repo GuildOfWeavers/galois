@@ -74,8 +74,12 @@ export class PrimeField implements FiniteField {
 
     exp(base: bigint, exponent: bigint): bigint {
         base = this.mod(base);
-        if (base === 0n && exponent === 0n) {
-            throw new TypeError('Base and exponent cannot be both 0');
+
+        if (base === 0n) {
+            if (exponent === 0n) {
+                throw new TypeError('Base and exponent cannot be both 0');
+            }
+            return 0n;
         }
 
         // handle raising to negative power
@@ -86,7 +90,6 @@ export class PrimeField implements FiniteField {
 
         let result = 1n;
         while (exponent > 0n) {
-            if (base === 0n) return 0n;
             if (exponent % 2n) {
                 result = this.mul(result, base);
             }
