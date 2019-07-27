@@ -172,19 +172,24 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
 
 function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
 
-    let length = count * this.VALUE_SIZE;
-    
-    for (let i = 0; i < length; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+    let endRef = aRef + count * this.VALUE_SIZE;
+    let aiRef = aRef, biRef = bRef, riRef = rRef;
 
-        let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
+    while (aiRef < endRef) {
+        let aLo = load<u64>(aiRef);
+        let aHi = load<u64>(aiRef + HALF_OFFSET);
+
+        let bLo = load<u64>(biRef);
+        let bHi = load<u64>(biRef + HALF_OFFSET);
 
         op(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+        store<u64>(riRef, _rLo);
+        store<u64>(riRef + HALF_OFFSET, _rHi);
+
+        aiRef += VALUE_SIZE;
+        biRef += VALUE_SIZE;
+        riRef += VALUE_SIZE;
     }
 }
 
@@ -193,16 +198,20 @@ function arrayScalarOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: Ar
     let bLo = load<u64>(bRef);
     let bHi = load<u64>(bRef + HALF_OFFSET);
 
-    let length = count * this.VALUE_SIZE;
+    let endRef = aRef + count * this.VALUE_SIZE;
+    let aiRef = aRef, riRef = rRef;
 
-    for (let i = 0; i < length; i += VALUE_SIZE) {
-        let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+    while (aiRef < endRef) {
+        let aLo = load<u64>(aiRef);
+        let aHi = load<u64>(aiRef + HALF_OFFSET);
 
         op(aHi, aLo, bHi, bLo);
 
-        store<u64>(rRef + i, _rLo);
-        store<u64>(rRef + i + HALF_OFFSET, _rHi);
+        store<u64>(riRef, _rLo);
+        store<u64>(riRef + HALF_OFFSET, _rHi);
+
+        aiRef += VALUE_SIZE;
+        riRef += VALUE_SIZE;
     }
 }
 
@@ -273,6 +282,32 @@ export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): A
     return result;
 }
 
+// POWER FUNCTIONS
+// ================================================================================================
+export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
+    let arraySize = length * VALUE_SIZE;
+    let result = new ArrayBuffer(arraySize);
+    let rRef = changetype<usize>(result);
+    let endRef = rRef + arraySize;
+
+    let sRef = changetype<usize>(_inputs) + seedIdx * VALUE_SIZE;
+    let sLo = load<u64>(sRef);
+    let sHi = load<u64>(sRef + HALF_OFFSET);
+
+    let pLo: u64 = 1, pHi: u64 = 0;
+    store<u64>(rRef, pLo);
+    store<u64>(rRef + HALF_OFFSET, pHi);
+
+    for (let riRef: u32 = rRef + VALUE_SIZE; riRef < endRef; riRef += VALUE_SIZE) {
+        modMul(pHi, pLo, sHi, sLo);
+        pLo = _rLo; pHi = _rHi;
+
+        store<u64>(riRef, pLo);
+        store<u64>(riRef + HALF_OFFSET, pHi);
+    }
+
+    return result;
+}
 
 // MODULAR ARITHMETIC FUNCTIONS
 // ================================================================================================

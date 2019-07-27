@@ -8,6 +8,8 @@ import * as loader from 'assemblyscript/lib/loader';
 const VALUE_BITS = 128;
 const VALUE_SIZE = VALUE_BITS / 8;
 const MAX_VALUE = 2n**BigInt(VALUE_BITS) - 1n;
+const MASK_32B = 0xFFFFFFFFn;
+const MASK_64B = 0xFFFFFFFFFFFFFFFFn;
 
 // WASM MODULE
 // ================================================================================================
@@ -29,6 +31,8 @@ interface Wasm {
     expArrayElements(aRef: number, bRef: number, elementCount: number): number;
     expArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     invArrayElements(sourceRef: number, elementCount: number): number;
+
+    getPowerSeries(length: number, seedIdx: number): number;
 
     combineVectors(aRef: number, bRef: number, elementCount: number): number;
 
@@ -58,10 +62,10 @@ export class Wasm128 {
         this.outputsIdx = (this.wasm.getOutputsPtr()) >>> 3;
 
         // set modulus in WASM module
-        const mLo2 = Number.parseInt((modulus & 0xFFFFFFFFn) as any);
-        const mLo1 = Number.parseInt(((modulus >> 32n) & 0xFFFFFFFFn) as any);
-        const mHi2 = Number.parseInt(((modulus >> 64n) & 0xFFFFFFFFn) as any);
-        const mHi1 = Number.parseInt(((modulus >> 96n) & 0xFFFFFFFFn) as any);
+        const mLo2 = Number.parseInt((modulus & MASK_32B) as any);
+        const mLo1 = Number.parseInt(((modulus >> 32n) & MASK_32B) as any);
+        const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B) as any);
+        const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B) as any);
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
     }
 
@@ -77,7 +81,7 @@ export class Wasm128 {
 
     addVectorElements(a: WasmVector, b: WasmVector | bigint): WasmVector {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.addArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -93,7 +97,7 @@ export class Wasm128 {
 
     subVectorElements(a: WasmVector, b: WasmVector | bigint): WasmVector {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.subArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -109,7 +113,7 @@ export class Wasm128 {
 
     mulVectorElements(a: WasmVector, b: WasmVector | bigint): WasmVector {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.mulArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -125,7 +129,7 @@ export class Wasm128 {
 
     divVectorElements(a: WasmVector, b: WasmVector | bigint): WasmVector {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.divArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -141,7 +145,7 @@ export class Wasm128 {
 
     expVectorElements(a: WasmVector, b: WasmVector | bigint): WasmVector {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.expArrayElements2(a.base, 0, a.length);
             return new WasmVector(this.wasm, a.length, base);
@@ -182,7 +186,7 @@ export class Wasm128 {
 
     addMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.addArrayElements2(a.base, 0, a.elementCount);
             return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
@@ -198,7 +202,7 @@ export class Wasm128 {
 
     subMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.subArrayElements2(a.base, 0, a.elementCount);
             return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
@@ -214,7 +218,7 @@ export class Wasm128 {
 
     mulMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.mulArrayElements2(a.base, 0, a.elementCount);
             return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
@@ -230,7 +234,7 @@ export class Wasm128 {
 
     divMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.divArrayElements2(a.base, 0, a.elementCount);
             return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
@@ -246,7 +250,7 @@ export class Wasm128 {
 
     expMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
         if (typeof b === 'bigint') {
-            this.wasm.U64[this.inputsIdx] = b & 0xFFFFFFFFFFFFFFFFn;
+            this.wasm.U64[this.inputsIdx] = b & MASK_64B
             this.wasm.U64[this.inputsIdx + 1] = b >> 64n;
             const base = this.wasm.expArrayElements2(a.base, 0, a.elementCount);
             return new WasmMatrix(this.wasm, a.rowCount, a.colCount, base);
@@ -289,6 +293,15 @@ export class Wasm128 {
 
         const base = this.wasm.mulMatrixes(a.base, b.base, n, m, p);
         return new WasmVector(this.wasm, n, base);
+    }
+
+    // OTHER OPERATIONS
+    // ----------------------------------------------------------------------------------------
+    getPowerSeries(seed: bigint, length: number): WasmVector {
+        this.wasm.U64[this.inputsIdx] = seed & MASK_64B
+        this.wasm.U64[this.inputsIdx + 1] = seed >> 64n;
+        const base = this.wasm.getPowerSeries(length, 0);
+        return new WasmVector(this.wasm, length, base);
     }
 
     // BASIC POLYNOMIAL OPERATIONS
@@ -345,7 +358,7 @@ export class WasmVector {
         }
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value & 0xFFFFFFFFFFFFFFFFn;
+        this.wasm.U64[idx] = value & MASK_64B
         this.wasm.U64[idx + 1] = value >> 64n;
     }
 }
@@ -387,7 +400,7 @@ export class WasmMatrix {
         }
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value & 0xFFFFFFFFFFFFFFFFn;
+        this.wasm.U64[idx] = value & MASK_64B
         this.wasm.U64[idx + 1] = value >> 64n;
     }
 }

@@ -76,6 +76,10 @@ start = Date.now();
 let mvMul = f1.mulMatrixByVector(m1, v3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 
+start = Date.now();
+let vPow = f1.getPowerSeries(42n, elements);
+console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
+
 console.log('-'.repeat(100));
 
 // 128 BIT FIELD WASM
@@ -205,6 +209,17 @@ console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in
 for (let i = 0; i < mvMul.length; i++) {
     if (mvMul[i] !== mvwMul.getValue(i)) {
         console.log(`> Matrix-vector multiplication error at index ${i}!`);
+        break;
+    }
+}
+
+start = Date.now();
+let wPow = wasm128.getPowerSeries(42n, elements);
+console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
+
+for (let i = 0; i < elements; i++) {
+    if (vPow[i] !== wPow.getValue(i)) {
+        console.log(`> Power series error in WASM at index ${i}!`);
         break;
     }
 }
