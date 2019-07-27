@@ -208,15 +208,13 @@ function arrayScalarOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: Ar
 
 // VECTOR FUNCTIONS
 // ================================================================================================
-export function combineVectors(a: ArrayBuffer, b: ArrayBuffer): u32 {
+export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32 {
 
-    let aRef = changetype<usize>(a);
-    let bRef = changetype<usize>(b);
+    let byteLength = elementCount * VALUE_SIZE;
     let rRef = changetype<usize>(_outputs);
-
     let rLo: u64, rHi: u64 = 0;
 
-    for (let i = 0; i < a.byteLength; i += VALUE_SIZE) {
+    for (let i = 0; i < byteLength; i += VALUE_SIZE) {
         let aLo = load<u64>(aRef + i);
         let aHi = load<u64>(aRef + i + HALF_OFFSET);
 
@@ -238,6 +236,43 @@ export function combineVectors(a: ArrayBuffer, b: ArrayBuffer): u32 {
 
 // MATRIX FUNCTIONS
 // ================================================================================================
+export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): ArrayBuffer {
+    let result = new ArrayBuffer(n * p * VALUE_SIZE);
+    let rRef = changetype<usize>(result);
+
+    let aLo: u64, aHi: u64, bLo: u64, bHi: u64, sHi: u64, sLo: u64;
+    let aRowSize = m * VALUE_SIZE;
+    let bRowSize = p * VALUE_SIZE;
+
+    for (let i: u32 = 0; i < n; i++) {
+        for (let j: u32 = 0; j < p; j++) {
+            sLo = 0; sHi = 0;
+            for (let k: u32 = 0; k < m; k++) {
+                // a = a[i,k]
+                let aValueRef = aRef + aRowSize * i + k * VALUE_SIZE;
+                aLo = load<u64>(aValueRef);
+                aHi = load<u64>(aValueRef + HALF_OFFSET);
+
+                // b = b[k,j]
+                let bValueRef = bRef + bRowSize * k + j * VALUE_SIZE;
+                bLo = load<u64>(bValueRef);
+                bHi = load<u64>(bValueRef + HALF_OFFSET);
+
+                // s = s + a * b
+                modMul(aHi, aLo, bHi, bLo);
+                modAdd(sHi, sLo, _rHi, _rLo);
+                sHi = _rHi; sLo = _rLo;
+            }
+
+            let rValueRef = rRef + bRowSize * i + j * VALUE_SIZE;
+            store<u64>(rValueRef, sLo);
+            store<u64>(rValueRef + HALF_OFFSET, sHi);
+        }
+    }
+
+    return result;
+}
+
 
 // MODULAR ARITHMETIC FUNCTIONS
 // ================================================================================================

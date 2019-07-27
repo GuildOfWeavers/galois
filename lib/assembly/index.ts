@@ -30,7 +30,9 @@ interface Wasm {
     expArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     invArrayElements(sourceRef: number, elementCount: number): number;
 
-    combineVectors(aRef: number, bRef: number): number;
+    combineVectors(aRef: number, bRef: number, elementCount: number): number;
+
+    mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 }
 
 // PUBLIC MODULE
@@ -162,7 +164,7 @@ export class Wasm128 {
         if (a.length !== b.length) {
             throw new Error('Cannot combine vectors: vectors have different lengths');
         }
-        const outputPos = this.wasm.combineVectors(a.base, b.base);
+        const outputPos = this.wasm.combineVectors(a.base, b.base, a.length);
         const lo = this.wasm.U64[this.outputsIdx + outputPos];
         const hi = this.wasm.U64[this.outputsIdx + outputPos + 1];
         return (hi << 64n) | lo;
@@ -261,6 +263,32 @@ export class Wasm128 {
     invMatrixElements(v: WasmMatrix): WasmMatrix {
         const base = this.wasm.invArrayElements(v.base, v.elementCount);
         return new WasmMatrix(this.wasm, v.rowCount, v.colCount, base);
+    }
+
+    mulMatrixes(a: WasmMatrix, b: WasmMatrix): WasmMatrix {
+        const n = a.rowCount;
+        const m = a.colCount;
+        const p = b.colCount;
+
+        if (m !== b.rowCount) {
+            throw new Error(`Cannot compute a product of ${a}x${m} and ${b.rowCount}x${p} matrixes`);
+        }
+
+        const base = this.wasm.mulMatrixes(a.base, b.base, n, m, p);
+        return new WasmMatrix(this.wasm, n, p, base);
+    }
+
+    mulMatrixByVector(a: WasmMatrix, b: WasmVector): WasmVector {
+        const n = a.rowCount;
+        const m = a.colCount;
+        const p = 1;
+
+        if (m !== b.length) {
+            throw new Error(`Cannot compute a product of ${a}x${m} matrix and ${b.length}x1 vector`);
+        }
+
+        const base = this.wasm.mulMatrixes(a.base, b.base, n, m, p);
+        return new WasmVector(this.wasm, n, base);
     }
 
     // BASIC POLYNOMIAL OPERATIONS
