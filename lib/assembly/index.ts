@@ -37,6 +37,8 @@ interface Wasm {
     combineVectors(aRef: number, bRef: number, elementCount: number): number;
 
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
+
+    evalPolyAtRoots(pRef: number, xRef: number, elementCount: number): number;
 }
 
 // PUBLIC MODULE
@@ -324,6 +326,11 @@ export class Wasm128 {
 
     mulPolyByConstant(a: WasmVector, b: bigint): WasmVector {
         return this.mulVectorElements(a, b);
+    }
+
+    evalPolyAtRoots(p: WasmVector, rootsOfUnity: WasmVector): WasmVector {
+        const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length);
+        return new WasmVector(this.wasm, p.length, base);
     }
 }
 

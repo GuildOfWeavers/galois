@@ -261,6 +261,10 @@ class Wasm128 {
     mulPolyByConstant(a, b) {
         return this.mulVectorElements(a, b);
     }
+    evalPolyAtRoots(p, rootsOfUnity) {
+        const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length);
+        return new WasmVector(this.wasm, p.length, base);
+    }
 }
 exports.Wasm128 = Wasm128;
 // VECTOR CLASS

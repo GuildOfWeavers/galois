@@ -309,6 +309,94 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
     return result;
 }
 
+// POLYNOMIAL FUNCTIONS
+// ================================================================================================
+export function evalPolyAtRoots(pRef: usize, xRef: usize, elementCount: u32): ArrayBuffer {
+
+    let result = fastFT(pRef, xRef, elementCount, 0, 0);
+    //let result = baseFT(pRef, xRef, 1, 0);
+    return result;
+}
+
+// FAST FOURIER TRANSFORM
+// ================================================================================================
+function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset: u32): ArrayBuffer {
+    let step: u32 = 1 << depth;
+    let resultLength: u32 = elementCount / step;
+
+    // if only 4 values left, use simple FT
+    if (resultLength <= 4) {
+        return baseFT(vRef, rRef, step, offset);
+    }
+    
+    let even = fastFT(vRef, rRef, elementCount, depth + 1, offset);
+    let eRef = changetype<usize>(even);
+    let odd = fastFT(vRef, rRef, elementCount, depth + 1, offset + step);
+    let oRef = changetype<usize>(odd);
+
+    let halfLength = resultLength >> 1;
+    let result = new ArrayBuffer(resultLength * VALUE_SIZE);
+    let resRef = changetype<usize>(result);
+
+    for (let i: u32 = 0; i < halfLength; i++) {
+        let yLo = load<u64>(oRef + i * VALUE_SIZE);
+        let yHi = load<u64>(oRef + i * VALUE_SIZE + HALF_OFFSET);
+
+        let rLo = load<u64>(rRef + i * step * VALUE_SIZE);
+        let rHi = load<u64>(rRef + i * step * VALUE_SIZE + HALF_OFFSET);
+
+        // yr = (y * r) % m
+        modMul(yHi, yLo, rHi, rLo);
+        let yrLo = _rLo, yrHi = _rHi;
+
+        let xLo = load<u64>(eRef + i * VALUE_SIZE);
+        let xHi = load<u64>(eRef + i * VALUE_SIZE + HALF_OFFSET);
+
+        // result[i] = (x + yr) % m
+        modAdd(xHi, xLo, yrHi, yrLo);
+        store<u64>(resRef + i * VALUE_SIZE, _rLo);
+        store<u64>(resRef + i * VALUE_SIZE + HALF_OFFSET, _rHi);
+
+        // result[i + halfLength] = (x - yr) % m
+        modSub(xHi, xLo, yrHi, yrLo);
+        store<u64>(resRef + i * VALUE_SIZE + halfLength * VALUE_SIZE, _rLo);
+        store<u64>(resRef + i * VALUE_SIZE + halfLength * VALUE_SIZE + HALF_OFFSET, _rHi);
+    }
+
+    return result;
+}
+
+function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
+    let resultSize = VALUE_SIZE * 4;
+    let result = new ArrayBuffer(resultSize);
+    let resRef = changetype<usize>(result);
+
+    let lastLo: u64, lastHi: u64;
+
+    step = step * VALUE_SIZE;
+
+    for (let i = 0; i < 4; i++) {
+        lastLo = 0; lastHi = 0;
+        for (let j = 0; j < 4; j++) {
+            let rValueRef = rRef + ((i * j) % 4) * step;
+            let rLo = load<u64>(rValueRef);
+            let rHi = load<u64>(rValueRef, HALF_OFFSET);
+
+            let vValueRef = vRef + offset * VALUE_SIZE + j * step;
+            let vLo = load<u64>(vValueRef);
+            let vHi = load<u64>(vValueRef, HALF_OFFSET);
+
+            modMul(rHi, rLo, vHi, vLo);
+            modAdd(lastHi, lastLo, _rHi, _rLo);
+            lastLo = _rLo; lastHi = _rHi;
+        }
+
+        store<u64>(resRef + i * VALUE_SIZE, lastLo);
+        store<u64>(resRef + i * VALUE_SIZE, lastHi, HALF_OFFSET);
+    }
+    return result;
+}
+
 // MODULAR ARITHMETIC FUNCTIONS
 // ================================================================================================
 /**
