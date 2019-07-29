@@ -443,6 +443,20 @@ function baseFT(vRef: usize, rRef: usize, vRefEnd: u32, step: u32, offset: u32):
                 }
             }
         }
+        else {
+            // only first value is non-zero
+            let r0Lo = load<u64>(rRef), r0Hi = load<u64>(rRef, HALF_OFFSET);
+            modMul(v0Hi, v0Lo, r0Hi, r0Lo);
+            store<u64>(resRef, _rLo); store<u64>(resRef, _rHi, HALF_OFFSET); resRef += VALUE_SIZE;
+            store<u64>(resRef, _rLo); store<u64>(resRef, _rHi, HALF_OFFSET); resRef += VALUE_SIZE;
+            store<u64>(resRef, _rLo); store<u64>(resRef, _rHi, HALF_OFFSET); resRef += VALUE_SIZE;
+            store<u64>(resRef, _rLo); store<u64>(resRef, _rHi, HALF_OFFSET);
+            return result;
+        }
+    }
+    else {
+        // all values are zeros
+        return result;
     }
 
     // load root variables
