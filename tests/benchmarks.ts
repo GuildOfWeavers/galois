@@ -46,7 +46,7 @@ console.log(`Computed ${elements} additions in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vSub = f1.subVectorElements(v1, v2);
-console.log(`Computed ${elements} subtractions vectors in ${Date.now() - start} ms`);
+console.log(`Computed ${elements} subtractions in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vMul = f1.mulVectorElements(v1, v2);
@@ -129,7 +129,7 @@ for (let i = 0; i < elements; i++) {
 
 start = Date.now();
 let wSub = wasm128.subVectorElements(w1, w2);
-console.log(`Computed ${elements} subtractions vectors in ${Date.now() - start} ms`);
+console.log(`Computed ${elements} subtractions in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
     if (vSub[i] !== wSub.getValue(i)) {

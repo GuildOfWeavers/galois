@@ -94,11 +94,11 @@ export function divArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): Ar
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
 
     let bLo = load<u64>(bRef);
-    let bHi = load<u64>(bRef + HALF_OFFSET);
+    let bHi = load<u64>(bRef, HALF_OFFSET);
 
     modInv(bHi, bLo);
     store<u64>(bRef, _rLo);
-    store<u64>(bRef + HALF_OFFSET, _rHi);
+    store<u64>(bRef, _rHi, HALF_OFFSET);
 
     arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
 
@@ -129,11 +129,11 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
     for (let i = 0; i < result.byteLength; i += VALUE_SIZE) {
         // result[i] = last;
         store<u64>(rRef + i, lastLo);
-        store<u64>(rRef + i + HALF_OFFSET, lastHi);
+        store<u64>(rRef + i, lastHi, HALF_OFFSET);
 
         // last = last * (source[i] || 1)
         sLo = load<u64>(sRef + i);
-        sHi = load<u64>(sRef + i + HALF_OFFSET);
+        sHi = load<u64>(sRef + i, HALF_OFFSET);
 
         if (sHi == 0 && sLo == 0) sLo++;
 
@@ -146,7 +146,7 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
 
     for (let i = result.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
         sLo = load<u64>(sRef + i);
-        sHi = load<u64>(sRef + i + HALF_OFFSET);
+        sHi = load<u64>(sRef + i, HALF_OFFSET);
 
         // result[i] = source[i] ? mul(result[i], inv) : 0n;
         if (sHi == 0 && sLo == 0) {
@@ -155,12 +155,12 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
         }
         else {
             rLo = load<u64>(rRef + i);
-            rHi = load<u64>(rRef + i + HALF_OFFSET);
+            rHi = load<u64>(rRef + i, HALF_OFFSET);
             modMul(rHi, rLo, invHi, invLo);
             rHi = _rHi; rLo = _rLo;
         }
         store<u64>(rRef + i, rLo);
-        store<u64>(rRef + i + HALF_OFFSET, rHi);
+        store<u64>(rRef + i, rHi, HALF_OFFSET);
 
         // inv = mul(inv, source[i] || 1n);
         modMul(invHi, invLo, sHi, sLo);
@@ -177,15 +177,15 @@ function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: A
 
     while (aiRef < endRef) {
         let aLo = load<u64>(aiRef);
-        let aHi = load<u64>(aiRef + HALF_OFFSET);
+        let aHi = load<u64>(aiRef, HALF_OFFSET);
 
         let bLo = load<u64>(biRef);
-        let bHi = load<u64>(biRef + HALF_OFFSET);
+        let bHi = load<u64>(biRef, HALF_OFFSET);
 
         op(aHi, aLo, bHi, bLo);
 
         store<u64>(riRef, _rLo);
-        store<u64>(riRef + HALF_OFFSET, _rHi);
+        store<u64>(riRef, _rHi, HALF_OFFSET);
 
         aiRef += VALUE_SIZE;
         biRef += VALUE_SIZE;
@@ -196,19 +196,19 @@ function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: A
 function arrayScalarOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
 
     let bLo = load<u64>(bRef);
-    let bHi = load<u64>(bRef + HALF_OFFSET);
+    let bHi = load<u64>(bRef, HALF_OFFSET);
 
     let endRef = aRef + count * this.VALUE_SIZE;
     let aiRef = aRef, riRef = rRef;
 
     while (aiRef < endRef) {
         let aLo = load<u64>(aiRef);
-        let aHi = load<u64>(aiRef + HALF_OFFSET);
+        let aHi = load<u64>(aiRef, HALF_OFFSET);
 
         op(aHi, aLo, bHi, bLo);
 
         store<u64>(riRef, _rLo);
-        store<u64>(riRef + HALF_OFFSET, _rHi);
+        store<u64>(riRef, _rHi, HALF_OFFSET);
 
         aiRef += VALUE_SIZE;
         riRef += VALUE_SIZE;
@@ -225,10 +225,10 @@ export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32
 
     for (let i = 0; i < byteLength; i += VALUE_SIZE) {
         let aLo = load<u64>(aRef + i);
-        let aHi = load<u64>(aRef + i + HALF_OFFSET);
+        let aHi = load<u64>(aRef + i, HALF_OFFSET);
 
         let bLo = load<u64>(bRef + i);
-        let bHi = load<u64>(bRef + i + HALF_OFFSET);
+        let bHi = load<u64>(bRef + i, HALF_OFFSET);
 
         // r = r + a * b
         modMul(aHi, aLo, bHi, bLo);
@@ -238,7 +238,7 @@ export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32
     
     // save the result into the 0 slot of the output buffer
     store<u64>(rRef, _rLo);
-    store<u64>(rRef + HALF_OFFSET, _rHi);
+    store<u64>(rRef, _rHi, HALF_OFFSET);
 
     return 0;
 }
@@ -260,12 +260,12 @@ export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): A
                 // a = a[i,k]
                 let aValueRef = aRef + aRowSize * i + k * VALUE_SIZE;
                 aLo = load<u64>(aValueRef);
-                aHi = load<u64>(aValueRef + HALF_OFFSET);
+                aHi = load<u64>(aValueRef, HALF_OFFSET);
 
                 // b = b[k,j]
                 let bValueRef = bRef + bRowSize * k + j * VALUE_SIZE;
                 bLo = load<u64>(bValueRef);
-                bHi = load<u64>(bValueRef + HALF_OFFSET);
+                bHi = load<u64>(bValueRef, HALF_OFFSET);
 
                 // s = s + a * b
                 modMul(aHi, aLo, bHi, bLo);
@@ -275,7 +275,7 @@ export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): A
 
             let rValueRef = rRef + bRowSize * i + j * VALUE_SIZE;
             store<u64>(rValueRef, sLo);
-            store<u64>(rValueRef + HALF_OFFSET, sHi);
+            store<u64>(rValueRef, sHi, HALF_OFFSET);
         }
     }
 
@@ -292,18 +292,18 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
 
     let sRef = changetype<usize>(_inputs) + seedIdx * VALUE_SIZE;
     let sLo = load<u64>(sRef);
-    let sHi = load<u64>(sRef + HALF_OFFSET);
+    let sHi = load<u64>(sRef, HALF_OFFSET);
 
     let pLo: u64 = 1, pHi: u64 = 0;
     store<u64>(rRef, pLo);
-    store<u64>(rRef + HALF_OFFSET, pHi);
+    store<u64>(rRef, pHi, HALF_OFFSET);
 
     for (let riRef: u32 = rRef + VALUE_SIZE; riRef < endRef; riRef += VALUE_SIZE) {
         modMul(pHi, pLo, sHi, sLo);
         pLo = _rLo; pHi = _rHi;
 
         store<u64>(riRef, pLo);
-        store<u64>(riRef + HALF_OFFSET, pHi);
+        store<u64>(riRef, pHi, HALF_OFFSET);
     }
 
     return result;
@@ -320,8 +320,8 @@ export function evalPolyAtRoots(pRef: usize, xRef: usize, elementCount: u32): Ar
 // FAST FOURIER TRANSFORM
 // ================================================================================================
 function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset: u32): ArrayBuffer {
-    let step: u32 = 1 << depth;
-    let resultElementCount: u32 = elementCount / step;
+    let step: u32 = VALUE_SIZE << depth;
+    let resultElementCount = elementCount >> depth;
 
     // if only 4 values left, use simple FT
     if (resultElementCount <= 4) {
@@ -336,31 +336,37 @@ function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset:
     let resultLength = resultElementCount * VALUE_SIZE;
     let result = new ArrayBuffer(resultLength);
     let resRef = changetype<usize>(result);
-
+    
     let halfLength = resultLength >> 1;
-    for (let i: u32 = 0; i < halfLength; i += VALUE_SIZE) {
-        let yLo = load<u64>(oRef + i);
-        let yHi = load<u64>(oRef + i, HALF_OFFSET);
+    let endRef = resRef + halfLength;
+    while (resRef < endRef) {
+        let yLo = load<u64>(oRef);
+        let yHi = load<u64>(oRef, HALF_OFFSET);
 
-        let rLo = load<u64>(rRef + i * step);
-        let rHi = load<u64>(rRef + i * step, HALF_OFFSET);
+        let rLo = load<u64>(rRef);
+        let rHi = load<u64>(rRef, HALF_OFFSET);
 
         // yr = (y * r) % m
         modMul(yHi, yLo, rHi, rLo);
         let yrLo = _rLo, yrHi = _rHi;
 
-        let xLo = load<u64>(eRef + i);
-        let xHi = load<u64>(eRef + i, HALF_OFFSET);
+        let xLo = load<u64>(eRef);
+        let xHi = load<u64>(eRef, HALF_OFFSET);
 
         // result[i] = (x + yr) % m
         modAdd(xHi, xLo, yrHi, yrLo);
-        store<u64>(resRef + i, _rLo);
-        store<u64>(resRef + i, _rHi, HALF_OFFSET);
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
 
         // result[i + halfLength] = (x - yr) % m
         modSub(xHi, xLo, yrHi, yrLo);
-        store<u64>(resRef + i + halfLength, _rLo);
-        store<u64>(resRef + i + halfLength, _rHi, HALF_OFFSET);
+        store<u64>(resRef + halfLength, _rLo);
+        store<u64>(resRef + halfLength, _rHi, HALF_OFFSET);
+
+        oRef += VALUE_SIZE;
+        eRef += VALUE_SIZE;
+        rRef += step;
+        resRef += VALUE_SIZE;
     }
 
     return result;
@@ -370,22 +376,19 @@ function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
 
     let result = new ArrayBuffer(VALUE_SIZE << 2);
     let resRef = changetype<usize>(result);
-
-    step = step * VALUE_SIZE;
+    vRef += offset;
 
     // load value variables
-    let ref = vRef + offset * VALUE_SIZE;
-    let v0Lo = load<u64>(ref), v0Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let v1Lo = load<u64>(ref), v1Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let v2Lo = load<u64>(ref), v2Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let v3Lo = load<u64>(ref), v3Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let v0Lo = load<u64>(vRef), v0Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
+    let v1Lo = load<u64>(vRef), v1Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
+    let v2Lo = load<u64>(vRef), v2Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
+    let v3Lo = load<u64>(vRef), v3Hi = load<u64>(vRef, HALF_OFFSET);
 
     // load root variables
-    ref = rRef;
-    let r0Lo = load<u64>(ref), r0Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let r1Lo = load<u64>(ref), r1Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let r2Lo = load<u64>(ref), r2Hi = load<u64>(ref, HALF_OFFSET); ref += step;
-    let r3Lo = load<u64>(ref), r3Hi = load<u64>(ref, HALF_OFFSET);
+    let r0Lo = load<u64>(rRef), r0Hi = load<u64>(rRef, HALF_OFFSET); rRef += step;
+    let r1Lo = load<u64>(rRef), r1Hi = load<u64>(rRef, HALF_OFFSET); rRef += step;
+    let r2Lo = load<u64>(rRef), r2Hi = load<u64>(rRef, HALF_OFFSET); rRef += step;
+    let r3Lo = load<u64>(rRef), r3Hi = load<u64>(rRef, HALF_OFFSET);
     
     // calculate 1st result
     let lastLo: u64 = 0, lastHi: u64 = 0;
