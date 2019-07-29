@@ -311,13 +311,14 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
 
 // POLYNOMIAL FUNCTIONS
 // ================================================================================================
-export function evalPolyAtRoots(pRef: usize, rRef: usize, elementCount: u32): ArrayBuffer {
+export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootCount: u32): ArrayBuffer {
 
-    let result = fastFT(pRef, rRef, elementCount, 0, 0);
+    let vRefEnd = pRef + polyDegree * VALUE_SIZE;
+    let result = fastFT(pRef, rRef, rootCount, vRefEnd, 0, 0);
     return result;
 }
 
-export function interpolateRoots(rRef: usize, yRef: usize, elementCount: u32): ArrayBuffer {
+export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): ArrayBuffer {
 
     let resultLength = elementCount * VALUE_SIZE;
     let reversedRoots = new ArrayBuffer(resultLength);
@@ -339,7 +340,8 @@ export function interpolateRoots(rRef: usize, yRef: usize, elementCount: u32): A
         rrRef += VALUE_SIZE;
     }
 
-    let result = fastFT(yRef, changetype<usize>(reversedRoots), elementCount, 0, 0);
+    let vRefEnd = vRef + resultLength;
+    let result = fastFT(vRef, changetype<usize>(reversedRoots), elementCount, vRefEnd, 0, 0);
     let resRef = changetype<usize>(result);
 
     modSub(mHi, mLo, 0, 2);
@@ -364,18 +366,18 @@ export function interpolateRoots(rRef: usize, yRef: usize, elementCount: u32): A
 
 // FAST FOURIER TRANSFORM
 // ================================================================================================
-function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset: u32): ArrayBuffer {
+function fastFT(vRef: usize, rRef: usize, rootCount: u32, vRefEnd: u32, depth: u32, offset: u32): ArrayBuffer {
     let step: u32 = VALUE_SIZE << depth;
-    let resultElementCount = elementCount >> depth;
+    let resultElementCount = rootCount >> depth;
 
     // if only 4 values left, use simple FT
     if (resultElementCount <= 4) {
-        return baseFT(vRef, rRef, step, offset);
+        return baseFT(vRef, rRef, vRefEnd, step, offset);
     }
     
-    let even = fastFT(vRef, rRef, elementCount, depth + 1, offset);
+    let even = fastFT(vRef, rRef, rootCount, vRefEnd, depth + 1, offset);
     let eRef = changetype<usize>(even);
-    let odd = fastFT(vRef, rRef, elementCount, depth + 1, offset + step);
+    let odd  = fastFT(vRef, rRef, rootCount, vRefEnd, depth + 1, offset + step);
     let oRef = changetype<usize>(odd);
 
     let resultLength = resultElementCount * VALUE_SIZE;
@@ -417,17 +419,31 @@ function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset:
     return result;
 }
 
-function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
+function baseFT(vRef: usize, rRef: usize, vRefEnd: u32, step: u32, offset: u32): ArrayBuffer {
 
     let result = new ArrayBuffer(VALUE_SIZE << 2);
     let resRef = changetype<usize>(result);
     vRef += offset;
 
     // load value variables
-    let v0Lo = load<u64>(vRef), v0Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
-    let v1Lo = load<u64>(vRef), v1Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
-    let v2Lo = load<u64>(vRef), v2Hi = load<u64>(vRef, HALF_OFFSET); vRef += step;
-    let v3Lo = load<u64>(vRef), v3Hi = load<u64>(vRef, HALF_OFFSET);
+    let v0Lo: u64 = 0, v0Hi: u64 = 0, v1Lo: u64 = 0, v1Hi: u64 = 0;
+    let v2Lo: u64 = 0, v2Hi: u64 = 0, v3Lo: u64 = 0, v3Hi: u64 = 0;
+
+    if (vRef < vRefEnd) {
+        v0Lo = load<u64>(vRef); v0Hi = load<u64>(vRef, HALF_OFFSET);
+        vRef += step;
+        if (vRef < vRefEnd) {
+            v1Lo = load<u64>(vRef); v1Hi = load<u64>(vRef, HALF_OFFSET);
+            vRef += step;
+            if (vRef < vRefEnd) {
+                v2Lo = load<u64>(vRef); v2Hi = load<u64>(vRef, HALF_OFFSET);
+                vRef += step;
+                if (vRef < vRefEnd) {
+                    v3Lo = load<u64>(vRef); v3Hi = load<u64>(vRef, HALF_OFFSET);
+                }
+            }
+        }
+    }
 
     // load root variables
     let r0Lo = load<u64>(rRef), r0Hi = load<u64>(rRef, HALF_OFFSET); rRef += step;
@@ -505,8 +521,10 @@ function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
 // ================================================================================================
 /**
  * Performs modular addition of a and b using the algorithm:
- *  if (a = b)
+ *  if (b = 0)
  *      return a
+ *  else if (a = 0)
+ *      return b
  *  else
  *      b = m - b
  *      if (a < b)
@@ -516,7 +534,10 @@ function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
  */
 function modAdd(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     if (bHi == 0 && bLo == 0) {
-        _rLo = 0; _rHi = 0;
+        _rLo = aLo; _rHi = aHi;
+    }
+    else if (aHi == 0 && aLo == 0) {
+        _rLo = bLo; _rHi = bHi;
     }
     else {
         let rLo: u64, rHi: u64;
@@ -586,65 +607,69 @@ function modSub(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
  *      z = z - m
  */
 function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
-
-    // iteration 1
-    mul128x64(aHi, aLo, bHi);                       // ab = a * b1
-    let z0 = _rLo, z1 = _rHi, z2 = _rEx;            // z = ab
-    let q0 = _rEx;                                  // q = z >> n
-
-    mul128x64(mHi, mLo, q0);                        // qm = q * m
-    let qm0 = _rLo, qm1 = _rHi, qm2 = _rEx;
-
-    sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
-    z0 = _rLo; z1 = _rHi, z2 = _rEx;
-
-    if (z2 > 0) {
-        assert(z2 == 1, 'z2 is greater than 1');
-        let t0 = z0;                                // z = z - m
-        z0 = t0 - mLo; z1 = z1 - mHi;
-        if (z0 > t0) z1--;
-    }
-
-    // iteration 2
-    let z3: u32 = 0;                                // potential overflow bit
-    z2 = z1, z1 = z0; z0 = 0;                       // z << w
-    mul128x64(aHi, aLo, bLo);                       // ab = a * b0
-    z0 = _rLo; z1 = z1 + _rHi, z2 = z2 + _rEx;      // z = z + ab
-    if (z1 < _rHi) {
-        if (z2 < _rEx) {
-            z2++;
-            z3 = 1;
-        }
-        else {
-            z2++;
-            if (z2 == 0) z3 = 1;
-        }
+    if ((aHi == 0 && aLo == 0) || (bHi == 0 && bLo == 0)) {
+        _rLo = 0; _rHi = 0;
     }
     else {
-        if (z2 < _rEx) z3 = 1;
+        // iteration 1
+        mul128x64(aHi, aLo, bHi);                       // ab = a * b1
+        let z0 = _rLo, z1 = _rHi, z2 = _rEx;            // z = ab
+        let q0 = _rEx;                                  // q = z >> n
+
+        mul128x64(mHi, mLo, q0);                        // qm = q * m
+        let qm0 = _rLo, qm1 = _rHi, qm2 = _rEx;
+
+        sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
+        z0 = _rLo; z1 = _rHi, z2 = _rEx;
+
+        if (z2 > 0) {
+            assert(z2 == 1, 'z2 is greater than 1');
+            let t0 = z0;                                // z = z - m
+            z0 = t0 - mLo; z1 = z1 - mHi;
+            if (z0 > t0) z1--;
+        }
+
+        // iteration 2
+        let z3: u32 = 0;                                // potential overflow bit
+        z2 = z1, z1 = z0; z0 = 0;                       // z << w
+        mul128x64(aHi, aLo, bLo);                       // ab = a * b0
+        z0 = _rLo; z1 = z1 + _rHi, z2 = z2 + _rEx;      // z = z + ab
+        if (z1 < _rHi) {
+            if (z2 < _rEx) {
+                z2++;
+                z3 = 1;
+            }
+            else {
+                z2++;
+                if (z2 == 0) z3 = 1;
+            }
+        }
+        else {
+            if (z2 < _rEx) z3 = 1;
+        }
+
+        q0 = z2;                                        // q = z >> n
+
+        if (z3 == 1) {
+            let t1 = z1;                                // z = z - (m << w)
+            z1 = t1 - mLo; z2 = z2 - mHi;
+            if (z1 > t1) z2--;
+        }
+
+        mul128x64(mHi, mLo, q0);                        // qm = q * m
+        qm0 = _rLo; qm1 = _rHi; qm2 = _rEx;
+
+        sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
+        z0 = _rLo; z1 = _rHi, z2 = _rEx;
+
+        if (z2 > 0 || lt(mHi, mLo, z1, z0)) {           // if m < z
+            let t0 = z0;                                // z = z - m
+            z0 = t0 - mLo; z1 = z1 - mHi;
+            if (z0 > t0) z1--;
+        }
+
+        _rLo = z0; _rHi = z1;                           // return the result
     }
-
-    q0 = z2;                                        // q = z >> n
-
-    if (z3 == 1) {
-        let t1 = z1;                                // z = z - (m << w)
-        z1 = t1 - mLo; z2 = z2 - mHi;
-        if (z1 > t1) z2--;
-    }
-
-    mul128x64(mHi, mLo, q0);                        // qm = q * m
-    qm0 = _rLo; qm1 = _rHi; qm2 = _rEx;
-    
-    sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
-    z0 = _rLo; z1 = _rHi, z2 = _rEx;
-
-    if (z2 > 0 || lt(mHi, mLo, z1, z0)) {           // if m < z
-        let t0 = z0;                                // z = z - m
-        z0 = t0 - mLo; z1 = z1 - mHi;
-        if (z0 > t0) z1--;
-    }
-
-    _rLo = z0; _rHi = z1;                           // return the result
 }
 
 function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {

@@ -83,8 +83,12 @@ let vRoots = f1.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vPolys = f1.interpolateRoots(vRoots, v1);
-console.log(`Interpolated ${elements} elements in ${Date.now() - start} ms`);
+let vPoly = f1.interpolateRoots(vRoots, v1);
+console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vValues = f1.evalPolyAtRoots(vPoly, vRoots);
+console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
 
@@ -231,12 +235,23 @@ for (let i = 0; i < elements; i++) {
 }
 
 start = Date.now();
-let wPolys = wasm128.interpolateRoots(wRoots, w1);
-console.log(`Interpolated ${elements} elements in ${Date.now() - start} ms`);
+let wPoly = wasm128.interpolateRoots(wRoots, w1);
+console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vPolys[i] !== wPolys.getValue(i)) {
+    if (vPoly[i] !== wPoly.getValue(i)) {
         console.log(`> Interpolation error in WASM at index ${i}!`);
+        break;
+    }
+}
+
+start = Date.now();
+let wValues = wasm128.evalPolyAtRoots(wPoly, wRoots);
+console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
+
+for (let i = 0; i < elements; i++) {
+    if (vValues[i] !== wValues.getValue(i)) {
+        console.log(`> Evaluation error in WASM at index ${i}!`);
         break;
     }
 }

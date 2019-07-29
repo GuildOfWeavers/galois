@@ -275,7 +275,7 @@ class Wasm128 {
         return this.mulVectorElements(a, b);
     }
     evalPolyAtRoots(p, rootsOfUnity) {
-        const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length);
+        const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
     }
     interpolateRoots(rootsOfUnity, ys) {
