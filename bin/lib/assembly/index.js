@@ -13,8 +13,16 @@ const MASK_32B = 0xffffffffn;
 const MASK_64B = 0xffffffffffffffffn;
 // PUBLIC MODULE
 // ================================================================================================
-function instantiate(modulus) {
-    const wasm = loader.instantiateBuffer(fs.readFileSync(`${__dirname}/prime128.wasm`));
+function instantiate(modulus, options) {
+    let initialMemPages = 10;
+    if (options) {
+        initialMemPages = Math.ceil(options.initialMemory / 1024 / 64);
+    }
+    const wasm = loader.instantiateBuffer(fs.readFileSync(`${__dirname}/prime128.wasm`), {
+        env: {
+            memory: new WebAssembly.Memory({ initial: initialMemPages })
+        }
+    });
     return new Wasm128(wasm, modulus);
 }
 exports.instantiate = instantiate;
@@ -32,6 +40,11 @@ class Wasm128 {
         const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B));
         const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B));
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
+    }
+    // PUBLIC ACCESSORS
+    // ----------------------------------------------------------------------------------------
+    get memorySize() {
+        return this.wasm.U8.byteLength;
     }
     // VECTOR OPERATIONS
     // ----------------------------------------------------------------------------------------

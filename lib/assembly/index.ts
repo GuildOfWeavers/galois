@@ -44,9 +44,22 @@ interface Wasm {
 
 // PUBLIC MODULE
 // ================================================================================================
-export function instantiate(modulus: bigint): Wasm128 {
-    const wasm = loader.instantiateBuffer<Wasm>(fs.readFileSync(`${__dirname}/prime128.wasm`));
+export function instantiate(modulus: bigint, options?: WasmOptions): Wasm128 {
+    let initialMemPages = 10;
+    if (options) {
+        initialMemPages = Math.ceil(options.initialMemory / 1024 / 64);
+    }
+
+    const wasm = loader.instantiateBuffer<Wasm>(fs.readFileSync(`${__dirname}/prime128.wasm`), {
+        env: {
+            memory: new WebAssembly.Memory({ initial: initialMemPages })
+        }
+    });
     return new Wasm128(wasm, modulus);
+}
+
+export interface WasmOptions {
+    initialMemory   : number;
 }
 
 export class Wasm128 {
@@ -70,6 +83,12 @@ export class Wasm128 {
         const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B) as any);
         const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B) as any);
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
+    }
+
+    // PUBLIC ACCESSORS
+    // ----------------------------------------------------------------------------------------
+    get memorySize(): number {
+        return this.wasm.U8.byteLength;
     }
 
     // VECTOR OPERATIONS

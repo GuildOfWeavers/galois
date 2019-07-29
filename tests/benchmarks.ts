@@ -16,7 +16,7 @@ const m1Cols = 100;
 const m2Rows = 100;
 const m2Cols = 50;
 
-const wasm128 = Wasm.instantiate(f1.modulus);
+const wasm128 = Wasm.instantiate(f1.modulus, { initialMemory: 128 * 1024 * 1024 }); // 128 MB
 
 // 128 BIT FIELD JS
 // ================================================================================================
