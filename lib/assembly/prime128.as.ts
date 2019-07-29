@@ -314,7 +314,6 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
 export function evalPolyAtRoots(pRef: usize, xRef: usize, elementCount: u32): ArrayBuffer {
 
     let result = fastFT(pRef, xRef, elementCount, 0, 0);
-    //let result = baseFT(pRef, xRef, 1, 0);
     return result;
 }
 
@@ -322,10 +321,10 @@ export function evalPolyAtRoots(pRef: usize, xRef: usize, elementCount: u32): Ar
 // ================================================================================================
 function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset: u32): ArrayBuffer {
     let step: u32 = 1 << depth;
-    let resultLength: u32 = elementCount / step;
+    let resultElementCount: u32 = elementCount / step;
 
     // if only 4 values left, use simple FT
-    if (resultLength <= 4) {
+    if (resultElementCount <= 4) {
         return baseFT(vRef, rRef, step, offset);
     }
     
@@ -334,66 +333,123 @@ function fastFT(vRef: usize, rRef: usize, elementCount: u32, depth: u32, offset:
     let odd = fastFT(vRef, rRef, elementCount, depth + 1, offset + step);
     let oRef = changetype<usize>(odd);
 
-    let halfLength = resultLength >> 1;
-    let result = new ArrayBuffer(resultLength * VALUE_SIZE);
+    let resultLength = resultElementCount * VALUE_SIZE;
+    let result = new ArrayBuffer(resultLength);
     let resRef = changetype<usize>(result);
 
-    for (let i: u32 = 0; i < halfLength; i++) {
-        let yLo = load<u64>(oRef + i * VALUE_SIZE);
-        let yHi = load<u64>(oRef + i * VALUE_SIZE + HALF_OFFSET);
+    let halfLength = resultLength >> 1;
+    for (let i: u32 = 0; i < halfLength; i += VALUE_SIZE) {
+        let yLo = load<u64>(oRef + i);
+        let yHi = load<u64>(oRef + i, HALF_OFFSET);
 
-        let rLo = load<u64>(rRef + i * step * VALUE_SIZE);
-        let rHi = load<u64>(rRef + i * step * VALUE_SIZE + HALF_OFFSET);
+        let rLo = load<u64>(rRef + i * step);
+        let rHi = load<u64>(rRef + i * step, HALF_OFFSET);
 
         // yr = (y * r) % m
         modMul(yHi, yLo, rHi, rLo);
         let yrLo = _rLo, yrHi = _rHi;
 
-        let xLo = load<u64>(eRef + i * VALUE_SIZE);
-        let xHi = load<u64>(eRef + i * VALUE_SIZE + HALF_OFFSET);
+        let xLo = load<u64>(eRef + i);
+        let xHi = load<u64>(eRef + i, HALF_OFFSET);
 
         // result[i] = (x + yr) % m
         modAdd(xHi, xLo, yrHi, yrLo);
-        store<u64>(resRef + i * VALUE_SIZE, _rLo);
-        store<u64>(resRef + i * VALUE_SIZE + HALF_OFFSET, _rHi);
+        store<u64>(resRef + i, _rLo);
+        store<u64>(resRef + i, _rHi, HALF_OFFSET);
 
         // result[i + halfLength] = (x - yr) % m
         modSub(xHi, xLo, yrHi, yrLo);
-        store<u64>(resRef + i * VALUE_SIZE + halfLength * VALUE_SIZE, _rLo);
-        store<u64>(resRef + i * VALUE_SIZE + halfLength * VALUE_SIZE + HALF_OFFSET, _rHi);
+        store<u64>(resRef + i + halfLength, _rLo);
+        store<u64>(resRef + i + halfLength, _rHi, HALF_OFFSET);
     }
 
     return result;
 }
 
 function baseFT(vRef: usize, rRef: usize, step: u32, offset: u32): ArrayBuffer {
-    let resultSize = VALUE_SIZE * 4;
-    let result = new ArrayBuffer(resultSize);
-    let resRef = changetype<usize>(result);
 
-    let lastLo: u64, lastHi: u64;
+    let result = new ArrayBuffer(VALUE_SIZE << 2);
+    let resRef = changetype<usize>(result);
 
     step = step * VALUE_SIZE;
 
-    for (let i = 0; i < 4; i++) {
-        lastLo = 0; lastHi = 0;
-        for (let j = 0; j < 4; j++) {
-            let rValueRef = rRef + ((i * j) % 4) * step;
-            let rLo = load<u64>(rValueRef);
-            let rHi = load<u64>(rValueRef, HALF_OFFSET);
+    // load value variables
+    let ref = vRef + offset * VALUE_SIZE;
+    let v0Lo = load<u64>(ref), v0Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let v1Lo = load<u64>(ref), v1Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let v2Lo = load<u64>(ref), v2Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let v3Lo = load<u64>(ref), v3Hi = load<u64>(ref, HALF_OFFSET); ref += step;
 
-            let vValueRef = vRef + offset * VALUE_SIZE + j * step;
-            let vLo = load<u64>(vValueRef);
-            let vHi = load<u64>(vValueRef, HALF_OFFSET);
+    // load root variables
+    ref = rRef;
+    let r0Lo = load<u64>(ref), r0Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let r1Lo = load<u64>(ref), r1Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let r2Lo = load<u64>(ref), r2Hi = load<u64>(ref, HALF_OFFSET); ref += step;
+    let r3Lo = load<u64>(ref), r3Hi = load<u64>(ref, HALF_OFFSET);
+    
+    // calculate 1st result
+    let lastLo: u64 = 0, lastHi: u64 = 0;
+    modMul(v0Hi, v0Lo, r0Hi, r0Lo);
+    let t0Lo = _rLo, t0Hi = _rHi;
 
-            modMul(rHi, rLo, vHi, vLo);
-            modAdd(lastHi, lastLo, _rHi, _rLo);
-            lastLo = _rLo; lastHi = _rHi;
-        }
+    modMul(v2Hi, v2Lo, r0Hi, r0Lo);
+    modAdd(t0Hi, t0Lo, _rHi, _rLo);
+    let t1Lo = _rLo, t1Hi = _rHi;
 
-        store<u64>(resRef + i * VALUE_SIZE, lastLo);
-        store<u64>(resRef + i * VALUE_SIZE, lastHi, HALF_OFFSET);
-    }
+    modMul(v1Hi, v1Lo, r0Hi, r0Lo);
+    modAdd(t1Hi, t1Lo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    modMul(v3Hi, v3Lo, r0Hi, r0Lo);
+    modAdd(lastHi, lastLo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    store<u64>(resRef, lastLo);
+    store<u64>(resRef, lastHi, HALF_OFFSET);
+
+    // calculate 2nd result
+    modMul(v2Hi, v2Lo, r2Hi, r2Lo);
+    modAdd(t0Hi, t0Lo, _rHi, _rLo);
+    let t2Lo = _rLo, t2Hi = _rHi;
+
+    modMul(v1Hi, v1Lo, r1Hi, r1Lo);
+    modAdd(t2Hi, t2Lo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    modMul(v3Hi, v3Lo, r3Hi, r3Lo);
+    modAdd(lastHi, lastLo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    resRef += VALUE_SIZE;
+    store<u64>(resRef, lastLo);
+    store<u64>(resRef, lastHi, HALF_OFFSET);
+
+    // calculate 3rd result
+    modMul(v1Hi, v1Lo, r2Hi, r2Lo);
+    modAdd(t1Hi, t1Lo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    modMul(v3Hi, v3Lo, r2Hi, r2Lo);
+    modAdd(lastHi, lastLo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    resRef += VALUE_SIZE;
+    store<u64>(resRef, lastLo);
+    store<u64>(resRef, lastHi, HALF_OFFSET);
+
+    // calculate 4th result
+    modMul(v1Hi, v1Lo, r3Hi, r3Lo);
+    modAdd(t2Hi, t2Lo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    modMul(v3Hi, v3Lo, r1Hi, r1Lo);
+    modAdd(lastHi, lastLo, _rHi, _rLo);
+    lastLo = _rLo; lastHi = _rHi;
+
+    resRef += VALUE_SIZE;
+    store<u64>(resRef, lastLo);
+    store<u64>(resRef, lastHi, HALF_OFFSET);
+
     return result;
 }
 
