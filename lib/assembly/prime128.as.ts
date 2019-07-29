@@ -39,8 +39,27 @@ export function getOutputsPtr(): usize {
 // ================================================================================================
 type ArithmeticOp = (aHi: u64, aLo: u64, bHi: u64, bLo: u64) => void;
 
-export function newArray(elementCount: u32): ArrayBuffer {
-    return new ArrayBuffer(elementCount * VALUE_SIZE);
+export function newArray(elementCount: u32, sRef: usize, sElementCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    if (sRef) {
+        if (sElementCount == 0) {
+            sElementCount = elementCount;
+        }
+        
+        // TODO: replace with bulk memory copy
+        let rRef = changetype<usize>(result);
+        let endRef = sRef + sElementCount * VALUE_SIZE;
+        while (sRef < endRef) {
+            let vLo = load<u64>(sRef);
+            let vHi = load<u64>(sRef, HALF_OFFSET);
+            store<u64>(rRef, vLo);
+            store<u64>(rRef, vHi, HALF_OFFSET);
+    
+            sRef += VALUE_SIZE;
+            rRef += VALUE_SIZE;
+        }
+    }
+    return result;
 }
 
 export function addArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {

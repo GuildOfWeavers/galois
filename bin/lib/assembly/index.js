@@ -260,10 +260,38 @@ class Wasm128 {
     // BASIC POLYNOMIAL OPERATIONS
     // ----------------------------------------------------------------------------------------
     addPolys(a, b) {
-        throw new Error('Not implemented');
+        let result;
+        if (a.length > b.length) {
+            let newB = new WasmVector(this.wasm, a.length, b);
+            result = this.addVectorElements(a, newB);
+            this.wasm.__release(newB.base);
+        }
+        else if (a.length < b.length) {
+            let newA = new WasmVector(this.wasm, b.length, a);
+            result = this.addVectorElements(newA, b);
+            this.wasm.__release(newA.base);
+        }
+        else {
+            result = this.addVectorElements(a, b);
+        }
+        return result;
     }
     subPolys(a, b) {
-        throw new Error('Not implemented');
+        let result;
+        if (a.length > b.length) {
+            let newB = new WasmVector(this.wasm, a.length, b);
+            result = this.subVectorElements(a, newB);
+            this.wasm.__release(newB.base);
+        }
+        else if (a.length < b.length) {
+            let newA = new WasmVector(this.wasm, b.length, a);
+            result = this.subVectorElements(newA, b);
+            this.wasm.__release(newA.base);
+        }
+        else {
+            result = this.subVectorElements(a, b);
+        }
+        return result;
     }
     mulPolys(a, b) {
         throw new Error('Not implemented');
@@ -274,6 +302,8 @@ class Wasm128 {
     mulPolyByConstant(a, b) {
         return this.mulVectorElements(a, b);
     }
+    // EVALUATION AND INTERPOLATION
+    // ----------------------------------------------------------------------------------------
     evalPolyAtRoots(p, rootsOfUnity) {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
@@ -287,9 +317,18 @@ exports.Wasm128 = Wasm128;
 // VECTOR CLASS
 // ================================================================================================
 class WasmVector {
-    constructor(wasm, length, base) {
+    constructor(wasm, length, baseOrSource) {
         this.wasm = wasm;
-        this.base = base === undefined ? this.wasm.newArray(length) : base;
+        if (typeof baseOrSource === 'number') {
+            this.base = baseOrSource;
+        }
+        else if (baseOrSource) {
+            let elementsToCopy = Math.min(length, baseOrSource.length);
+            this.base = this.wasm.newArray(length, baseOrSource.base, elementsToCopy);
+        }
+        else {
+            this.base = this.wasm.newArray(length, 0, 0);
+        }
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
     }
@@ -317,7 +356,7 @@ class WasmMatrix {
     constructor(wasm, rows, columns, base) {
         this.wasm = wasm;
         this.elementCount = rows * columns;
-        this.base = base === undefined ? this.wasm.newArray(this.elementCount) : base;
+        this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
         this.rowCount = rows;
         this.colCount = columns;
         this.rowSze = columns * VALUE_SIZE;

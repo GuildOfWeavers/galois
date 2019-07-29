@@ -18,7 +18,7 @@ interface Wasm {
     getOutputsPtr(): number;
     setModulus(mHi1: number, mHi2: number, mLo1: number, mLo2: number): void;
 
-    newArray(elementCount: number): number;
+    newArray(elementCount: number, sRef: number, sElementCount: number): number;
 
     addArrayElements(aRef: number, bRef: number, elementCount: number): number;
     addArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
@@ -329,11 +329,39 @@ export class Wasm128 {
     // BASIC POLYNOMIAL OPERATIONS
     // ----------------------------------------------------------------------------------------
     addPolys(a: WasmVector, b: WasmVector): WasmVector {
-        throw new Error('Not implemented');
+        let result: WasmVector;
+        if (a.length > b.length) {
+            let newB = new WasmVector(this.wasm, a.length, b);
+            result = this.addVectorElements(a, newB);
+            this.wasm.__release(newB.base);
+        }
+        else if (a.length < b.length) {
+            let newA = new WasmVector(this.wasm, b.length, a);
+            result = this.addVectorElements(newA, b);
+            this.wasm.__release(newA.base);
+        }
+        else {
+            result = this.addVectorElements(a, b);
+        }
+        return result;
     }
 
     subPolys(a: WasmVector, b: WasmVector): WasmVector {
-        throw new Error('Not implemented');
+        let result: WasmVector;
+        if (a.length > b.length) {
+            let newB = new WasmVector(this.wasm, a.length, b);
+            result = this.subVectorElements(a, newB);
+            this.wasm.__release(newB.base);
+        }
+        else if (a.length < b.length) {
+            let newA = new WasmVector(this.wasm, b.length, a);
+            result = this.subVectorElements(newA, b);
+            this.wasm.__release(newA.base);
+        }
+        else {
+            result = this.subVectorElements(a, b);
+        }
+        return result;
     }
 
     mulPolys(a: WasmVector, b: WasmVector): WasmVector {
@@ -348,6 +376,8 @@ export class Wasm128 {
         return this.mulVectorElements(a, b);
     }
 
+    // EVALUATION AND INTERPOLATION
+    // ----------------------------------------------------------------------------------------
     evalPolyAtRoots(p: WasmVector, rootsOfUnity: WasmVector): WasmVector {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
@@ -369,9 +399,18 @@ export class WasmVector {
     readonly length         : number;
     readonly byteLength     : number;
 
-    constructor(wasm: Wasm & loader.ASUtil, length: number, base?: number) {
+    constructor(wasm: Wasm & loader.ASUtil, length: number, baseOrSource?: number | WasmVector) {
         this.wasm = wasm;
-        this.base = base === undefined ? this.wasm.newArray(length) : base;
+        if (typeof baseOrSource === 'number') {
+            this.base = baseOrSource;    
+        }
+        else if (baseOrSource) {
+            let elementsToCopy = Math.min(length, baseOrSource.length);
+            this.base = this.wasm.newArray(length, baseOrSource.base, elementsToCopy);
+        }
+        else {
+            this.base = this.wasm.newArray(length, 0, 0);
+        }
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
     }
@@ -411,7 +450,7 @@ export class WasmMatrix {
     constructor(wasm: Wasm & loader.ASUtil, rows: number, columns: number, base?: number) {
         this.wasm = wasm;
         this.elementCount = rows * columns;
-        this.base = base === undefined ? this.wasm.newArray(this.elementCount) : base;
+        this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
         this.rowCount = rows;
         this.colCount = columns;
         this.rowSze = columns * VALUE_SIZE;
