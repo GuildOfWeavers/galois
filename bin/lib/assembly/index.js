@@ -265,6 +265,10 @@ class Wasm128 {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length);
         return new WasmVector(this.wasm, p.length, base);
     }
+    interpolateRoots(rootsOfUnity, ys) {
+        const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
+        return new WasmVector(this.wasm, ys.length, base);
+    }
 }
 exports.Wasm128 = Wasm128;
 // VECTOR CLASS

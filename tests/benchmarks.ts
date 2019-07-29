@@ -5,9 +5,11 @@ import { PrimeField } from '../lib/PrimeField';
 
 // SETUP
 // ================================================================================================
-const elements = 100000;
-const f1 = new PrimeField(2n**128n - 159n);
+const elements = 2**18;
+const f1 = new PrimeField(2n**128n - 9n * 2n**32n + 1n); // 2n**128n - 159n
 const f2 = new PrimeField(2n**256n - 189n);
+
+const root128 = f1.getRootOfUnity(elements);
 
 const m1Rows = 50;
 const m1Cols = 100;
@@ -77,8 +79,12 @@ let mvMul = f1.mulMatrixByVector(m1, v3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vPow = f1.getPowerSeries(42n, elements);
+let vRoots = f1.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vPolys = f1.interpolateRoots(vRoots, v1);
+console.log(`Interpolated ${elements} elements in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
 
@@ -214,12 +220,23 @@ for (let i = 0; i < mvMul.length; i++) {
 }
 
 start = Date.now();
-let wPow = wasm128.getPowerSeries(42n, elements);
+let wRoots = wasm128.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vPow[i] !== wPow.getValue(i)) {
+    if (vRoots[i] !== wRoots.getValue(i)) {
         console.log(`> Power series error in WASM at index ${i}!`);
+        break;
+    }
+}
+
+start = Date.now();
+let wPolys = wasm128.interpolateRoots(wRoots, w1);
+console.log(`Interpolated ${elements} elements in ${Date.now() - start} ms`);
+
+for (let i = 0; i < elements; i++) {
+    if (vPolys[i] !== wPolys.getValue(i)) {
+        console.log(`> Interpolation error in WASM at index ${i}!`);
         break;
     }
 }

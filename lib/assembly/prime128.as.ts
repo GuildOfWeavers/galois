@@ -311,9 +311,54 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
 
 // POLYNOMIAL FUNCTIONS
 // ================================================================================================
-export function evalPolyAtRoots(pRef: usize, xRef: usize, elementCount: u32): ArrayBuffer {
+export function evalPolyAtRoots(pRef: usize, rRef: usize, elementCount: u32): ArrayBuffer {
 
-    let result = fastFT(pRef, xRef, elementCount, 0, 0);
+    let result = fastFT(pRef, rRef, elementCount, 0, 0);
+    return result;
+}
+
+export function interpolateRoots(rRef: usize, yRef: usize, elementCount: u32): ArrayBuffer {
+
+    let resultLength = elementCount * VALUE_SIZE;
+    let reversedRoots = new ArrayBuffer(resultLength);
+    let rrRef = changetype<usize>(reversedRoots);
+
+    // invert the roots array
+    store<u64>(rrRef, 1);
+    rrRef += VALUE_SIZE;
+
+    let startRef = rRef;
+    rRef += resultLength - VALUE_SIZE;
+    while (rRef > startRef) {
+        let vLo = load<u64>(rRef);
+        let vHi = load<u64>(rRef, HALF_OFFSET);
+        store<u64>(rrRef, vLo);
+        store<u64>(rrRef, vHi, HALF_OFFSET);
+
+        rRef -= VALUE_SIZE;
+        rrRef += VALUE_SIZE;
+    }
+
+    let result = fastFT(yRef, changetype<usize>(reversedRoots), elementCount, 0, 0);
+    let resRef = changetype<usize>(result);
+
+    modSub(mHi, mLo, 0, 2);
+    modExp(0, elementCount, _rHi, _rLo);
+    let ivLo = _rLo, ivHi = _rHi;
+
+    let endRef = resRef + resultLength;
+    while (resRef < endRef) {
+        let vLo = load<u64>(resRef);
+        let vHi = load<u64>(resRef, HALF_OFFSET);
+
+        modMul(ivHi, ivLo, vHi, vLo);
+
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        resRef += VALUE_SIZE;
+    }
+
     return result;
 }
 
@@ -553,8 +598,14 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     sub192x192(z2, z1, z0, qm2, qm1, qm0);          // z = z - qm
     z0 = _rLo; z1 = _rHi, z2 = _rEx;
 
+    if (z2 > 0) {
+        assert(z2 == 1, 'z2 is greater than 1');
+        let t0 = z0;                                // z = z - m
+        z0 = t0 - mLo; z1 = z1 - mHi;
+        if (z0 > t0) z1--;
+    }
+
     // iteration 2
-    assert(z2 == 0, 'z2 must be 0');
     let z3: u32 = 0;                                // potential overflow bit
     z2 = z1, z1 = z0; z0 = 0;                       // z << w
     mul128x64(aHi, aLo, bLo);                       // ab = a * b0
