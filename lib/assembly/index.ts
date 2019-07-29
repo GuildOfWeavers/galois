@@ -38,7 +38,8 @@ interface Wasm {
 
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 
-    evalPolyAtRoots(pRef: number, xRef: number, elementCount: number): number;
+    evalPolyAtRoots(pRef: number, rRef: number, elementCount: number): number;
+    interpolateRoots(rRef: number, yRef: number, elementCount: number): number;
 }
 
 // PUBLIC MODULE
@@ -331,6 +332,11 @@ export class Wasm128 {
     evalPolyAtRoots(p: WasmVector, rootsOfUnity: WasmVector): WasmVector {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length);
         return new WasmVector(this.wasm, p.length, base);
+    }
+
+    interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector {
+        const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
+        return new WasmVector(this.wasm, ys.length, base);
     }
 }
 
