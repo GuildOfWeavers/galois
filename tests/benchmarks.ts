@@ -44,11 +44,13 @@ for (let i = 0; i < m2.length; i++) {
     let row = v2.slice(i * m2Cols, i * m2Cols + m2Cols);
     m2[i] = row;
 }
-console.log(`Built ${m1Rows}x${m1Cols} and ${m2Rows}x${m2Cols} matrixes in ${Date.now() - start} ms`);
+
+console.log(`Built matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();
-const vQPolys = f1.vectorToMatrix(v1, quartic);
-console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
+let vXs = f1.vectorToMatrix(v1, quartic);
+let vYs = f1.vectorToMatrix(v2, quartic);
+console.log(`Transposed ${elements}x2 elements in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vAdd = f1.addVectorElements(v1, v2);
@@ -99,6 +101,10 @@ let vValues = f1.evalPolyAtRoots(vPoly, vRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 start = Date.now();
+const vQPolys = f1.interpolateQuarticBatch(vXs, vYs);
+console.log(`Interpolated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+
+start = Date.now();
 const vEv = f1.evalQuarticBatch(vQPolys, v4);
 console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
 
@@ -143,12 +149,13 @@ for (let i = 0; i < m2Rows; i++) {
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
-const wQPolys = wasm128.vectorToMatrix(w1, quartic);
+const wXs = wasm128.vectorToMatrix(w1, 4);
+const wYs = wasm128.vectorToMatrix(w2, 4);
 console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 
 for (let i = 0; i < qPolys; i++) {
     for (let j = 0; j < quartic; j++) {
-        if (vQPolys[i][j] !== wQPolys.getValue(i, j)) {
+        if (vXs[i][j] !== wXs.getValue(i, j)) {
             console.log(`> Transposition error in WASM at index ${i}!`);
             break;
         }
@@ -282,6 +289,19 @@ for (let i = 0; i < elements; i++) {
     if (vValues[i] !== wValues.getValue(i)) {
         console.log(`> Evaluation error in WASM at index ${i}!`);
         break;
+    }
+}
+
+start = Date.now();
+let wQPolys = wasm128.interpolateQuarticBatch(wXs, wYs);
+console.log(`Interpolated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+
+for (let i = 0; i < qPolys; i++) {
+    for (let j = 0; j < quartic; j++) {
+        if (vQPolys[i][j] !== wQPolys.getValue(i, j)) {
+            console.log(`> Quartic batch interpolation error in WASM at index ${i}!`);
+            break;
+        }
     }
 }
 
