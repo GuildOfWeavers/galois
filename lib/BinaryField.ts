@@ -187,17 +187,11 @@ export class BinaryField implements FiniteField {
 
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed: bigint, length: number): Vector {
-        throw new Error('Not implemented');
-    }
-
-    // ROOTS OF UNITY
-    // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {
         throw new Error('Not implemented');
     }
 
-    getPowerCycle(rootOfUnity: bigint): Vector {
+    getPowerSeries(seed: bigint, length: number): Vector {
         throw new Error('Not implemented');
     }
 

@@ -1193,7 +1193,7 @@ describe('PrimeField;', () => {
 
                         root = F.getRootOfUnity(poly.length);
 
-                        xs = F.getPowerCycle(root);
+                        xs = F.getPowerSeries(root, poly.length);
                         ys = F.evalPolyAtRoots(poly, xs);
                     });
 

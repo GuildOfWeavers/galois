@@ -307,15 +307,6 @@ class PrimeField {
         }
         throw new Error(`Root of Unity for order ${order} was not found`);
     }
-    getPowerCycle(rootOfUnity) {
-        const result = [1n];
-        let value = rootOfUnity;
-        while (value !== 1n) {
-            result.push(value);
-            value = this.mul(value, rootOfUnity);
-        }
-        return result;
-    }
     getPowerSeries(seed, length) {
         const powers = new Array(length);
         powers[0] = 1n;

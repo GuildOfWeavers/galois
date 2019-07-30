@@ -28,7 +28,7 @@ const runs = 1;
 
         // find root of unity
         const G = F.getRootOfUnity(degree * extension);
-        const domain = F.getPowerCycle(G);
+        const domain = F.getPowerSeries(G, degree * extension);
 
         // evaluate the polynomial using FFT
         let start = Date.now();
@@ -74,7 +74,7 @@ const runs = 1;
 
         // find root of unity
         const G = F.getRootOfUnity(degree * extension);
-        const domain = F.getPowerCycle(G);
+        const domain = F.getPowerSeries(G, degree * extension);
 
         // evaluate the polynomial over the domain
         const values = F.evalPolyAtRoots(p, domain);
@@ -123,7 +123,7 @@ const runs = 1;
 
         // find root of unity
         const G = F.getRootOfUnity(degree * extension);
-        const domain = F.getPowerCycle(G);
+        const domain = F.getPowerSeries(G, degree * extension);
 
         // evaluate the polynomial over the domain
         let start = Date.now();

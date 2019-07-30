@@ -372,16 +372,6 @@ export class PrimeField implements FiniteField {
         throw new Error(`Root of Unity for order ${order} was not found`);
     }
 
-    getPowerCycle(rootOfUnity: bigint): Vector {
-        const result = [1n];
-        let value = rootOfUnity;
-        while (value !== 1n) {
-            result.push(value);
-            value = this.mul(value, rootOfUnity);
-        }
-        return result;
-    }
-
     getPowerSeries(seed: bigint, length: number): Vector {
         const powers = new Array<bigint>(length);
         powers[0] = 1n;

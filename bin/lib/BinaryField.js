@@ -143,15 +143,10 @@ class BinaryField {
     }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed, length) {
-        throw new Error('Not implemented');
-    }
-    // ROOTS OF UNITY
-    // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {
         throw new Error('Not implemented');
     }
-    getPowerCycle(rootOfUnity) {
+    getPowerSeries(seed, length) {
         throw new Error('Not implemented');
     }
     // POLYNOMIALS
