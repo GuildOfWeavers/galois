@@ -323,6 +323,10 @@ class Wasm128 {
         const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
         return new WasmVector(this.wasm, ys.length, base);
     }
+    interpolateQuarticBatch(xs, ys) {
+        const base = this.wasm.interpolateQuarticBatch(xs.base, ys.base, xs.rowCount);
+        return new WasmMatrix(this.wasm, xs.rowCount, xs.colCount, base);
+    }
 }
 exports.Wasm128 = Wasm128;
 // VECTOR CLASS

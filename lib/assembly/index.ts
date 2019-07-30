@@ -43,6 +43,7 @@ interface Wasm {
     evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
 
     interpolateRoots(rRef: number, yRef: number, elementCount: number): number;
+    interpolateQuarticBatch(xRef: number, yRef: number, rowCount: number): number;
 }
 
 // PUBLIC MODULE
@@ -402,6 +403,11 @@ export class Wasm128 {
     interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector {
         const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
         return new WasmVector(this.wasm, ys.length, base);
+    }
+
+    interpolateQuarticBatch(xs: WasmMatrix, ys: WasmMatrix): WasmMatrix {
+        const base = this.wasm.interpolateQuarticBatch(xs.base, ys.base, xs.rowCount);
+        return new WasmMatrix(this.wasm, xs.rowCount, xs.colCount, base);
     }
 }
 

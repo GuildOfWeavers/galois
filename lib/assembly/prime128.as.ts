@@ -463,6 +463,140 @@ export function evalQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): Arra
     return result;
 }
 
+export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32): ArrayBuffer {
+    
+    let equations = new ArrayBuffer(rowCount * 16 * VALUE_SIZE);
+    let eqRef = changetype<usize>(equations);
+
+    let xRefOrig = xRef;
+
+    // build equations
+    for (let i: u32 = 0; i < rowCount; i++) {
+
+        let x0Lo = load<u64>(xRef), x0Hi = load<u64>(xRef, HALF_OFFSET); xRef += VALUE_SIZE;
+        let x1Lo = load<u64>(xRef), x1Hi = load<u64>(xRef, HALF_OFFSET); xRef += VALUE_SIZE;
+        let x2Lo = load<u64>(xRef), x2Hi = load<u64>(xRef, HALF_OFFSET); xRef += VALUE_SIZE;
+        let x3Lo = load<u64>(xRef), x3Hi = load<u64>(xRef, HALF_OFFSET); xRef += VALUE_SIZE;
+
+        modMul(x0Hi, x0Lo, x1Hi, x1Lo);     // x0 * x1
+        let x01Lo = _rLo, x01Hi = _rHi;
+        modMul(x0Hi, x0Lo, x2Hi, x2Lo);     // x0 * x2
+        let x02Lo = _rLo, x02Hi = _rHi;
+        modMul(x0Hi, x0Lo, x3Hi, x3Lo);     // x0 * x3
+        let x03Lo = _rLo, x03Hi = _rHi;
+        modMul(x1Hi, x1Lo, x2Hi, x2Lo);     // x1 * x2
+        let x12Lo = _rLo, x12Hi = _rHi;
+        modMul(x1Hi, x1Lo, x3Hi, x3Lo);     // x1 * x3
+        let x13Lo = _rLo, x13Hi = _rHi;
+        modMul(x2Hi, x2Lo, x3Hi, x3Lo);     // x2 * x3
+        let x23Lo = _rLo, x23Hi = _rHi;
+
+        // eq0
+        modSub(0, 0, x12Hi, x12Lo);         // -x12 * x3
+        modMul(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modAdd(x12Hi, x12Lo, x13Hi, x13Lo); // x12 + x13 + x23
+        modAdd(_rHi, _rLo, x23Hi, x23Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modSub(0, 0, x1Hi, x1Lo);           // -x1 - x2 - x3
+        modSub(_rHi, _rLo, x2Hi, x2Lo);
+        modSub(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        store<u64>(eqRef, 1); eqRef += VALUE_SIZE;
+
+        // eq1
+        modSub(0, 0, x02Hi, x02Lo);         // -x02 * x3
+        modMul(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modAdd(x02Hi, x02Lo, x03Hi, x03Lo); // x02 + x03 + x23
+        modAdd(_rHi, _rLo, x23Hi, x23Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modSub(0, 0, x0Hi, x0Lo);           // -x0 - x2 - x3
+        modSub(_rHi, _rLo, x2Hi, x2Lo);
+        modSub(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        store<u64>(eqRef, 1); eqRef += VALUE_SIZE;
+
+        // eq2
+        modSub(0, 0, x01Hi, x01Lo);         // -x01 * x3
+        modMul(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modAdd(x01Hi, x01Lo, x03Hi, x03Lo); // x01 + x03 + x13
+        modAdd(_rHi, _rLo, x13Hi, x13Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modSub(0, 0, x0Hi, x0Lo);           // -x0 - x1 - x3
+        modSub(_rHi, _rLo, x1Hi, x1Lo);
+        modSub(_rHi, _rLo, x3Hi, x3Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        store<u64>(eqRef, 1); eqRef += VALUE_SIZE;
+
+        // eq3
+        modSub(0, 0, x01Hi, x01Lo);         // -x01 * x2
+        modMul(_rHi, _rLo, x2Hi, x2Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modAdd(x01Hi, x01Lo, x02Hi, x02Lo); // x01 + x02 + x12
+        modAdd(_rHi, _rLo, x12Hi, x12Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        modSub(0, 0, x0Hi, x0Lo);           // -x0 - x1 - x2
+        modSub(_rHi, _rLo, x1Hi, x1Lo);
+        modSub(_rHi, _rLo, x2Hi, x2Lo);
+        store<u64>(eqRef, _rLo); store<u64>(eqRef, _rHi, HALF_OFFSET); eqRef += VALUE_SIZE;
+
+        store<u64>(eqRef, 1); eqRef += VALUE_SIZE;
+    }
+
+    eqRef = changetype<usize>(equations);
+    let evaluations = evalQuarticBatch(eqRef, xRefOrig, rowCount * 4);
+    let invEvaluations = invArrayElements(changetype<usize>(evaluations), rowCount * 4);
+    let iyValues = mulArrayElements(changetype<usize>(invEvaluations), yRef, rowCount * 4);
+    let iyRef = changetype<usize>(iyValues);
+
+    let result = new ArrayBuffer(rowCount * 4 * VALUE_SIZE);
+    let rRef = changetype<usize>(result);
+
+    for (let i: u32 = 0; i < rowCount; i++) {
+
+        arrayScalarOp(eqRef, iyRef, rRef, 4, modMul);
+
+        iyRef += VALUE_SIZE;
+        eqRef += VALUE_SIZE * 4;
+
+        let temp = new ArrayBuffer(4 * VALUE_SIZE);
+        let tRef = changetype<usize>(temp);
+        arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
+        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+
+        iyRef += VALUE_SIZE;
+        eqRef += VALUE_SIZE * 4;
+
+        arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
+        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+
+        iyRef += VALUE_SIZE;
+        eqRef += VALUE_SIZE * 4;
+
+        arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
+        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+
+        rRef += VALUE_SIZE * 4;
+        iyRef += VALUE_SIZE;
+        eqRef += VALUE_SIZE * 4;
+    }
+
+    return result;
+}
+
 // FAST FOURIER TRANSFORM
 // ================================================================================================
 function fastFT(vRef: usize, rRef: usize, rootCount: u32, vRefEnd: u32, depth: u32, offset: u32): ArrayBuffer {
