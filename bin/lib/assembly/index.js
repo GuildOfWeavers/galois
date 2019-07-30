@@ -314,9 +314,9 @@ class Wasm128 {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
     }
-    evaluateQuarticBatch(polys, xs) {
+    evalQuarticBatch(polys, xs) {
         // TODO: make sure the matrix has exactly 4 columns
-        const base = this.wasm.evaluateQuarticBatch(polys.base, xs.base, polys.rowCount);
+        const base = this.wasm.evalQuarticBatch(polys.base, xs.base, polys.rowCount);
         return new WasmVector(this.wasm, polys.rowCount, base);
     }
     interpolateRoots(rootsOfUnity, ys) {

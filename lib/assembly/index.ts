@@ -40,7 +40,7 @@ interface Wasm {
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
-    evaluateQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
+    evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
 
     interpolateRoots(rRef: number, yRef: number, elementCount: number): number;
 }
@@ -393,9 +393,9 @@ export class Wasm128 {
         return new WasmVector(this.wasm, p.length, base);
     }
 
-    evaluateQuarticBatch(polys: WasmMatrix, xs: WasmVector): WasmVector {
+    evalQuarticBatch(polys: WasmMatrix, xs: WasmVector): WasmVector {
         // TODO: make sure the matrix has exactly 4 columns
-        const base = this.wasm.evaluateQuarticBatch(polys.base, xs.base, polys.rowCount);
+        const base = this.wasm.evalQuarticBatch(polys.base, xs.base, polys.rowCount);
         return new WasmVector(this.wasm, polys.rowCount, base);
     }
 

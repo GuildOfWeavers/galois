@@ -268,7 +268,7 @@ declare module '@guildofweavers/galois' {
          * @param polys 
          * @param xs 
          */
-        evaluateQuarticBatch(polys: Polynom[], xs: Vector): Vector;
+        evalQuarticBatch(polys: Polynom[], xs: Vector): Vector;
 
         // POLYNOMIAL INTERPOLATION
         // ----------------------------------------------------------------------------------------

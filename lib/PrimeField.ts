@@ -510,7 +510,7 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    evaluateQuarticBatch(polys: Polynom[], xs: Vector): Vector {
+    evalQuarticBatch(polys: Polynom[], xs: Vector): Vector {
         // TODO make sure the number of polynomials and x-coordinates is the same
         const result = this.newVector(polys.length);
         for (let i = 0; i < polys.length; i++) {

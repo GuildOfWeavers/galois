@@ -409,7 +409,7 @@ export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): A
     return result;
 }
 
-export function evaluateQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): ArrayBuffer {
+export function evalQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): ArrayBuffer {
     let result = new ArrayBuffer(polyCount * VALUE_SIZE);
     let rRef = changetype<usize>(result);
     let refEnd = rRef + result.byteLength;

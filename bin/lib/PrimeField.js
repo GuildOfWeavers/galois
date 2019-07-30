@@ -427,7 +427,7 @@ class PrimeField {
         const result = fastFF(values, rootsOfUnity, 0, 0, this);
         return result;
     }
-    evaluateQuarticBatch(polys, xs) {
+    evalQuarticBatch(polys, xs) {
         // TODO make sure the number of polynomials and x-coordinates is the same
         const result = this.newVector(polys.length);
         for (let i = 0; i < polys.length; i++) {

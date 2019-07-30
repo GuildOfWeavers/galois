@@ -99,7 +99,7 @@ let vValues = f1.evalPolyAtRoots(vPoly, vRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 start = Date.now();
-const vEv = f1.evaluateQuarticBatch(vQPolys, v4);
+const vEv = f1.evalQuarticBatch(vQPolys, v4);
 console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
@@ -286,7 +286,7 @@ for (let i = 0; i < elements; i++) {
 }
 
 start = Date.now();
-const wEv = wasm128.evaluateQuarticBatch(wQPolys, w4);
+const wEv = wasm128.evalQuarticBatch(wQPolys, w4);
 console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
 
 for (let i = 0; i < qPolys; i++) {
