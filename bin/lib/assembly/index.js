@@ -150,6 +150,12 @@ class Wasm128 {
     destroyMatrix(v) {
         throw new Error('Not implemented');
     }
+    vectorToMatrix(v, columns) {
+        // TODO: make sure there is no remainder
+        const rowCount = v.length / columns;
+        const base = this.wasm.transposeArray(v.base, rowCount, columns);
+        return new WasmMatrix(this.wasm, rowCount, columns, base);
+    }
     addMatrixElements(a, b) {
         if (typeof b === 'bigint') {
             this.wasm.U64[this.inputsIdx] = b & MASK_64B;
@@ -307,6 +313,11 @@ class Wasm128 {
     evalPolyAtRoots(p, rootsOfUnity) {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
+    }
+    evaluateQuarticBatch(polys, xs) {
+        // TODO: make sure the matrix has exactly 4 columns
+        const base = this.wasm.evaluateQuarticBatch(polys.base, xs.base, polys.rowCount);
+        return new WasmVector(this.wasm, polys.rowCount, base);
     }
     interpolateRoots(rootsOfUnity, ys) {
         const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);

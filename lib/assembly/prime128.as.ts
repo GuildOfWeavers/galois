@@ -62,6 +62,32 @@ export function newArray(elementCount: u32, sRef: usize, sElementCount: u32): Ar
     return result;
 }
 
+export function transposeArray(vRef: usize, rowCount: u32, colCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(rowCount * colCount * VALUE_SIZE);
+    let rRef = changetype<usize>(result);
+
+    let rEndRef = rRef + result.byteLength;
+    let vEndRef = vRef + result.byteLength;
+    let colLength = rowCount * VALUE_SIZE;
+
+    while (rRef < rEndRef) {
+        let viRef = vRef;
+        while (viRef < vEndRef) {
+            let vLo = load<u64>(viRef);
+            let vHi = load<u64>(viRef, HALF_OFFSET);
+
+            store<u64>(rRef, vLo);
+            store<u64>(rRef, vHi, HALF_OFFSET);
+
+            rRef += VALUE_SIZE;
+            viRef += colLength;
+        }
+        vRef += VALUE_SIZE;
+    }
+
+    return result;
+}
+
 export function addArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
     let result = new ArrayBuffer(elementCount * VALUE_SIZE);
     arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modAdd);
@@ -378,6 +404,60 @@ export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): A
         store<u64>(resRef, _rHi, HALF_OFFSET);
 
         resRef += VALUE_SIZE;
+    }
+
+    return result;
+}
+
+export function evaluateQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): ArrayBuffer {
+    let result = new ArrayBuffer(polyCount * VALUE_SIZE);
+    let rRef = changetype<usize>(result);
+    let refEnd = rRef + result.byteLength;
+    let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
+
+    let kLo: u64, kHi: u64, xLo: u64, xHi: u64, xpLo: u64, xpHi: u64, rLo: u64, rHi: u64;
+
+    while (rRef < refEnd) {
+        // term 0
+        rLo = load<u64>(pRef);
+        rHi = load<u64>(pRef, HALF_OFFSET);
+
+        // term 1
+        kLo = load<u64>(pRef, VALUE_SIZE);
+        kHi = load<u64>(pRef, VALUE_SIZE + HALF_OFFSET);
+
+        xLo = load<u64>(xRef);
+        xHi = load<u64>(xRef, HALF_OFFSET);
+
+        modMul(kHi, kLo, xHi, xLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 2
+        kLo = load<u64>(pRef, VALUE_SIZE * 2);
+        kHi = load<u64>(pRef, VALUE_SIZE * 2 + HALF_OFFSET);
+
+        modMul(xHi, xLo, xHi, xLo);
+        xpLo = _rLo; xpHi = _rHi;   // xp = x*x
+
+        modMul(kHi, kLo, xpHi, xpLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 3
+        kLo = load<u64>(pRef, VALUE_SIZE * 3);
+        kHi = load<u64>(pRef, VALUE_SIZE * 3 + HALF_OFFSET);
+
+        modMul(xpHi, xpLo, xHi, xLo);   // x*x*x
+        modMul(kHi, kLo, _rHi, _rLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+
+        store<u64>(rRef, _rLo);
+        store<u64>(rRef, _rHi, HALF_OFFSET);
+
+        rRef += VALUE_SIZE;
+        xRef += VALUE_SIZE;
+        pRef += rowSize;
     }
 
     return result;

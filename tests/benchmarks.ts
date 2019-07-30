@@ -16,6 +16,9 @@ const m1Cols = 100;
 const m2Rows = 100;
 const m2Cols = 50;
 
+const quartic = 4;
+const qPolys = elements / quartic;
+
 const wasm128 = Wasm.instantiate(f1.modulus, { initialMemory: 128 * 1024 * 1024 }); // 128 MB
 
 // 128 BIT FIELD JS
@@ -26,6 +29,7 @@ let start = Date.now();
 let v1 = f1.prng(42n, elements);
 let v2 = f1.prng(43n, elements);
 let v3 = f1.prng(44n, m1Cols);
+let v4 = f1.prng(45n, qPolys);
 console.log(`Generated ${elements}x2 random field elements in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -41,6 +45,10 @@ for (let i = 0; i < m2.length; i++) {
     m2[i] = row;
 }
 console.log(`Built ${m1Rows}x${m1Cols} and ${m2Rows}x${m2Cols} matrixes in ${Date.now() - start} ms`);
+
+start = Date.now();
+const vQPolys = f1.vectorToMatrix(v1, quartic);
+console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vAdd = f1.addVectorElements(v1, v2);
@@ -90,6 +98,10 @@ start = Date.now();
 let vValues = f1.evalPolyAtRoots(vPoly, vRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
+start = Date.now();
+const vEv = f1.evaluateQuarticBatch(vQPolys, v4);
+console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+
 console.log('-'.repeat(100));
 
 // 128 BIT FIELD WASM
@@ -100,12 +112,16 @@ start = Date.now();
 const w1 = wasm128.newVector(elements);
 const w2 = wasm128.newVector(elements);
 const w3 = wasm128.newVector(v3.length)
+const w4 = wasm128.newVector(v4.length)
 for (let i = 0; i < elements; i++) {
     w1.setValue(i, v1[i]);
     w2.setValue(i, v2[i]);
 }
 for (let i = 0; i < v3.length; i++) {
     w3.setValue(i, v3[i]);
+}
+for (let i = 0; i < v4.length; i++) {
+    w4.setValue(i, v4[i]);
 }
 console.log(`Copied vectors into WASM memory in ${Date.now() - start} ms`);
 
@@ -125,6 +141,19 @@ for (let i = 0; i < m2Rows; i++) {
     }
 }
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
+
+start = Date.now();
+const wQPolys = wasm128.vectorToMatrix(w1, quartic);
+console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
+
+for (let i = 0; i < qPolys; i++) {
+    for (let j = 0; j < quartic; j++) {
+        if (vQPolys[i][j] !== wQPolys.getValue(i, j)) {
+            console.log(`> Transposition error in WASM at index ${i}!`);
+            break;
+        }
+    }
+}
 
 start = Date.now();
 let wAdd = wasm128.addVectorElements(w1, w2);
@@ -252,6 +281,17 @@ console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms
 for (let i = 0; i < elements; i++) {
     if (vValues[i] !== wValues.getValue(i)) {
         console.log(`> Evaluation error in WASM at index ${i}!`);
+        break;
+    }
+}
+
+start = Date.now();
+const wEv = wasm128.evaluateQuarticBatch(wQPolys, w4);
+console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+
+for (let i = 0; i < qPolys; i++) {
+    if (vEv[i] !== wEv.getValue(i)) {
+        console.log(`> Quartic batch evaluation error in WASM at index ${i}!`);
         break;
     }
 }

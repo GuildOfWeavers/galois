@@ -73,6 +73,9 @@ declare module '@guildofweavers/galois' {
         /** Creates a new vector of the specified length */
         newVector(length: number): Vector;
 
+        /** Breaks the provided vector into a matrix with the specified number of columns */
+        vectorToMatrix(v: Vector, columns: number): Matrix
+
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
         addVectorElements(a: Vector, b: Vector): Vector;
 
@@ -259,6 +262,13 @@ declare module '@guildofweavers/galois' {
          * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
          */
         evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector;
+
+        /**
+         * TODO
+         * @param polys 
+         * @param xs 
+         */
+        evaluateQuarticBatch(polys: Polynom[], xs: Vector): Vector;
 
         // POLYNOMIAL INTERPOLATION
         // ----------------------------------------------------------------------------------------

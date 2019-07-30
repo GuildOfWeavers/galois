@@ -19,6 +19,7 @@ interface Wasm {
     setModulus(mHi1: number, mHi2: number, mLo1: number, mLo2: number): void;
 
     newArray(elementCount: number, sRef: number, sElementCount: number): number;
+    transposeArray(vRef: number, rowCount: number, colCount: number): number;
 
     addArrayElements(aRef: number, bRef: number, elementCount: number): number;
     addArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
@@ -39,6 +40,8 @@ interface Wasm {
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
+    evaluateQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
+
     interpolateRoots(rRef: number, yRef: number, elementCount: number): number;
 }
 
@@ -204,6 +207,13 @@ export class Wasm128 {
 
     destroyMatrix(v: WasmMatrix): void {
         throw new Error('Not implemented');
+    }
+
+    vectorToMatrix(v: WasmVector, columns: number): WasmMatrix {
+        // TODO: make sure there is no remainder
+        const rowCount = v.length / columns;
+        const base = this.wasm.transposeArray(v.base, rowCount, columns);
+        return new WasmMatrix(this.wasm, rowCount, columns, base);
     }
 
     addMatrixElements(a: WasmMatrix, b: WasmMatrix | bigint): WasmMatrix {
@@ -381,6 +391,12 @@ export class Wasm128 {
     evalPolyAtRoots(p: WasmVector, rootsOfUnity: WasmVector): WasmVector {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);
+    }
+
+    evaluateQuarticBatch(polys: WasmMatrix, xs: WasmVector): WasmVector {
+        // TODO: make sure the matrix has exactly 4 columns
+        const base = this.wasm.evaluateQuarticBatch(polys.base, xs.base, polys.rowCount);
+        return new WasmVector(this.wasm, polys.rowCount, base);
     }
 
     interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector {

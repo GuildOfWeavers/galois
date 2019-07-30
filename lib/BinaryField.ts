@@ -143,6 +143,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    vectorToMatrix(v: Vector, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): Matrix {
@@ -224,6 +228,10 @@ export class BinaryField implements FiniteField {
     }
 
     evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
+    evaluateQuarticBatch(polys: Polynom[], xs: Vector): Vector {
         throw new Error('Not implemented');
     }
 

@@ -159,6 +159,17 @@ class PrimeField {
         }
         return result;
     }
+    vectorToMatrix(v, columns) {
+        // TODO: make sure there is no remainder
+        const rowCount = v.length / columns;
+        const result = this.newMatrix(rowCount, columns);
+        for (let i = 0; i < rowCount; i++) {
+            for (let j = 0; j < columns; j++) {
+                result[i][j] = v[i + j * rowCount];
+            }
+        }
+        return result;
+    }
     vectorElementsOp(op, a, b) {
         const result = new Array(a.length);
         for (let i = 0; i < result.length; i++) {
@@ -414,6 +425,14 @@ class PrimeField {
             }
         }
         const result = fastFF(values, rootsOfUnity, 0, 0, this);
+        return result;
+    }
+    evaluateQuarticBatch(polys, xs) {
+        // TODO make sure the number of polynomials and x-coordinates is the same
+        const result = this.newVector(polys.length);
+        for (let i = 0; i < polys.length; i++) {
+            result[i] = this.evalPolyAt(polys[i], xs[i]);
+        }
         return result;
     }
     interpolate(xs, ys) {

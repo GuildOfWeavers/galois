@@ -109,6 +109,9 @@ class BinaryField {
     combineVectors(a, b) {
         throw new Error('Not implemented');
     }
+    vectorToMatrix(v, columns) {
+        throw new Error('Not implemented');
+    }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows, columns) {
@@ -172,6 +175,9 @@ class BinaryField {
         throw new Error('Not implemented');
     }
     evalPolyAtRoots(p, rootsOfUnity) {
+        throw new Error('Not implemented');
+    }
+    evaluateQuarticBatch(polys, xs) {
         throw new Error('Not implemented');
     }
     interpolate(xs, ys) {

@@ -204,6 +204,18 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
+    vectorToMatrix(v: Vector, columns: number): Matrix {
+        // TODO: make sure there is no remainder
+        const rowCount = v.length / columns;
+        const result = this.newMatrix(rowCount, columns);
+        for (let i = 0; i < rowCount; i++) {
+            for (let j = 0; j < columns; j++) {
+                result[i][j] = v[i + j * rowCount];
+            }
+        }
+        return result;
+    }
+
     private vectorElementsOp(op: ArithmeticOperation, a: Vector, b: Vector) {
         const result = new Array<bigint>(a.length);
         for (let i = 0; i < result.length; i++) {
@@ -496,6 +508,15 @@ export class PrimeField implements FiniteField {
 
         const result = fastFF(values, rootsOfUnity, 0, 0, this);
         return result;
+    }
+
+    evaluateQuarticBatch(polys: Polynom[], xs: Vector): Vector {
+        // TODO make sure the number of polynomials and x-coordinates is the same
+        const result = this.newVector(polys.length);
+        for (let i = 0; i < polys.length; i++) {
+            result[i] = this.evalPolyAt(polys[i], xs[i]);
+        }
+        return result
     }
 
     interpolate(xs: Vector, ys: Vector): Polynom {
