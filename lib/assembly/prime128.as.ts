@@ -583,13 +583,13 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32)
 
     let elementCount = rowCount << 2;
     eqRef = changetype<usize>(equations);
-    let evaluations = evalQuarticBatch(eqRef, xRefOrig, elementCount);
-    let invEvaluations = invArrayElements(changetype<usize>(evaluations), elementCount);
-    let iyValues = mulArrayElements(changetype<usize>(invEvaluations), yRef, elementCount);
-    let iyRef = changetype<usize>(iyValues);
-
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+    
+    let result = evalQuarticBatch(eqRef, xRefOrig, elementCount);
     let rRef = changetype<usize>(result);
+
+    let invEvaluations = invArrayElements(rRef, elementCount);
+    let iyRef = changetype<usize>(invEvaluations);
+    arrayElementOp(iyRef, yRef, iyRef, elementCount, modMul);
 
     let temp = new ArrayBuffer(equationSize);
     let tRef = changetype<usize>(temp);
