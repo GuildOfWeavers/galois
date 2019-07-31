@@ -360,6 +360,32 @@ export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
 
 // POLYNOMIAL FUNCTIONS
 // ================================================================================================
+export function mulPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementCount: u32): ArrayBuffer {
+    let aLength = aElementCount * VALUE_SIZE;
+    let bLength = bElementCount * VALUE_SIZE;
+
+    let resultLength = aLength + bLength - VALUE_SIZE;
+    let result = new ArrayBuffer(resultLength);
+    let resRef = changetype<usize>(result);
+
+    for (let i: u32 = 0; i < aLength; i += VALUE_SIZE) {
+        for (let j: u32 = 0; j < bLength; j += VALUE_SIZE) {
+            let aLo = load<u64>(aRef + i), aHi = load<u64>(aRef + i, HALF_OFFSET);
+            let bLo = load<u64>(bRef + j), bHi = load<u64>(bRef + j, HALF_OFFSET);
+            modMul(aHi, aLo, bHi, bLo);
+
+            let rRef = resRef + i + j;
+            let rLo = load<u64>(rRef), rHi = load<u64>(rRef, HALF_OFFSET);
+            modAdd(rHi, rLo, _rHi, _rLo);
+
+            store<u64>(rRef, _rLo);
+            store<u64>(rRef, _rHi, HALF_OFFSET);
+        }
+    }
+
+    return result;
+}
+
 export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootCount: u32): ArrayBuffer {
 
     let vRefEnd = pRef + polyDegree * VALUE_SIZE;

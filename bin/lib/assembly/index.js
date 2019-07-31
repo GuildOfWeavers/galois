@@ -313,7 +313,8 @@ class Wasm128 {
         return result;
     }
     mulPolys(a, b) {
-        throw new Error('Not implemented');
+        const base = this.wasm.mulPolys(a.base, b.base, a.length, b.length);
+        return new WasmVector(this.wasm, a.length + b.length - 1, base);
     }
     divPolys(a, b) {
         throw new Error('Not implemented');

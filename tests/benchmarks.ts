@@ -108,6 +108,10 @@ start = Date.now();
 const vEv = f1.evalQuarticBatch(vQPolys, v4);
 console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
 
+start = Date.now();
+const vMulPoly = f1.mulPolys(v1.slice(0, 1024), v2.slice(0, 1024));
+console.log(`Multiplied two 1024 degree polynomials in ${Date.now() - start} ms`);
+
 console.log('-'.repeat(100));
 
 // 128 BIT FIELD WASM
@@ -312,6 +316,24 @@ console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms
 for (let i = 0; i < qPolys; i++) {
     if (vEv[i] !== wEv.getValue(i)) {
         console.log(`> Quartic batch evaluation error in WASM at index ${i}!`);
+        break;
+    }
+}
+
+let wp1 = wasm128.newVector(1024);
+let wp2 = wasm128.newVector(1024);
+for (let i = 0; i < 1024; i++) {
+    wp1.setValue(i, v1[i]);
+    wp2.setValue(i, v2[i]);
+}
+
+start = Date.now();
+const wMulPoly = wasm128.mulPolys(wp1, wp2);
+console.log(`Multiplied two 1024 degree polynomials in ${Date.now() - start} ms`);
+
+for (let i = 0; i < vMulPoly.length; i++) {
+    if (vMulPoly[i] !== wMulPoly.getValue(i)) {
+        console.log(`> Polynomial multiplication error in WASM at index ${i}!`);
         break;
     }
 }

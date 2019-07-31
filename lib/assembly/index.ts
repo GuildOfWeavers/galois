@@ -40,6 +40,8 @@ interface Wasm {
 
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 
+    mulPolys(aRef: number, bRef: number, aElementCount: number, bElementCount: number): number;
+
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
     evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
 
@@ -392,7 +394,8 @@ export class Wasm128 {
     }
 
     mulPolys(a: WasmVector, b: WasmVector): WasmVector {
-        throw new Error('Not implemented');
+        const base = this.wasm.mulPolys(a.base, b.base, a.length, b.length);
+        return new WasmVector(this.wasm, a.length + b.length - 1, base);
     }
 
     divPolys(a: WasmVector, b: WasmVector): WasmVector {
