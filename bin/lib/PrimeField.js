@@ -346,13 +346,13 @@ class PrimeField {
         return result;
     }
     divPolys(a, b) {
-        if (a.length < b.length) {
-            throw new Error('Cannot divide by polynomial of higher order');
-        }
         let apos = lastNonZeroIndex(a);
         let bpos = lastNonZeroIndex(b);
-        let diff = apos - bpos;
+        if (apos < bpos) {
+            throw new Error('Cannot divide by polynomial of higher order');
+        }
         a = a.slice();
+        let diff = apos - bpos;
         let result = new Array(diff + 1);
         for (let p = result.length - 1; diff >= 0; diff--, apos--, p--) {
             let quot = this.div(a[apos], b[bpos]);

@@ -414,16 +414,15 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
-    divPolys(a: Polynom, b: Polynom): Polynom {
-        if (a.length < b.length) {
-            throw new Error('Cannot divide by polynomial of higher order');
-        }
-        
+    divPolys(a: Polynom, b: Polynom): Polynom {        
         let apos = lastNonZeroIndex(a)!;
         let bpos = lastNonZeroIndex(b)!;
-        let diff = apos - bpos;
+        if (apos < bpos) {
+            throw new Error('Cannot divide by polynomial of higher order');
+        }
 
         a = a.slice();
+        let diff = apos - bpos;
         let result: Polynom = new Array(diff + 1);
 
         for (let p = result.length - 1; diff >= 0; diff--, apos--, p--) {

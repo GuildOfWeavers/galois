@@ -193,7 +193,7 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
     modInv(lastHi, lastLo);
     let invHi = _rHi, invLo = _rLo;
 
-    for (let i = result.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
+    for (let i: i32 = result.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
         sLo = load<u64>(sRef + i);
         sHi = load<u64>(sRef + i, HALF_OFFSET);
 
@@ -380,6 +380,46 @@ export function mulPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementC
 
             store<u64>(rRef, _rLo);
             store<u64>(rRef, _rHi, HALF_OFFSET);
+        }
+    }
+
+    return result;
+}
+
+export function divPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementCount: u32): ArrayBuffer {
+    let aPos = <i32>(aElementCount * VALUE_SIZE - VALUE_SIZE);
+    let bPos = <i32>(bElementCount * VALUE_SIZE - VALUE_SIZE);
+
+    let diff = <i32>(aPos - bPos);
+    let resultLength = diff + VALUE_SIZE;
+    let result = new ArrayBuffer(resultLength);
+    let resRef = changetype<usize>(result);
+    
+    let aCopy = newArray(aElementCount, aRef, aElementCount);
+    aRef = changetype<usize>(aCopy);
+    
+    for (let p = resultLength - VALUE_SIZE; diff >= 0; diff -= VALUE_SIZE, aPos -= VALUE_SIZE, p -= VALUE_SIZE) {
+
+        let aLo = load<u64>(aRef + aPos), aHi = load<u64>(aRef + aPos, HALF_OFFSET);
+        let bLo = load<u64>(bRef + bPos), bHi = load<u64>(bRef + bPos, HALF_OFFSET);
+        
+        modInv(bHi, bLo);
+        modMul(aHi, aLo, _rHi, _rLo);
+        let qLo = _rLo, qHi = _rHi;
+
+        store<u64>(resRef + p, qLo);
+        store<u64>(resRef + p, qHi, HALF_OFFSET);
+        
+        for (let i = bPos; i >= 0; i -= VALUE_SIZE) {
+            let bLo = load<u64>(bRef + i), bHi = load<u64>(bRef + i, HALF_OFFSET);
+            modMul(bHi, bLo, qHi, qLo);
+                        
+            let aiRef = aRef + diff + i;
+            let aLo = load<u64>(aiRef), aHi = load<u64>(aiRef, HALF_OFFSET);
+            modSub(aHi, aLo, _rHi, _rLo);
+
+            store<u64>(aiRef, _rLo);
+            store<u64>(aiRef, _rHi, HALF_OFFSET);
         }
     }
 

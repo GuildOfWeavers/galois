@@ -41,6 +41,7 @@ interface Wasm {
     mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
 
     mulPolys(aRef: number, bRef: number, aElementCount: number, bElementCount: number): number;
+    divPolys(aRef: number, bRef: number, aElementCount: number, bElementCount: number): number
 
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
     evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
@@ -399,7 +400,15 @@ export class Wasm128 {
     }
 
     divPolys(a: WasmVector, b: WasmVector): WasmVector {
-        throw new Error('Not implemented');
+        let aLength = lastNonZeroIndex(a)! + 1;
+        let bLength = lastNonZeroIndex(b)! + 1;
+        if (aLength < bLength) {
+            throw new Error('Cannot divide by polynomial of higher order');
+        }
+
+        let diffLength = aLength - bLength;
+        const base = this.wasm.divPolys(a.base, b.base, aLength, bLength);
+        return new WasmVector(this.wasm, diffLength + 1, base);
     }
 
     mulPolyByConstant(a: WasmVector, b: bigint): WasmVector {
@@ -529,5 +538,13 @@ export class WasmMatrix {
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         this.wasm.U64[idx] = value & MASK_64B
         this.wasm.U64[idx + 1] = value >> 64n;
+    }
+}
+
+// HELPER FUNCTIONS
+// ================================================================================================
+function lastNonZeroIndex(values: WasmVector) {
+    for (let i = values.length - 1; i >= 0; i--) {
+        if (values.getValue(i) !== 0n) return i;
     }
 }

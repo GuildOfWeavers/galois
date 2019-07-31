@@ -317,7 +317,14 @@ class Wasm128 {
         return new WasmVector(this.wasm, a.length + b.length - 1, base);
     }
     divPolys(a, b) {
-        throw new Error('Not implemented');
+        let aLength = lastNonZeroIndex(a) + 1;
+        let bLength = lastNonZeroIndex(b) + 1;
+        if (aLength < bLength) {
+            throw new Error('Cannot divide by polynomial of higher order');
+        }
+        let diffLength = aLength - bLength;
+        const base = this.wasm.divPolys(a.base, b.base, aLength, bLength);
+        return new WasmVector(this.wasm, diffLength + 1, base);
     }
     mulPolyByConstant(a, b) {
         return this.mulVectorElements(a, b);
@@ -422,4 +429,12 @@ class WasmMatrix {
     }
 }
 exports.WasmMatrix = WasmMatrix;
+// HELPER FUNCTIONS
+// ================================================================================================
+function lastNonZeroIndex(values) {
+    for (let i = values.length - 1; i >= 0; i--) {
+        if (values.getValue(i) !== 0n)
+            return i;
+    }
+}
 //# sourceMappingURL=index.js.map
