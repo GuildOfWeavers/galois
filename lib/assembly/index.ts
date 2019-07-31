@@ -47,6 +47,7 @@ interface Wasm {
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
     evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
 
+    interpolate(xRef: number, yRef: number, elementCount: number): number;
     interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): number;
     interpolateQuarticBatch(xRef: number, yRef: number, rowCount: number): number;
 }
@@ -104,6 +105,14 @@ export class Wasm128 {
     // ----------------------------------------------------------------------------------------
     newVector(length: number): WasmVector {
         return new WasmVector(this.wasm, length);
+    }
+
+    newVectorFrom(values: bigint[]): WasmVector {
+        const result = new WasmVector(this.wasm, values.length);
+        for (let i = 0; i < values.length; i++) {
+            result.setValue(i, values[i]);
+        }
+        return result;     
     }
 
     destroyVector(v: WasmVector): void {
@@ -209,6 +218,18 @@ export class Wasm128 {
     // ----------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): WasmMatrix {
         return new WasmMatrix(this.wasm, rows, columns);
+    }
+
+    newMatrixFrom(values: bigint[][]): WasmMatrix {
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new WasmMatrix(this.wasm, rows, columns);
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                result.setValue(i, j, values[i][j]);
+            }
+        }
+        return result;   
     }
 
     destroyMatrix(v: WasmMatrix): void {
@@ -436,6 +457,11 @@ export class Wasm128 {
         // TODO: make sure the matrix has exactly 4 columns
         const base = this.wasm.evalQuarticBatch(polys.base, xs.base, polys.rowCount);
         return new WasmVector(this.wasm, polys.rowCount, base);
+    }
+
+    interpolate(xs: WasmVector, ys: WasmVector): WasmVector {
+        const base = this.wasm.interpolate(xs.base, ys.base, xs.length);
+        return new WasmVector(this.wasm, xs.length + 1, base);
     }
 
     interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector

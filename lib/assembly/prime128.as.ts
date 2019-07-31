@@ -387,13 +387,19 @@ export function mulPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementC
 }
 
 export function divPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementCount: u32): ArrayBuffer {
+    let resultLength = (aElementCount - bElementCount) * VALUE_SIZE + VALUE_SIZE;
+    let result = new ArrayBuffer(resultLength);
+    let resRef = changetype<usize>(result);
+    divPolys2(aRef, bRef, resRef, aElementCount, bElementCount);
+    return result;
+}
+
+export function divPolys2(aRef: usize, bRef: usize, resRef: usize, aElementCount: u32, bElementCount: u32): void {
     let aPos = <i32>(aElementCount * VALUE_SIZE - VALUE_SIZE);
     let bPos = <i32>(bElementCount * VALUE_SIZE - VALUE_SIZE);
 
     let diff = <i32>(aPos - bPos);
     let resultLength = diff + VALUE_SIZE;
-    let result = new ArrayBuffer(resultLength);
-    let resRef = changetype<usize>(result);
     
     let aCopy = newArray(aElementCount, aRef, aElementCount);
     aRef = changetype<usize>(aCopy);
@@ -422,54 +428,22 @@ export function divPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementC
             store<u64>(aiRef, _rHi, HALF_OFFSET);
         }
     }
-
-    return result;
 }
 
-export function evalPolyAt(pRef: usize, xIdx: u32, elementCount: u32): u32 {
+export function evalPolyAt(pRef: usize, xIdx: u32, degreePlus1: u32): u32 {
 
-    // set y to degree 0 term
-    let yLo = load<u64>(pRef);
-    let yHi = load<u64>(pRef, HALF_OFFSET);
-    
-    if (elementCount > 1) {
-        let pRefEnd = pRef + elementCount * VALUE_SIZE;
-        pRef += VALUE_SIZE;
+    // load x value
+    let xRef = changetype<usize>(_inputs) + xIdx * VALUE_SIZE;
+    let xLo = load<u64>(xRef);
+    let xHi = load<u64>(xRef, HALF_OFFSET);
 
-        // load x value
-        let xRef = changetype<usize>(_inputs) + xIdx * VALUE_SIZE;
-        let xLo = load<u64>(xRef);
-        let xHi = load<u64>(xRef, HALF_OFFSET);
-    
-        // compute degree 1 term
-        let kLo = load<u64>(pRef);
-        let kHi = load<u64>(pRef, HALF_OFFSET);
-        modMul(kHi, kLo, xHi, xLo);
-        modAdd(yHi, yLo, _rHi, _rLo);
-        yLo = _rLo; yHi = _rHi;
-
-        // compute all other terms
-        pRef += VALUE_SIZE;
-        let pxLo = xLo, pxHi = xHi;
-        while (pRef < pRefEnd) {
-            let kLo = load<u64>(pRef);
-            let kHi = load<u64>(pRef, HALF_OFFSET);
-    
-            modMul(pxHi, pxLo, xHi, xLo);
-            pxLo = _rLo; pxHi = _rHi;
-
-            modMul(kHi, kLo, pxHi, pxLo);
-            modAdd(yHi, yLo, _rHi, _rLo);
-            yLo = _rLo; yHi = _rHi;
-    
-            pRef += VALUE_SIZE;
-        }
-    }
+    // evaluate the polynomial
+    evalPoly(pRef, xHi, xLo, degreePlus1);
 
     // save the result into the 0 slot of the output buffer
     let rRef = changetype<usize>(_outputs);
-    store<u64>(rRef, yLo);
-    store<u64>(rRef, yHi, HALF_OFFSET);
+    store<u64>(rRef, _rLo);
+    store<u64>(rRef, _rHi, HALF_OFFSET);
 
     return 0;
 }
@@ -478,6 +452,114 @@ export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootC
 
     let vRefEnd = pRef + polyDegree * VALUE_SIZE;
     let result = fastFT(pRef, rRef, rootCount, vRefEnd, 0, 0);
+    return result;
+}
+
+export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayBuffer {
+
+    let resultLength = elementCount * VALUE_SIZE;
+
+    // 1 --- build zero polynomial
+    let zPolyLength = resultLength + VALUE_SIZE;
+    let zPoly = new ArrayBuffer(zPolyLength);
+    let zRef = changetype<usize>(zPoly);
+
+    // set last value to 1
+    store<u64>(zRef + resultLength, 1);
+
+    let p = resultLength - VALUE_SIZE;
+    for (let i = 0; i < resultLength; i += VALUE_SIZE, p -= VALUE_SIZE) {
+
+        let xLo = load<u64>(xRef + i);
+        let xHi = load<u64>(xRef + i, HALF_OFFSET);
+
+        // load zPoly[p]
+        let zLo = load<u64>(zRef + p);
+        let zHi = load<u64>(zRef + p, HALF_OFFSET);
+
+        for(let j = p; j < resultLength; j += VALUE_SIZE) {
+        
+            // load zPoly[j+1]
+            let zLo1 = load<u64>(zRef + j, VALUE_SIZE);
+            let zHi1 = load<u64>(zRef + j, VALUE_SIZE + HALF_OFFSET);
+            
+            // zPoly[i] = zPoly[j] - x[i] * zPoly[j+1]
+            modMul(xHi, xLo, zHi1, zLo1);
+            modSub(zHi, zLo, _rHi, _rLo);
+            store<u64>(zRef + j, _rLo);
+            store<u64>(zRef + j, _rHi, HALF_OFFSET);
+
+            zLo = zLo1; zHi = zHi1;
+        }
+    }
+
+    // 2 --- build numerators
+    let divisor = new ArrayBuffer(VALUE_SIZE << 1);
+    let divRef = changetype<usize>(divisor);
+    store<u64>(divRef, 1, VALUE_SIZE);  // divisor[1] = 1
+
+    let numerators = new ArrayBuffer(resultLength * elementCount);
+    let numRef = changetype<usize>(numerators);
+    for (let i = 0; i < resultLength; i += VALUE_SIZE, numRef += resultLength) {
+        // divisor[0] = -x[i]
+        let xLo = load<u64>(xRef + i);
+        let xHi = load<u64>(xRef + i, HALF_OFFSET);
+        modSub(0, 0, xHi, xLo);
+        store<u64>(divRef, _rLo);
+        store<u64>(divRef, _rHi, HALF_OFFSET);
+
+        divPolys2(zRef, divRef, numRef, elementCount + 1, 2);
+    }
+
+    // 3 --- build denominators
+    numRef = changetype<usize>(numerators);
+    let denominators = new ArrayBuffer(resultLength);
+    let denRef = changetype<usize>(denominators);
+    for (let i = 0; i < resultLength; i += VALUE_SIZE, numRef += resultLength) {
+        let xLo = load<u64>(xRef + i);
+        let xHi = load<u64>(xRef + i, HALF_OFFSET);
+
+        evalPoly(numRef, xHi, xLo, elementCount);
+
+        store<u64>(denRef + i, _rLo);
+        store<u64>(denRef + i, _rHi, HALF_OFFSET);
+    }
+
+    // 4 --- compute the inverse
+    let invDenominators = invArrayElements(denRef, elementCount);
+    let iRef = changetype<usize>(invDenominators);
+
+    // 5 --- finish interpolation
+    numRef = changetype<usize>(numerators);
+    let result = new ArrayBuffer(resultLength);
+    let resRef = changetype<usize>(result);
+    for (let i = 0; i < resultLength; i += VALUE_SIZE) {
+        let yLo = load<u64>(yRef + i);
+        let yHi = load<u64>(yRef + i, HALF_OFFSET);
+
+        let iLo = load<u64>(iRef + i);
+        let iHi = load<u64>(iRef + i, HALF_OFFSET);
+
+        modMul(yHi, yLo, iHi, iLo);
+        let ysLo = _rLo, ysHi = _rHi;
+
+        for (let j = 0; j < resultLength; j += VALUE_SIZE) {
+            let nLo = load<u64>(numRef + i * elementCount + j);
+            let nHi = load<u64>(numRef + i * elementCount + j, HALF_OFFSET);
+
+            if ((nLo > 0 || nHi > 0) && (yLo > 0 || yHi > 0)) {
+                modMul(nHi, nLo, ysHi, ysLo);
+
+                let resLo = load<u64>(resRef + j);
+                let resHi = load<u64>(resRef + j, HALF_OFFSET);
+                modAdd(resHi, resLo, _rHi, _rLo);
+
+                store<u64>(resRef + j, _rLo);
+                store<u64>(resRef + j, _rHi, HALF_OFFSET);
+            }
+        }
+    }
+
     return result;
 }
 
@@ -739,6 +821,45 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32)
     }
 
     return result;
+}
+
+function evalPoly(pRef: usize, xHi: u64, xLo: u64, degreePlus1: u32): void {
+
+    // set y to degree 0 term
+    let yLo = load<u64>(pRef);
+    let yHi = load<u64>(pRef, HALF_OFFSET);
+    
+    if (degreePlus1 > 1) {
+        let pRefEnd = pRef + degreePlus1 * VALUE_SIZE;
+        pRef += VALUE_SIZE;
+    
+        // compute degree 1 term
+        let kLo = load<u64>(pRef);
+        let kHi = load<u64>(pRef, HALF_OFFSET);
+        modMul(kHi, kLo, xHi, xLo);
+        modAdd(yHi, yLo, _rHi, _rLo);
+        yLo = _rLo; yHi = _rHi;
+
+        // compute all other terms
+        pRef += VALUE_SIZE;
+        let pxLo = xLo, pxHi = xHi;
+        while (pRef < pRefEnd) {
+            let kLo = load<u64>(pRef);
+            let kHi = load<u64>(pRef, HALF_OFFSET);
+    
+            modMul(pxHi, pxLo, xHi, xLo);
+            pxLo = _rLo; pxHi = _rHi;
+
+            modMul(kHi, kLo, pxHi, pxLo);
+            modAdd(yHi, yLo, _rHi, _rLo);
+            yLo = _rLo; yHi = _rHi;
+    
+            pRef += VALUE_SIZE;
+        }
+    }
+
+    // return the result
+    _rLo = yLo; _rHi = yHi;
 }
 
 // FAST FOURIER TRANSFORM

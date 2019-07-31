@@ -51,6 +51,13 @@ class Wasm128 {
     newVector(length) {
         return new WasmVector(this.wasm, length);
     }
+    newVectorFrom(values) {
+        const result = new WasmVector(this.wasm, values.length);
+        for (let i = 0; i < values.length; i++) {
+            result.setValue(i, values[i]);
+        }
+        return result;
+    }
     destroyVector(v) {
         throw new Error('Not implemented');
     }
@@ -146,6 +153,17 @@ class Wasm128 {
     // ----------------------------------------------------------------------------------------
     newMatrix(rows, columns) {
         return new WasmMatrix(this.wasm, rows, columns);
+    }
+    newMatrixFrom(values) {
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new WasmMatrix(this.wasm, rows, columns);
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                result.setValue(i, j, values[i][j]);
+            }
+        }
+        return result;
     }
     destroyMatrix(v) {
         throw new Error('Not implemented');
@@ -347,6 +365,10 @@ class Wasm128 {
         // TODO: make sure the matrix has exactly 4 columns
         const base = this.wasm.evalQuarticBatch(polys.base, xs.base, polys.rowCount);
         return new WasmVector(this.wasm, polys.rowCount, base);
+    }
+    interpolate(xs, ys) {
+        const base = this.wasm.interpolate(xs.base, ys.base, xs.length);
+        return new WasmVector(this.wasm, xs.length + 1, base);
     }
     interpolateRoots(rootsOfUnity, ys) {
         if (ys instanceof WasmVector) {

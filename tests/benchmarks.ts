@@ -11,13 +11,13 @@ const f2 = new PrimeField(2n**256n - 189n);
 
 const root128 = f1.getRootOfUnity(elements);
 
-const m1Rows = 50;
-const m1Cols = 100;
-const m2Rows = 100;
-const m2Cols = 50;
+const m1Rows = 64;
+const m1Cols = 128;
+const m2Rows = 128;
+const m2Cols = 64;
 
 const quartic = 4;
-const qPolys = elements / quartic;
+const quarticPolyCount = elements / quartic;
 
 const polyDegree1 = 1024;
 const polyDegree2 = 2048;
@@ -32,7 +32,7 @@ let start = Date.now();
 let v1 = f1.prng(42n, elements);
 let v2 = f1.prng(43n, elements);
 let v3 = f1.prng(44n, m1Cols);
-let v4 = f1.prng(45n, qPolys);
+let v4 = f1.prng(45n, quarticPolyCount);
 console.log(`Generated ${elements}x2 random field elements in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -96,20 +96,24 @@ let vRoots = f1.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vPoly = f1.interpolateRoots(vRoots, v1);
+const vPoly1 = f1.interpolate(v1.slice(0, polyDegree1), v2.slice(0, polyDegree1));
+console.log(`Interpolated degree ${polyDegree1} polynomial in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vPoly2 = f1.interpolateRoots(vRoots, v1);
 console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vValues = f1.evalPolyAtRoots(vPoly, vRoots);
+let vValues = f1.evalPolyAtRoots(vPoly2, vRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 start = Date.now();
 const vQPolys = f1.interpolateQuarticBatch(vXs, vYs);
-console.log(`Interpolated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+console.log(`Interpolated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
 start = Date.now();
 const vEv = f1.evalQuarticBatch(vQPolys, v4);
-console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
 start = Date.now();
 const vMulPoly = f1.mulPolys(v1.slice(0, polyDegree1), v2.slice(0, polyDegree1));
@@ -120,7 +124,7 @@ const vDivPoly = f1.divPolys(v1.slice(0, polyDegree2), v2.slice(0, polyDegree1))
 console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
 
 start = Date.now();
-const vEvAt = f1.evalPolyAt(vPoly, 42n);
+const vEvAt = f1.evalPolyAt(vPoly2, 42n);
 console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
@@ -130,37 +134,15 @@ console.log('-'.repeat(100));
 console.log('128-bit prime field (WASM)');
 
 start = Date.now();
-const w1 = wasm128.newVector(elements);
-const w2 = wasm128.newVector(elements);
-const w3 = wasm128.newVector(v3.length)
-const w4 = wasm128.newVector(v4.length)
-for (let i = 0; i < elements; i++) {
-    w1.setValue(i, v1[i]);
-    w2.setValue(i, v2[i]);
-}
-for (let i = 0; i < v3.length; i++) {
-    w3.setValue(i, v3[i]);
-}
-for (let i = 0; i < v4.length; i++) {
-    w4.setValue(i, v4[i]);
-}
+const w1 = wasm128.newVectorFrom(v1);
+const w2 = wasm128.newVectorFrom(v2);
+const w3 = wasm128.newVectorFrom(v3)
+const w4 = wasm128.newVectorFrom(v4)
 console.log(`Copied vectors into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
-const mw1 = wasm128.newMatrix(m1Rows, m1Cols);
-const mw2 = wasm128.newMatrix(m2Rows, m2Cols);
-
-for (let i = 0; i < m1Rows; i++) {
-    for (let j = 0; j < m1Cols; j++) {
-        mw1.setValue(i, j, m1[i][j]);
-    }
-}
-
-for (let i = 0; i < m2Rows; i++) {
-    for (let j = 0; j < m2Cols; j++) {
-        mw2.setValue(i, j, m2[i][j]);
-    }
-}
+const mw1 = wasm128.newMatrixFrom(m1);
+const mw2 = wasm128.newMatrixFrom(m2);
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -168,7 +150,7 @@ const wXs = wasm128.vectorToMatrix(w1, 4);
 const wYs = wasm128.vectorToMatrix(w2, 4);
 console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 
-for (let i = 0; i < qPolys; i++) {
+for (let i = 0; i < quarticPolyCount; i++) {
     for (let j = 0; j < quartic; j++) {
         if (vXs[i][j] !== wXs.getValue(i, j)) {
             console.log(`> Transposition error in WASM at index ${i}!`);
@@ -285,19 +267,33 @@ for (let i = 0; i < elements; i++) {
     }
 }
 
-start = Date.now();
-let wPoly = wasm128.interpolateRoots(wRoots, w1);
-console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
+let wp1 = wasm128.newVectorFrom(v1.slice(0, polyDegree1));
+let wp2 = wasm128.newVectorFrom(v2.slice(0, polyDegree1));
 
-for (let i = 0; i < elements; i++) {
-    if (vPoly[i] !== wPoly.getValue(i)) {
+start = Date.now();
+let wPoly1 = wasm128.interpolate(wp1, wp2);
+console.log(`Interpolated degree ${polyDegree1} polynomial in ${Date.now() - start} ms`);
+
+for (let i = 0; i < vPoly1.length; i++) {
+    if (vPoly1[i] !== wPoly1.getValue(i)) {
         console.log(`> Interpolation error in WASM at index ${i}!`);
         break;
     }
 }
 
 start = Date.now();
-let wValues = wasm128.evalPolyAtRoots(wPoly, wRoots);
+let wPoly2 = wasm128.interpolateRoots(wRoots, w1);
+console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
+
+for (let i = 0; i < elements; i++) {
+    if (vPoly2[i] !== wPoly2.getValue(i)) {
+        console.log(`> Interpolation error in WASM at index ${i}!`);
+        break;
+    }
+}
+
+start = Date.now();
+let wValues = wasm128.evalPolyAtRoots(wPoly2, wRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
@@ -309,9 +305,9 @@ for (let i = 0; i < elements; i++) {
 
 start = Date.now();
 let wQPolys = wasm128.interpolateQuarticBatch(wXs, wYs);
-console.log(`Interpolated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+console.log(`Interpolated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
-for (let i = 0; i < qPolys; i++) {
+for (let i = 0; i < quarticPolyCount; i++) {
     for (let j = 0; j < quartic; j++) {
         if (vQPolys[i][j] !== wQPolys.getValue(i, j)) {
             console.log(`> Quartic batch interpolation error in WASM at index ${i}!`);
@@ -322,20 +318,13 @@ for (let i = 0; i < qPolys; i++) {
 
 start = Date.now();
 const wEv = wasm128.evalQuarticBatch(wQPolys, w4);
-console.log(`Evaluated ${qPolys} quartic polynomials in ${Date.now() - start} ms`);
+console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
-for (let i = 0; i < qPolys; i++) {
+for (let i = 0; i < quarticPolyCount; i++) {
     if (vEv[i] !== wEv.getValue(i)) {
         console.log(`> Quartic batch evaluation error in WASM at index ${i}!`);
         break;
     }
-}
-
-let wp1 = wasm128.newVector(polyDegree1);
-let wp2 = wasm128.newVector(polyDegree1);
-for (let i = 0; i < polyDegree1; i++) {
-    wp1.setValue(i, v1[i]);
-    wp2.setValue(i, v2[i]);
 }
 
 start = Date.now();
@@ -349,10 +338,7 @@ for (let i = 0; i < vMulPoly.length; i++) {
     }
 }
 
-let wp3 = wasm128.newVector(polyDegree2);
-for (let i = 0; i < polyDegree2; i++) {
-    wp3.setValue(i, v1[i]);
-}
+let wp3 = wasm128.newVectorFrom(v1.slice(0, polyDegree2));
 
 start = Date.now();
 const wDivPoly = wasm128.divPolys(wp3, wp2);
@@ -366,7 +352,7 @@ for (let i = 0; i < vDivPoly.length; i++) {
 }
 
 start = Date.now();
-const wEvAt = wasm128.evalPolyAt(wPoly, 42n);
+const wEvAt = wasm128.evalPolyAt(wPoly2, 42n);
 console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
 
 if (vEvAt !== wEvAt) {
