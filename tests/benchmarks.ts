@@ -119,6 +119,10 @@ start = Date.now();
 const vDivPoly = f1.divPolys(v1.slice(0, polyDegree2), v2.slice(0, polyDegree1));
 console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
 
+start = Date.now();
+const vEvAt = f1.evalPolyAt(vPoly, 42n);
+console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
+
 console.log('-'.repeat(100));
 
 // 128 BIT FIELD WASM
@@ -359,6 +363,14 @@ for (let i = 0; i < vDivPoly.length; i++) {
         console.log(`> Polynomial division error in WASM at index ${i}!`);
         break;
     }
+}
+
+start = Date.now();
+const wEvAt = wasm128.evalPolyAt(wPoly, 42n);
+console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
+
+if (vEvAt !== wEvAt) {
+    console.log(`> Polynomial evaluation error in WASM!`);
 }
 
 console.log('-'.repeat(100));

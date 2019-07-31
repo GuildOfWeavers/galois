@@ -331,6 +331,14 @@ class Wasm128 {
     }
     // EVALUATION AND INTERPOLATION
     // ----------------------------------------------------------------------------------------
+    evalPolyAt(p, x) {
+        this.wasm.U64[this.inputsIdx] = x & MASK_64B;
+        this.wasm.U64[this.inputsIdx + 1] = x >> 64n;
+        const outputPos = this.wasm.evalPolyAt(p.base, 0, p.length);
+        const lo = this.wasm.U64[this.outputsIdx + outputPos];
+        const hi = this.wasm.U64[this.outputsIdx + outputPos + 1];
+        return (hi << 64n) | lo;
+    }
     evalPolyAtRoots(p, rootsOfUnity) {
         const base = this.wasm.evalPolyAtRoots(p.base, rootsOfUnity.base, p.length, rootsOfUnity.length);
         return new WasmVector(this.wasm, p.length, base);

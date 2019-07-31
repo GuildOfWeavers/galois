@@ -426,6 +426,54 @@ export function divPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementC
     return result;
 }
 
+export function evalPolyAt(pRef: usize, xIdx: u32, elementCount: u32): u32 {
+
+    // set y to degree 0 term
+    let yLo = load<u64>(pRef);
+    let yHi = load<u64>(pRef, HALF_OFFSET);
+    
+    if (elementCount > 1) {
+        let pRefEnd = pRef + elementCount * VALUE_SIZE;
+        pRef += VALUE_SIZE;
+
+        // load x value
+        let xRef = changetype<usize>(_inputs) + xIdx * VALUE_SIZE;
+        let xLo = load<u64>(xRef);
+        let xHi = load<u64>(xRef, HALF_OFFSET);
+    
+        // compute degree 1 term
+        let kLo = load<u64>(pRef);
+        let kHi = load<u64>(pRef, HALF_OFFSET);
+        modMul(kHi, kLo, xHi, xLo);
+        modAdd(yHi, yLo, _rHi, _rLo);
+        yLo = _rLo; yHi = _rHi;
+
+        // compute all other terms
+        pRef += VALUE_SIZE;
+        let pxLo = xLo, pxHi = xHi;
+        while (pRef < pRefEnd) {
+            let kLo = load<u64>(pRef);
+            let kHi = load<u64>(pRef, HALF_OFFSET);
+    
+            modMul(pxHi, pxLo, xHi, xLo);
+            pxLo = _rLo; pxHi = _rHi;
+
+            modMul(kHi, kLo, pxHi, pxLo);
+            modAdd(yHi, yLo, _rHi, _rLo);
+            yLo = _rLo; yHi = _rHi;
+    
+            pRef += VALUE_SIZE;
+        }
+    }
+
+    // save the result into the 0 slot of the output buffer
+    let rRef = changetype<usize>(_outputs);
+    store<u64>(rRef, yLo);
+    store<u64>(rRef, yHi, HALF_OFFSET);
+
+    return 0;
+}
+
 export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootCount: u32): ArrayBuffer {
 
     let vRefEnd = pRef + polyDegree * VALUE_SIZE;
