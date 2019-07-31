@@ -27,6 +27,7 @@ interface Wasm {
     subArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     mulArrayElements(aRef: number, bRef: number, elementCount: number): number;
     mulArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
+    mulArrayElements3(aRef: number, bRef: number, rRef: number, elementCount: number): void;
     divArrayElements(aRef: number, bRef: number, elementCount: number): number;
     divArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
     expArrayElements(aRef: number, bRef: number, elementCount: number): number;
@@ -42,7 +43,7 @@ interface Wasm {
     evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
     evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
 
-    interpolateRoots(rRef: number, yRef: number, elementCount: number): number;
+    interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): number;
     interpolateQuarticBatch(xRef: number, yRef: number, rowCount: number): number;
 }
 
@@ -328,6 +329,21 @@ export class Wasm128 {
         return new WasmVector(this.wasm, n, base);
     }
 
+    mulMatrixRows(a: WasmMatrix, b: WasmVector): WasmMatrix {
+        if (a.colCount !== b.length) {
+            throw new Error('Number of columns must be the same as vector length');
+        }
+
+        const result = new WasmMatrix(this.wasm, a.rowCount, a.colCount);
+        let aRef = a.base, rRef = result.base;
+        for (let i = 0; i < a.rowCount; i++) {
+            this.wasm.mulArrayElements3(aRef, b.base, rRef, b.length);
+            aRef += a.rowSize;
+            rRef += result.rowSize;
+        }
+        return result;
+    }
+
     // OTHER OPERATIONS
     // ----------------------------------------------------------------------------------------
     getPowerSeries(seed: bigint, length: number): WasmVector {
@@ -400,9 +416,24 @@ export class Wasm128 {
         return new WasmVector(this.wasm, polys.rowCount, base);
     }
 
-    interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector {
-        const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
-        return new WasmVector(this.wasm, ys.length, base);
+    interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector): WasmVector
+    interpolateRoots(rootsOfUnity: WasmVector, ys: WasmMatrix): WasmMatrix
+    interpolateRoots(rootsOfUnity: WasmVector, ys: WasmVector | WasmMatrix): WasmVector | WasmMatrix {
+        if (ys instanceof WasmVector) {
+            const result = new WasmVector(this.wasm, rootsOfUnity.length);
+            this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, result.base, ys.length);
+            return result;
+        }
+        else {
+            const result = new WasmMatrix(this.wasm, ys.rowCount, ys.colCount);
+            let yRef = ys.base, resRef = result.base;
+            for (let i = 0; i < ys.rowCount; i++) {
+                this.wasm.interpolateRoots(rootsOfUnity.base, yRef, resRef, ys.colCount);
+                yRef += ys.rowSize;
+                resRef += result.rowSize;
+            }
+            return result;
+        }
     }
 
     interpolateQuarticBatch(xs: WasmMatrix, ys: WasmMatrix): WasmMatrix {
@@ -467,7 +498,7 @@ export class WasmMatrix {
     readonly colCount       : number;
     readonly elementCount   : number;
     readonly byteLength     : number;
-    readonly rowSze         : number;
+    readonly rowSize         : number;
 
     constructor(wasm: Wasm & loader.ASUtil, rows: number, columns: number, base?: number) {
         this.wasm = wasm;
@@ -475,12 +506,12 @@ export class WasmMatrix {
         this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
         this.rowCount = rows;
         this.colCount = columns;
-        this.rowSze = columns * VALUE_SIZE;
-        this.byteLength = rows * this.rowSze;
+        this.rowSize = columns * VALUE_SIZE;
+        this.byteLength = rows * this.rowSize;
     }
 
     getValue(row: number, column: number): bigint {
-        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)
         const lo = this.wasm.U64[idx];
         const hi = this.wasm.U64[idx + 1];
@@ -492,7 +523,7 @@ export class WasmMatrix {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
-        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         this.wasm.U64[idx] = value & MASK_64B
         this.wasm.U64[idx + 1] = value >> 64n;
     }

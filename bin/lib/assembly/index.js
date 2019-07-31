@@ -255,6 +255,19 @@ class Wasm128 {
         const base = this.wasm.mulMatrixes(a.base, b.base, n, m, p);
         return new WasmVector(this.wasm, n, base);
     }
+    mulMatrixRows(a, b) {
+        if (a.colCount !== b.length) {
+            throw new Error('Number of columns must be the same as vector length');
+        }
+        const result = new WasmMatrix(this.wasm, a.rowCount, a.colCount);
+        let aRef = a.base, rRef = result.base;
+        for (let i = 0; i < a.rowCount; i++) {
+            this.wasm.mulArrayElements3(aRef, b.base, rRef, b.length);
+            aRef += a.rowSize;
+            rRef += result.rowSize;
+        }
+        return result;
+    }
     // OTHER OPERATIONS
     // ----------------------------------------------------------------------------------------
     getPowerSeries(seed, length) {
@@ -320,8 +333,21 @@ class Wasm128 {
         return new WasmVector(this.wasm, polys.rowCount, base);
     }
     interpolateRoots(rootsOfUnity, ys) {
-        const base = this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, ys.length);
-        return new WasmVector(this.wasm, ys.length, base);
+        if (ys instanceof WasmVector) {
+            const result = new WasmVector(this.wasm, rootsOfUnity.length);
+            this.wasm.interpolateRoots(rootsOfUnity.base, ys.base, result.base, ys.length);
+            return result;
+        }
+        else {
+            const result = new WasmMatrix(this.wasm, ys.rowCount, ys.colCount);
+            let yRef = ys.base, resRef = result.base;
+            for (let i = 0; i < ys.rowCount; i++) {
+                this.wasm.interpolateRoots(rootsOfUnity.base, yRef, resRef, ys.colCount);
+                yRef += ys.rowSize;
+                resRef += result.rowSize;
+            }
+            return result;
+        }
     }
     interpolateQuarticBatch(xs, ys) {
         const base = this.wasm.interpolateQuarticBatch(xs.base, ys.base, xs.rowCount);
@@ -374,11 +400,11 @@ class WasmMatrix {
         this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
         this.rowCount = rows;
         this.colCount = columns;
-        this.rowSze = columns * VALUE_SIZE;
-        this.byteLength = rows * this.rowSze;
+        this.rowSize = columns * VALUE_SIZE;
+        this.byteLength = rows * this.rowSize;
     }
     getValue(row, column) {
-        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)
         const lo = this.wasm.U64[idx];
         const hi = this.wasm.U64[idx + 1];
@@ -389,7 +415,7 @@ class WasmMatrix {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
-        const idx = (this.base + row * this.rowSze + column * VALUE_SIZE) >>> 3;
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         this.wasm.U64[idx] = value & MASK_64B;
         this.wasm.U64[idx + 1] = value >> 64n;
     }

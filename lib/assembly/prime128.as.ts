@@ -127,6 +127,10 @@ export function mulArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): Ar
     return result;
 }
 
+export function mulArrayElements3(aRef: usize, bRef: usize, rRef: usize, elementCount: u32): void {
+    arrayElementOp(aRef, bRef, rRef, elementCount, modMul);
+}
+
 export function divArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
     let result = invArrayElements(bRef, elementCount);
     let rRef = changetype<usize>(result);
@@ -363,13 +367,12 @@ export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootC
     return result;
 }
 
-export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): ArrayBuffer {
+export function interpolateRoots(rRef: usize, vRef: usize, resRef: usize, elementCount: u32): void {
 
     let resultLength = elementCount * VALUE_SIZE;
-    let reversedRoots = new ArrayBuffer(resultLength);
-    let rrRef = changetype<usize>(reversedRoots);
-
-    // invert the roots array
+    
+    // reverse the roots array and store them in the results array
+    let rrRef = resRef;     
     store<u64>(rrRef, 1);
     rrRef += VALUE_SIZE;
 
@@ -385,9 +388,10 @@ export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): A
         rrRef += VALUE_SIZE;
     }
 
+    // run FFT against reversed roots
     let vRefEnd = vRef + resultLength;
-    let result = fastFT(vRef, changetype<usize>(reversedRoots), elementCount, vRefEnd, 0, 0);
-    let resRef = changetype<usize>(result);
+    let fftResult = fastFT(vRef, resRef, elementCount, vRefEnd, 0, 0);
+    let fftRef = changetype<usize>(fftResult);
 
     modSub(mHi, mLo, 0, 2);
     modExp(0, elementCount, _rHi, _rLo);
@@ -395,8 +399,8 @@ export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): A
 
     let endRef = resRef + resultLength;
     while (resRef < endRef) {
-        let vLo = load<u64>(resRef);
-        let vHi = load<u64>(resRef, HALF_OFFSET);
+        let vLo = load<u64>(fftRef);
+        let vHi = load<u64>(fftRef, HALF_OFFSET);
 
         modMul(ivHi, ivLo, vHi, vLo);
 
@@ -404,9 +408,8 @@ export function interpolateRoots(rRef: usize, vRef: usize, elementCount: u32): A
         store<u64>(resRef, _rHi, HALF_OFFSET);
 
         resRef += VALUE_SIZE;
+        fftRef += VALUE_SIZE;
     }
-
-    return result;
 }
 
 export function evalQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): ArrayBuffer {
@@ -946,6 +949,17 @@ function modMul(aHi: u64, aLo: u64, bHi: u64, bLo: u64): void {
     }
 }
 
+/**
+ * Performs modular exponentiation of base to the exp power using the following algorithm:
+ *  if (base = 0) return 0
+ *  r = 0
+ *  while (exp > 0)
+ *      if (exp is odd)
+ *          r = (r * base) % m
+ *      exp = floor(exp / 2)
+ *      base = (base^2) % m
+ *  return r
+ */
 function modExp(baseHi: u64, baseLo: u64, expHi: u64, expLo: u64): void {
     let rHi: u64, rLo: u64;
 
