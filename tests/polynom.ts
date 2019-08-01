@@ -21,9 +21,9 @@ const runs = 1;
 
     for (let r = 0; r < runs; r++) {
         // generate a random polynomial
-        const p = new Array<bigint>(degree);
+        const p = F.newVector(degree);
         for (let i = 0; i < p.length; i++) {
-            p[i] = F.rand();
+            p.values[i] = F.rand();
         }
 
         // find root of unity
@@ -32,20 +32,20 @@ const runs = 1;
 
         // evaluate the polynomial using FFT
         let start = Date.now();
-        const values = F.evalPolyAtRoots(p, domain);
+        const results = F.evalPolyAtRoots(p, domain);
         t0 += (Date.now() - start);
 
         // evaluate the polynomial using direct evaluation
         start = Date.now();
         const values2 = new Array(domain.length);
-        for (let i = 0; i < values.length; i++) {
-            values2[i] = F.evalPolyAt(p, domain[i]);
+        for (let i = 0; i < results.length; i++) {
+            values2[i] = F.evalPolyAt(p, domain.values[i]);
         }
         t1 += (Date.now() - start);
 
         // compare results
-        for (let i = 0; i < values.length; i++) {
-            if (values[i] !== values2[i]) {
+        for (let i = 0; i < results.length; i++) {
+            if (results.getValue(i) !== values2[i]) {
                 console.log('Error');
                 return;
             }
@@ -67,9 +67,9 @@ const runs = 1;
 
     for (let r = 0; r < runs; r++) {
         // generate a random polynomial
-        const p = new Array<bigint>(degree);
+        const p = F.newVector(degree);
         for (let i = 0; i < p.length; i++) {
-            p[i] = F.rand();
+            p.values[i] = F.rand();
         }
 
         // find root of unity
@@ -91,13 +91,13 @@ const runs = 1;
 
         // compare results
         for (let i = 0; i < p.length; i++) {
-            if (p[i] !== p1[i]) {
+            if (p.values[i] !== p1.values[i]) {
                 console.log('Error1');
                 return;
             }
 
-            if (p[i] !== p2[i]) {
-                console.log('Error1');
+            if (p.values[i] !== p2.values[i]) {
+                console.log('Error2');
                 return;
             }
         }
@@ -116,9 +116,9 @@ const runs = 1;
 
     for (let r = 0; r < runs; r++) {
         // generate a random polynomial
-        const p = new Array<bigint>(degree);
+        const p = F.newVector(degree);
         for (let i = 0; i < p.length; i++) {
-            p[i] = F.rand();
+            p.values[i] = F.rand();
         }
 
         // find root of unity
@@ -137,7 +137,7 @@ const runs = 1;
 
         // compare results
         for (let i = 0; i < p.length; i++) {
-            if (p[i] !== p1[i]) {
+            if (p.values[i] !== p1.values[i]) {
                 console.log('Error1');
                 return;
             }
@@ -156,26 +156,23 @@ const runs = 1;
     for (let r = 0; r < runs; r++) {
         // generate random polynomials of degree 4
         let start = Date.now();
-        const p = new Array<bigint[]>(samples);
-        for (let i = 0; i < p.length; i++) {
-            p[i] = new Array(4);
+        const p = F.newMatrix(samples, 4);
+        for (let i = 0; i < p.rowCount; i++) {
             for (let j = 0; j < 4; j++) {
-                p[i][j] = F.rand();
+                p.setValue(i, j, F.rand());
             }
         }
         t0 += (Date.now() - start);
 
         // evaluate each polynomial at 4 random places
         start = Date.now();
-        const xs = new Array<bigint[]>(samples);
-        const ys = new Array<bigint[]>(samples);
+        const xs = F.newMatrix(samples, 4);
+        const ys = F.newMatrix(samples, 4);
         for (let i = 0; i < samples; i++) {
-            xs[i] = new Array(4);
-            ys[i] = new Array(4);
             for (let j = 0; j < 4; j++) {
                 let r = F.rand();
-                xs[i][j] = r;
-                ys[i][j] = F.evalPolyAt(p[i], r);
+                xs.setValue(i, j, r);
+                ys.setValue(i, j, F.evalPolyAt(F.newVectorFrom(p.values[i]), r));
             }
         }
         t1 += (Date.now() - start);
@@ -186,12 +183,12 @@ const runs = 1;
         t2 += (Date.now() - start);
 
         // compare polynomials
-        for (let i = 0; i < p.length; i++) {
-            for (let j = 0; j < 4; j++) {
-                if (p[i][j] !== ip[i][j]) {
+        for (let i = 0; i < p.rowCount; i++) {
+            for (let j = 0; j < p.colCount; j++) {
+                if (p.getValue(i, j) !== ip.getValue(i, j)) {
                     console.log('Error'!);
-                    console.log('P:\t' + p[i]);
-                    console.log('IP\t' + ip[i]);
+                    console.log('P:\t' + p.values[i]);
+                    console.log('IP\t' + ip.values[i]);
                     return;
                 }
             }

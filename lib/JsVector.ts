@@ -1,12 +1,18 @@
-export class Vector {
+// IMPORTS
+// ================================================================================================
+import { Vector } from '@guildofweavers/galois';
+
+// VECTOR CLASS
+// ================================================================================================
+export class JsVector implements Vector {
 
     readonly values         : bigint[];
     readonly elementSize    : number;
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(length: number, elementSize: number) {
-        this.values = new Array<bigint>(length);
+    constructor(values: bigint[], elementSize: number) {
+        this.values = values;
         this.elementSize = elementSize;
     }
 
@@ -28,5 +34,15 @@ export class Vector {
 
     setValue(index: number, value: bigint): void {
         this.values[index] = value;
+    }
+
+    toValues(): bigint[] {
+        return this.values;
+    }
+
+    // ARRAY-LIKE METHODS
+    // --------------------------------------------------------------------------------------------
+    slice(start?: number, end?: number): JsVector {
+        return new JsVector(this.values.slice(start, end), this.elementSize);
     }
 }

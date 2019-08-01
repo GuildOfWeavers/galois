@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-class Vector {
+// VECTOR CLASS
+// ================================================================================================
+class JsVector {
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(length, elementSize) {
-        this.values = new Array(length);
+    constructor(values, elementSize) {
+        this.values = values;
         this.elementSize = elementSize;
     }
     // PROPERTIES
@@ -23,6 +25,14 @@ class Vector {
     setValue(index, value) {
         this.values[index] = value;
     }
+    toValues() {
+        return this.values;
+    }
+    // ARRAY-LIKE METHODS
+    // --------------------------------------------------------------------------------------------
+    slice(start, end) {
+        return new JsVector(this.values.slice(start, end), this.elementSize);
+    }
 }
-exports.Vector = Vector;
-//# sourceMappingURL=Vector.js.map
+exports.JsVector = JsVector;
+//# sourceMappingURL=JsVector.js.map

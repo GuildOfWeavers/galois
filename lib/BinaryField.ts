@@ -115,6 +115,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    newVectorFrom(values: bigint[]): Vector {
+        throw new Error('Not implemented');
+    }
+
     addVectorElements(a: Vector, b: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
@@ -150,6 +154,10 @@ export class BinaryField implements FiniteField {
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    newMatrixFrom(values: bigint[][]): Matrix {
         throw new Error('Not implemented');
     }
 
@@ -225,7 +233,7 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    evalQuarticBatch(polys: Polynom[], xs: Vector): Vector {
+    evalQuarticBatch(polys: Matrix, xs: Vector): Vector {
         throw new Error('Not implemented');
     }
 
@@ -237,7 +245,7 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[] {
+    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix {
         throw new Error('Not implemented');
     }
 }

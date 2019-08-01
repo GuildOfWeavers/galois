@@ -1,10 +1,7 @@
 declare module '@guildofweavers/galois' {
 
     /** Polynomial represented in reverse-coefficient form */
-    export type Polynom = bigint[];
-    
-    export type Vector = bigint[];
-    export type Matrix = bigint[][];
+    export type Polynom = Vector;
 
     export interface FiniteField {
 
@@ -73,7 +70,10 @@ declare module '@guildofweavers/galois' {
         /** Creates a new vector of the specified length */
         newVector(length: number): Vector;
 
-        /** Breaks the provided vector into a matrix with the specified number of columns */
+        /** Creates a new vector from the specified array of values */
+        newVectorFrom(values: bigint[]): Vector;
+
+        /** Transposes the provided vector into a matrix with the specified number of columns */
         vectorToMatrix(v: Vector, columns: number): Matrix
 
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
@@ -115,8 +115,11 @@ declare module '@guildofweavers/galois' {
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
 
-        // creates a new matrix with the specified number of rows and columns
+        /** Creates a new matrix with the specified number of rows and columns */
         newMatrix(rows: number, columns: number): Matrix;
+
+        /** creates a new matrix from the specified 2-dimensional array of values */
+        newMatrixFrom(values: bigint[][]): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
         addMatrixElements(a: Matrix, b: Matrix): Matrix;
@@ -258,11 +261,11 @@ declare module '@guildofweavers/galois' {
         evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector;
 
         /**
-         * TODO
-         * @param polys 
-         * @param xs 
+         * Evaluates a set of degree 3 polynomials at provided x coordinates
+         * @param polys A matrix where each row is a degree 3 polynomial
+         * @param xs A vector of x coordinates to evaluate
          */
-        evalQuarticBatch(polys: Polynom[], xs: Vector): Vector;
+        evalQuarticBatch(polys: Matrix, xs: Vector): Vector;
 
         // POLYNOMIAL INTERPOLATION
         // ----------------------------------------------------------------------------------------
@@ -286,17 +289,30 @@ declare module '@guildofweavers/galois' {
          * @param xSets A matrix of X coordinates (4 values per row)
          * @param ySets A matrix of Y coordinates (4 values per row)
          */
-        interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[];
+        interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix;
     }
 
     // DATA TYPES
     // ----------------------------------------------------------------------------------------
-    export interface Vector2 {
+    export interface Vector {
         readonly length     : number;
         readonly byteLength : number;
 
         getValue(index: number): bigint;
         setValue(index: number, value: bigint): void;
+
+        toValues(): bigint[];
+    }
+
+    export interface Matrix {
+        readonly rowCount   : number;
+        readonly colCount   : number;
+        readonly byteLength : number;
+
+        getValue(row: number, column: number): bigint;
+        setValue(row: number, column: number, value: bigint): void;
+
+        toValues(): bigint[][];
     }
 
     // FINITE FIELD IMPLEMENTATIONS

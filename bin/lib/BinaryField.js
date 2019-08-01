@@ -88,6 +88,9 @@ class BinaryField {
     newVector(length) {
         throw new Error('Not implemented');
     }
+    newVectorFrom(values) {
+        throw new Error('Not implemented');
+    }
     addVectorElements(a, b) {
         throw new Error('Not implemented');
     }
@@ -115,6 +118,9 @@ class BinaryField {
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows, columns) {
+        throw new Error('Not implemented');
+    }
+    newMatrixFrom(values) {
         throw new Error('Not implemented');
     }
     addMatrixElements(a, b) {

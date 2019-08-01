@@ -29,25 +29,26 @@ const wasm128 = Wasm.instantiate(f1.modulus, { initialMemory: 128 * 1024 * 1024 
 console.log('128-bit prime field (JS)');
 
 let start = Date.now();
-let v1 = f1.prng(42n, elements);
-let v2 = f1.prng(43n, elements);
-let v3 = f1.prng(44n, m1Cols);
-let v4 = f1.prng(45n, quarticPolyCount);
+const v1 = f1.prng(42n, elements);
+const v2 = f1.prng(43n, elements);
+const v3 = f1.prng(44n, m1Cols);
+const v4 = f1.prng(45n, quarticPolyCount);
 console.log(`Generated ${elements}x2 random field elements in ${Date.now() - start} ms`);
 
 start = Date.now();
-let m1 = new Array<bigint[]>(m1Rows);
-for (let i = 0; i < m1.length; i++) {
-    let row = v1.slice(i * m1Cols, i * m1Cols + m1Cols);
-    m1[i] = row;
+let temp = new Array<bigint[]>(m1Rows);
+for (let i = 0; i < temp.length; i++) {
+    let row = v1.values.slice(i * m1Cols, i * m1Cols + m1Cols);
+    temp[i] = row;
 }
+const m1 = f1.newMatrixFrom(temp);
 
-let m2 = new Array<bigint[]>(m2Rows);
-for (let i = 0; i < m2.length; i++) {
-    let row = v2.slice(i * m2Cols, i * m2Cols + m2Cols);
-    m2[i] = row;
+temp = new Array<bigint[]>(m2Rows);
+for (let i = 0; i < temp.length; i++) {
+    let row = v2.values.slice(i * m2Cols, i * m2Cols + m2Cols);
+    temp[i] = row;
 }
-
+const m2 = f1.newMatrixFrom(temp);
 console.log(`Built matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -134,15 +135,15 @@ console.log('-'.repeat(100));
 console.log('128-bit prime field (WASM)');
 
 start = Date.now();
-const w1 = wasm128.newVectorFrom(v1);
-const w2 = wasm128.newVectorFrom(v2);
-const w3 = wasm128.newVectorFrom(v3)
-const w4 = wasm128.newVectorFrom(v4)
+const w1 = wasm128.newVectorFrom(v1.values);
+const w2 = wasm128.newVectorFrom(v2.values);
+const w3 = wasm128.newVectorFrom(v3.values)
+const w4 = wasm128.newVectorFrom(v4.values)
 console.log(`Copied vectors into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
-const mw1 = wasm128.newMatrixFrom(m1);
-const mw2 = wasm128.newMatrixFrom(m2);
+const mw1 = wasm128.newMatrixFrom(m1.values);
+const mw2 = wasm128.newMatrixFrom(m2.values);
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -152,7 +153,7 @@ console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 
 for (let i = 0; i < quarticPolyCount; i++) {
     for (let j = 0; j < quartic; j++) {
-        if (vXs[i][j] !== wXs.getValue(i, j)) {
+        if (vXs.getValue(i, j) !== wXs.getValue(i, j)) {
             console.log(`> Transposition error in WASM at index ${i}!`);
             break;
         }
@@ -164,7 +165,7 @@ let wAdd = wasm128.addVectorElements(w1, w2);
 console.log(`Computed ${elements} additions in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vAdd[i] !== wAdd.getValue(i)) {
+    if (vAdd.getValue(i) !== wAdd.getValue(i)) {
         console.log(`> Addition error in WASM at index ${i}!`);
         break;
     }
@@ -175,7 +176,7 @@ let wSub = wasm128.subVectorElements(w1, w2);
 console.log(`Computed ${elements} subtractions in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vSub[i] !== wSub.getValue(i)) {
+    if (vSub.getValue(i) !== wSub.getValue(i)) {
         console.log(`> Subtraction error in WASM at index ${i}!`);
         break;
     }
@@ -186,7 +187,7 @@ let wMul = wasm128.mulVectorElements(w1, w2);
 console.log(`Computed ${elements} products in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vMul[i] !== wMul.getValue(i)) {
+    if (vMul.getValue(i) !== wMul.getValue(i)) {
         console.log(`> Multiplication error in WASM at index ${i}!`);
         break;
     }
@@ -197,7 +198,7 @@ let wDiv = wasm128.divVectorElements(w1, w2);
 console.log(`Computed ${elements} quotients in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vDiv[i] !== wDiv.getValue(i)) {
+    if (vDiv.getValue(i) !== wDiv.getValue(i)) {
         console.log(`> Division error in WASM at index ${i}!`);
         break;
     }
@@ -208,7 +209,7 @@ let wInv = wasm128.invVectorElements(w1);
 console.log(`Computed ${elements} inverses in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vInv[i] !== wInv.getValue(i)) {
+    if (vInv.getValue(i) !== wInv.getValue(i)) {
         console.log(`> Inversion error in WASM at index ${i}!`);
         break;
     }
@@ -219,7 +220,7 @@ let wExp = wasm128.expVectorElements(w1, w2);
 console.log(`Computed ${elements} exponents in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vExp[i] !== wExp.getValue(i)) {
+    if (vExp.getValue(i) !== wExp.getValue(i)) {
         console.log(`> Exponentiation error in WASM at index ${i}!`);
         break;
     }
@@ -239,7 +240,7 @@ console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m2Rows}x${m2Cols} m
 
 for (let i = 0; i < m1Rows; i++) {
     for (let j = 0; j < m2Cols; j++) {
-        if (mmMul[i][j] !== mmwMul.getValue(i, j)) {
+        if (mmMul.getValue(i, j) !== mmwMul.getValue(i, j)) {
             console.log(`> Matrix multiplication error at [${i},${j}]!`);
         }
     }
@@ -250,7 +251,7 @@ let mvwMul = wasm128.mulMatrixByVector(mw1, w3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 
 for (let i = 0; i < mvMul.length; i++) {
-    if (mvMul[i] !== mvwMul.getValue(i)) {
+    if (mvMul.getValue(i) !== mvwMul.getValue(i)) {
         console.log(`> Matrix-vector multiplication error at index ${i}!`);
         break;
     }
@@ -261,21 +262,21 @@ let wRoots = wasm128.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vRoots[i] !== wRoots.getValue(i)) {
+    if (vRoots.getValue(i) !== wRoots.getValue(i)) {
         console.log(`> Power series error in WASM at index ${i}!`);
         break;
     }
 }
 
-let wp1 = wasm128.newVectorFrom(v1.slice(0, polyDegree1));
-let wp2 = wasm128.newVectorFrom(v2.slice(0, polyDegree1));
+let wp1 = wasm128.newVectorFrom(v1.slice(0, polyDegree1).values);
+let wp2 = wasm128.newVectorFrom(v2.slice(0, polyDegree1).values);
 
 start = Date.now();
 let wPoly1 = wasm128.interpolate(wp1, wp2);
 console.log(`Interpolated degree ${polyDegree1} polynomial in ${Date.now() - start} ms`);
 
 for (let i = 0; i < vPoly1.length; i++) {
-    if (vPoly1[i] !== wPoly1.getValue(i)) {
+    if (vPoly1.getValue(i) !== wPoly1.getValue(i)) {
         console.log(`> Interpolation error in WASM at index ${i}!`);
         break;
     }
@@ -286,7 +287,7 @@ let wPoly2 = wasm128.interpolateRoots(wRoots, w1);
 console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vPoly2[i] !== wPoly2.getValue(i)) {
+    if (vPoly2.getValue(i) !== wPoly2.getValue(i)) {
         console.log(`> Interpolation error in WASM at index ${i}!`);
         break;
     }
@@ -297,7 +298,7 @@ let wValues = wasm128.evalPolyAtRoots(wPoly2, wRoots);
 console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
 
 for (let i = 0; i < elements; i++) {
-    if (vValues[i] !== wValues.getValue(i)) {
+    if (vValues.getValue(i) !== wValues.getValue(i)) {
         console.log(`> Evaluation error in WASM at index ${i}!`);
         break;
     }
@@ -309,7 +310,7 @@ console.log(`Interpolated ${quarticPolyCount} quartic polynomials in ${Date.now(
 
 for (let i = 0; i < quarticPolyCount; i++) {
     for (let j = 0; j < quartic; j++) {
-        if (vQPolys[i][j] !== wQPolys.getValue(i, j)) {
+        if (vQPolys.getValue(i, j) !== wQPolys.getValue(i, j)) {
             console.log(`> Quartic batch interpolation error in WASM at index ${i}!`);
             break;
         }
@@ -321,7 +322,7 @@ const wEv = wasm128.evalQuarticBatch(wQPolys, w4);
 console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
 for (let i = 0; i < quarticPolyCount; i++) {
-    if (vEv[i] !== wEv.getValue(i)) {
+    if (vEv.getValue(i) !== wEv.getValue(i)) {
         console.log(`> Quartic batch evaluation error in WASM at index ${i}!`);
         break;
     }
@@ -332,20 +333,20 @@ const wMulPoly = wasm128.mulPolys(wp1, wp2);
 console.log(`Multiplied two ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
 
 for (let i = 0; i < vMulPoly.length; i++) {
-    if (vMulPoly[i] !== wMulPoly.getValue(i)) {
+    if (vMulPoly.getValue(i) !== wMulPoly.getValue(i)) {
         console.log(`> Polynomial multiplication error in WASM at index ${i}!`);
         break;
     }
 }
 
-let wp3 = wasm128.newVectorFrom(v1.slice(0, polyDegree2));
+let wp3 = wasm128.newVectorFrom(v1.slice(0, polyDegree2).values);
 
 start = Date.now();
 const wDivPoly = wasm128.divPolys(wp3, wp2);
 console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
 
 for (let i = 0; i < vDivPoly.length; i++) {
-    if (vDivPoly[i] !== wDivPoly.getValue(i)) {
+    if (vDivPoly.getValue(i) !== wDivPoly.getValue(i)) {
         console.log(`> Polynomial division error in WASM at index ${i}!`);
         break;
     }
