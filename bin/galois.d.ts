@@ -73,9 +73,6 @@ declare module '@guildofweavers/galois' {
         /** Creates a new vector from the specified array of values */
         newVectorFrom(values: bigint[]): Vector;
 
-        /** Transposes the provided vector into a matrix with the specified number of columns */
-        vectorToMatrix(v: Vector, columns: number): Matrix
-
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
         addVectorElements(a: Vector, b: Vector): Vector;
 
@@ -111,6 +108,26 @@ declare module '@guildofweavers/galois' {
 
         /** Computes a linear combination of two vectors */
         combineVectors(a: Vector, b: Vector): bigint;
+
+        /** Computes a linear combination as sum(v[i][j]*k[i]) for each row i */
+        combineManyVectors(v: Vector[], k: Vector): Vector;
+
+        /**
+         * Creates a new vector by selecting values from the source vector by skipping over the specified number of elements
+         * @param v Source vector
+         * @param skip Number of elements to skip before selecting the next value
+         * @param times Number of times to pluck the source vector
+         */
+        pluckVector(v: Vector, skip: number, times: number): Vector;
+
+        /** Creates a new vector with the length truncated to the specified value */
+        truncateVector(v: Vector, newLength: number): Vector;
+
+        /** Creates a copy of a vector that represents the source vector duplicated the specified number of times */
+        duplicateVector(v: Vector, times?: number): Vector;
+
+        /** Transposes the provided vector into a matrix with the specified number of columns */
+        vectorToMatrix(v: Vector, columns: number): Matrix
 
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
@@ -167,6 +184,9 @@ declare module '@guildofweavers/galois' {
          * @param b Vector of length n
          */
         mulMatrixByVector(m: Matrix, v: Vector): Vector;
+
+        /** Return an array of vectors corresponding to matrixes' rows */
+        matrixRowsToVectors(m: Matrix): Vector[];
         
         // RANDOMNESS
         // ----------------------------------------------------------------------------------------
@@ -251,14 +271,21 @@ declare module '@guildofweavers/galois' {
          * @param p Polynomial to evaluate
          * @param x X coordinates at which to evaluate the polynomial
          */
-        evalPolyAt(p: Polynom, x: bigint): bigint;
+        evalPolyAt(p: Vector, x: bigint): bigint;
+
+        /**
+         * Uses Fast Fourier Transform to evaluate a  set of polynomials at all provided roots of unity
+         * @param p Polynomials to evaluate
+         * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
+         */
+        evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): Vector;
 
         /**
          * Uses Fast Fourier Transform to evaluate a polynomial at all provided roots of unity
-         * @param p Polynomial to evaluate
+         * @param p A matrix where each row contains a polynomial to evaluate
          * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
          */
-        evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector;
+        evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): Matrix;
 
         /**
          * Evaluates a set of degree 3 polynomials at provided x coordinates
@@ -275,14 +302,28 @@ declare module '@guildofweavers/galois' {
          * @param xs x coordinates of points
          * @param ys y coordinates of points
          */
-        interpolate(xs: Vector, ys: Vector): Polynom;
+        interpolate(xs: Vector, ys: Vector): Vector;
+
+        /**
+         * Uses Lagrange Interpolation to compute a polynomial from provided points
+         * @param xs x coordinates of points
+         * @param ys A matrix with each row representing y coordinates of points to interpolate
+         */
+        interpolate(xs: Vector, ys: Matrix): Matrix;
 
         /**
          * Uses Fast Fourier Transform to compute a polynomial from provided points
          * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
          * @param ys y coordinates of points to interpolate
          */
-        interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom;
+        interpolateRoots(rootsOfUnity: Vector, ys: Vector): Vector;
+
+        /**
+         * Uses Fast Fourier Transform to compute polynomials from provided points
+         * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
+         * @param ys A matrix with each row representing y coordinates of points to interpolate
+         */
+        interpolateRoots(rootsOfUnity: Vector, ySets: Matrix): Matrix;
 
         /**
          * Uses an optimized version of Lagrange Interpolation for degree 3 polynomials
@@ -299,9 +340,8 @@ declare module '@guildofweavers/galois' {
         readonly byteLength : number;
 
         getValue(index: number): bigint;
-        setValue(index: number, value: bigint): void;
 
-        toValues(): bigint[];
+        toValues(): ReadonlyArray<bigint>;
     }
 
     export interface Matrix {
@@ -310,18 +350,12 @@ declare module '@guildofweavers/galois' {
         readonly byteLength : number;
 
         getValue(row: number, column: number): bigint;
-        setValue(row: number, column: number, value: bigint): void;
 
         toValues(): bigint[][];
     }
 
-    // FINITE FIELD IMPLEMENTATIONS
+    // GLOBAL FUNCTIONS
     // ----------------------------------------------------------------------------------------
-    export class PrimeField {
-        constructor(modulus: bigint);
-    }
-    export interface PrimeField extends FiniteField {
-        mod(value: bigint): bigint;
-    }
+    export function createPrimeField(modulus: bigint): FiniteField;
 
 }

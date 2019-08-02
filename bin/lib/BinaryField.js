@@ -112,7 +112,19 @@ class BinaryField {
     combineVectors(a, b) {
         throw new Error('Not implemented');
     }
+    combineManyVectors(v, k) {
+        throw new Error('Not implemented');
+    }
     vectorToMatrix(v, columns) {
+        throw new Error('Not implemented');
+    }
+    pluckVector(v, skip, times) {
+        throw new Error('Not implemented');
+    }
+    truncateVector(v, newLength) {
+        throw new Error('Not implemented');
+    }
+    duplicateVector(v, times = 1) {
         throw new Error('Not implemented');
     }
     // MATRIX OPERATIONS
@@ -147,6 +159,9 @@ class BinaryField {
     mulMatrixByVector(m, v) {
         throw new Error('Not implemented');
     }
+    matrixRowsToVectors(m) {
+        throw new Error('Not implemented');
+    }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {
@@ -176,6 +191,9 @@ class BinaryField {
         throw new Error('Not implemented');
     }
     evalPolyAtRoots(p, rootsOfUnity) {
+        throw new Error('Not implemented');
+    }
+    evalPolysAtRoots(p, rootsOfUnity) {
         throw new Error('Not implemented');
     }
     evalQuarticBatch(polys, xs) {

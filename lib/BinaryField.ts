@@ -147,7 +147,23 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    combineManyVectors(v: Vector[], k: Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
     vectorToMatrix(v: Vector, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    pluckVector(v: Vector, skip: number, times: number): Vector {
+        throw new Error('Not implemented');
+    }
+
+    truncateVector(v: Vector, newLength: number): Vector {
+        throw new Error('Not implemented');
+    }
+
+    duplicateVector(v: Vector, times = 1): Vector {
         throw new Error('Not implemented');
     }
 
@@ -193,6 +209,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    matrixRowsToVectors(m: Matrix): Vector[] {
+        throw new Error('Not implemented');
+    }
+
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {
@@ -225,11 +245,15 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    evalPolyAt(p: Polynom, x: bigint): bigint {
+    evalPolyAt(p: Vector, x: bigint): bigint {
         throw new Error('Not implemented');
     }
 
-    evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector {
+    evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
+    evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): Matrix {
         throw new Error('Not implemented');
     }
 
@@ -237,11 +261,15 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    interpolate(xs: Vector, ys: Vector): Polynom {
+    interpolate(xs: Vector, ys: Vector): Vector
+    interpolate(xs: Vector, ys: Matrix): Matrix
+    interpolate(xs: Vector, ys: Vector | Matrix): Vector | Matrix {
         throw new Error('Not implemented');
     }
 
-    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom {
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Vector
+    interpolateRoots(rootsOfUnity: Vector, ys: Matrix): Matrix
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector | Matrix): Vector | Matrix {
         throw new Error('Not implemented');
     }
 

@@ -213,6 +213,50 @@ export class PrimeField implements FiniteField {
         return result;
     }
 
+    combineManyVectors(v: Vector[], k: Vector): JsVector {
+        if (v.length !== k.length) {
+            throw new Error('Number of vectors must be the same as number of coefficients');
+        }
+
+        const resultLength = v[0].length;
+        const vValues = new Array<readonly bigint[]>(v.length);
+        for (let i = 0; i < v.length; i++) {
+            vValues[i] = v[i].toValues();
+        }
+
+        const kValues = k.toValues();
+        const rValues = new Array<bigint>(resultLength);
+        for (let i = 0; i < resultLength; i++) {
+            let sum = 0n;
+            for (let j = 0; i < k.length; j++) {
+                sum += kValues[j] * vValues[i][j];
+            }
+            rValues[i] = sum;
+        }
+        return this.newVectorFrom(rValues);
+    }
+
+    pluckVector(v: Vector, skip: number, times: number): JsVector {
+        const vValues = v.toValues();
+        const rValues = new Array<bigint>(times);
+        for (let i = 0; i < times; i++) {
+            rValues[i] = vValues[(i * skip) % vValues.length];
+        }
+        return this.newVectorFrom(rValues);
+    }
+
+    truncateVector(v: Vector, newLength: number): JsVector {
+        return this.newVectorFrom(v.toValues().slice(0, newLength));
+    }
+
+    duplicateVector(v: Vector, times = 1): JsVector {
+        let rValues = v.toValues() as bigint[];
+        for (let i = 0; i < times; i++) {
+            rValues = rValues.concat(rValues);
+        }
+        return this.newVectorFrom(rValues);
+    }
+
     vectorToMatrix(v: Vector, columns: number): JsMatrix {
         const rowCount = v.length / columns;
         if (!Number.isInteger(rowCount)) {
@@ -408,6 +452,15 @@ export class PrimeField implements FiniteField {
         return this.newVectorFrom(powers);
     }
 
+    matrixRowsToVectors(m: Matrix): JsVector[] {
+        const mValues = m.toValues();
+        const result = new Array<JsVector>(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            result[i] = this.newVectorFrom(mValues[i]);
+        }
+        return result;
+    }
+
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------
     addPolys(a: Polynom, b: Polynom): JsVector {
@@ -476,6 +529,8 @@ export class PrimeField implements FiniteField {
         return this.newVectorFrom(rValues);
     }
 
+    // POLYNOMIAL EVALUATION
+    // --------------------------------------------------------------------------------------------
     evalPolyAt(p: Polynom, x: bigint): bigint {
         const pValues = p.toValues();
         switch (p.length) {
@@ -507,7 +562,7 @@ export class PrimeField implements FiniteField {
         }
     }
 
-    evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): JsVector {
+    evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): JsVector {
         if (p.length > rootsOfUnity.length) {
             throw new Error('Number of roots of unity cannot be smaller than number of values');
         }
@@ -515,22 +570,53 @@ export class PrimeField implements FiniteField {
             throw new Error('Number of roots of unity must be 2^n');
         }
 
-        const pValues = p.toValues();
-        let tValues = pValues;
-
+        let pValues = p.toValues();
+        
         // make sure values and roots of unity are of the same length
         if (rootsOfUnity.length > p.length) {
-            tValues = new Array(rootsOfUnity.length);
+            let tValues = new Array<bigint>(rootsOfUnity.length);
             for (let i = 0; i < p.length; i++) {
                 tValues[i] = pValues[i];
             }
-            for (let i = p.length; i < tValues.length; i++) {
-                tValues[i] = 0n;
-            }
+            tValues.fill(0n, p.length);
+            pValues = tValues;
         }
 
-        const rValues = fastFF(tValues, rootsOfUnity.toValues(), 0, 0, this);
+        const rValues = fastFT(pValues, rootsOfUnity.toValues(), 0, 0, this);
         return this.newVectorFrom(rValues);
+    }
+
+    evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): JsMatrix {
+        if (!isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be 2^n');
+        }
+
+        const pValues = p.toValues();
+        const polys = new Array<bigint[]>(p.rowCount);
+        for (let i = 0; i < p.rowCount; i ++) {
+            if (pValues[i].length === rootsOfUnity.length) {
+                polys[i] = pValues[i];
+            }
+            else if (pValues[i].length > rootsOfUnity.length) {
+                // make sure values and roots of unity are of the same length
+                let tValues = new Array<bigint>(rootsOfUnity.length);
+                for (let j = 0; j < pValues[i].length; j++) {
+                    tValues[j] = pValues[i][j];
+                }
+                tValues.fill(0n, pValues[i].length);
+                polys[i] = tValues;
+            }
+            else {
+                throw new Error('Number of roots of unity cannot be smaller than number of values');
+            }
+        }
+        
+        const xValues = rootsOfUnity.toValues();
+        const rValues = new Array<bigint[]>(p.rowCount);
+        for (let i = 0; i < p.rowCount; i++) {
+            rValues[i] = fastFT(polys[i], xValues, 0, 0, this);
+        }
+        return this.newMatrixFrom(rValues);
     }
 
     evalQuarticBatch(polys: Matrix, xs: Vector): JsVector {
@@ -547,14 +633,13 @@ export class PrimeField implements FiniteField {
         return this.newVectorFrom(rValues);
     }
 
-    interpolate(xs: Vector, ys: Vector): JsVector {
-        if (xs.length !== ys.length) {
-            throw new Error('Number of x coordinates must be the same as number of y coordinates');
-        }
-
+    // POLYNOMIAL INTERPOLATION
+    // --------------------------------------------------------------------------------------------
+    interpolate(xs: Vector, ys: Vector): JsVector
+    interpolate(xs: Vector, ys: Matrix): JsMatrix
+    interpolate(xs: Vector, ys: Vector | Matrix): JsVector | JsMatrix {
         const xsValues = xs.toValues();
-        const ysValues = ys.toValues();
-
+        
         const root = this.newVectorFrom(zpoly(xsValues, this));
         let divisor = this.newVectorFrom([0n, 1n]);
         const numerators = new Array<JsVector>(xs.length);
@@ -569,42 +654,98 @@ export class PrimeField implements FiniteField {
         }
         const invDenValues = this.invVectorElements(this.newVectorFrom(denominators)).values;
 
-        const rValues = new Array(ys.length).fill(0n);
-        for (let i = 0; i < xs.length; i++) {
-            let ySlice = this.mod(ysValues[i] * invDenValues[i]);
-            for (let j = 0; j < ys.length; j++) {
-                if (numerators[i].values[j] && ysValues[i]) {
-                    rValues[j] = this.mod(rValues[j] + numerators[i].values[j] * ySlice);
+        if (ys instanceof JsVector) {
+            if (xs.length !== ys.length) {
+                throw new Error('Number of x coordinates must be the same as number of y coordinates');
+            }
+
+            const yValues = ys.toValues();
+            const rValues = new Array(xs.length).fill(0n);
+            for (let i = 0; i < xs.length; i++) {
+                let ySlice = this.mod(yValues[i] * invDenValues[i]);
+                for (let j = 0; j < xs.length; j++) {
+                    if (numerators[i].values[j] && yValues[i]) {
+                        rValues[j] = this.mod(rValues[j] + numerators[i].values[j] * ySlice);
+                    }
                 }
             }
+            return this.newVectorFrom(rValues);
         }
+        else if (ys instanceof JsMatrix) {
+            const yValues = ys.toValues();
+            const rValues = new Array<bigint[]>(ys.rowCount);
 
-        return this.newVectorFrom(rValues);
+            for (let i = 0; i < ys.rowCount; i++) {
+                if (xs.length !== yValues[i].length) {
+                    throw new Error('Number of x coordinates must be the same as number of y coordinates');
+                }
+
+                let rowValues = new Array(xs.length).fill(0n);
+                for (let j = 0; j < xs.length; j++) {
+                    let ySlice = this.mod(yValues[i][j] * invDenValues[j]);
+                    for (let k = 0; k < xs.length; k++) {
+                        if (numerators[j].values[k] && yValues[i][j]) {
+                            rowValues[k] = this.mod(rowValues[k] + numerators[j].values[k] * ySlice);
+                        }
+                    }
+                    rValues[i] = rowValues;
+                }
+            }
+            return this.newMatrixFrom(rValues);
+        }
+        else {
+            throw new Error(`y-coordinates object is invalid`);
+        }
+        
     }
 
-    interpolateRoots(rootsOfUnity: Vector, ys: Vector): JsVector {
-        if (rootsOfUnity.length !== ys.length) {
-            throw new Error('Number of roots of unity must be the same as number of y coordinates');
-        }
-        else if (!isPowerOf2(rootsOfUnity.length)) {
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector): JsVector
+    interpolateRoots(rootsOfUnity: Vector, ys: Matrix): JsMatrix
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector | Matrix): JsVector | JsMatrix {
+        if (!isPowerOf2(rootsOfUnity.length)) {
             throw new Error('Number of roots of unity must be 2^n');
         }
 
+        // reverse roots of unity
         const rouValues = rootsOfUnity.toValues();
-        const ysValues = ys.toValues();
-
-        const invlen = this.exp(BigInt(ys.length), this.modulus - 2n);
+        const invlen = this.exp(BigInt(rootsOfUnity.length), this.modulus - 2n);
         let reversedRoots = new Array<bigint>(rootsOfUnity.length);
         reversedRoots[0] = 1n;
         for (let i = rootsOfUnity.length - 1, j = 1; i > 0; i--, j++) {
             reversedRoots[j] = rouValues[i];
         }
 
-        const rValues = fastFF(ysValues, reversedRoots, 0, 0, this);
-        for (let i = 0; i < rValues.length; i++) {
-            rValues[i] = this.mod(rValues[i] * invlen);
+        // run FFT to compute the interpolation
+        if (ys instanceof JsVector) {
+            if (rootsOfUnity.length !== ys.length) {
+                throw new Error('Number of roots of unity must be the same as number of y coordinates');
+            }
+            const yValues = ys.toValues();
+            const rValues = fastFT(yValues, reversedRoots, 0, 0, this);
+            for (let i = 0; i < rValues.length; i++) {
+                rValues[i] = this.mod(rValues[i] * invlen);
+            }
+            return this.newVectorFrom(rValues);
         }
-        return this.newVectorFrom(rValues);
+        else if (ys instanceof JsMatrix) {
+            const yValues = ys.toValues();
+            const rValues = new Array<bigint[]>(ys.rowCount);
+
+            for (let i = 0; i < ys.rowCount; i++) {
+                if (rootsOfUnity.length !== yValues[i].length) {
+                    throw new Error('Number of roots of unity must be the same as number of y coordinates');
+                }
+                let rowValues = fastFT(yValues[i], reversedRoots, 0, 0, this);
+                for (let j = 0; j < rValues.length; j++) {
+                    rowValues[j] = this.mod(rowValues[j] * invlen);
+                }
+                rValues[i] = rowValues;
+            }
+            return this.newMatrixFrom(rValues);
+        }
+        else {
+            throw new Error(`y-coordinates object is invalid`);
+        }
     }
 
     interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): JsMatrix {
@@ -665,7 +806,7 @@ export class PrimeField implements FiniteField {
 
 // HELPER FUNCTIONS
 // ================================================================================================
-function fastFF(values: bigint[], roots: bigint[], depth: number, offset: number, F: PrimeField): bigint[] {
+function fastFT(values: readonly bigint[], roots: readonly bigint[], depth: number, offset: number, F: PrimeField): bigint[] {
 
     const step = 1 << depth;
     const resultLength = roots.length / step;
@@ -683,8 +824,8 @@ function fastFF(values: bigint[], roots: bigint[], depth: number, offset: number
         return result;
     }
     
-    const even = fastFF(values, roots, depth + 1, offset, F);
-    const odd = fastFF(values, roots, depth + 1, offset + step, F);
+    const even = fastFT(values, roots, depth + 1, offset, F);
+    const odd = fastFT(values, roots, depth + 1, offset + step, F);
 
     const halfLength = resultLength / 2;
     const result = new Array<bigint>(resultLength);
@@ -699,7 +840,7 @@ function fastFF(values: bigint[], roots: bigint[], depth: number, offset: number
     return result;
 }
 
-function zpoly(xs: bigint[], field: PrimeField): bigint[] {
+function zpoly(xs: readonly bigint[], field: PrimeField): bigint[] {
     const result = new Array<bigint>(xs.length + 1);
     result[result.length - 1] = 1n;
 
@@ -713,7 +854,7 @@ function zpoly(xs: bigint[], field: PrimeField): bigint[] {
     return result;
 }
 
-function lastNonZeroIndex(values: bigint[]) {
+function lastNonZeroIndex(values: readonly bigint[]) {
     for (let i = values.length - 1; i >= 0; i--) {
         if (values[i] !== 0n) return i;
     }

@@ -1,3 +1,9 @@
-// RE-EXPORTS
+// IMPORTS
 // ================================================================================================
-export { PrimeField } from './lib/PrimeField';
+import { PrimeField } from './lib/PrimeField';
+
+// PUBLIC FUNCTIONS
+// ================================================================================================
+function createPrimeField(modulus: bigint) {
+    return new PrimeField(modulus);
+}
