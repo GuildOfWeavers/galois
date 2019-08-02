@@ -52,6 +52,8 @@ interface Wasm {
     interpolateQuarticBatch(xRef: number, yRef: number, rowCount: number): number;
 }
 
+export type WasmPrime128 = Wasm & loader.ASUtil;
+
 // PUBLIC MODULE
 // ================================================================================================
 export function instantiate(modulus: bigint, options?: WasmOptions): Wasm128 {

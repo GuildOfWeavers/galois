@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { PrimeField } from '../lib/PrimeField';
-import { JsVector } from '../lib/JsVector';
+import { JsVector } from '../lib/structures';
 
 let F: PrimeField;
 

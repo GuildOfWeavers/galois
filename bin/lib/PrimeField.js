@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto = require("crypto");
-const JsVector_1 = require("./JsVector");
-const JsMatrix_1 = require("./JsMatrix");
+const structures_1 = require("./structures");
 const utils_1 = require("./utils");
 // CLASS DEFINITION
 // ================================================================================================
@@ -113,10 +112,10 @@ class PrimeField {
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
     newVector(length) {
-        return new JsVector_1.JsVector(new Array(length), this.elementSize);
+        return new structures_1.JsVector(new Array(length), this.elementSize);
     }
     newVectorFrom(values) {
-        return new JsVector_1.JsVector(values, this.elementSize);
+        return new structures_1.JsVector(values, this.elementSize);
     }
     addVectorElements(a, b) {
         return (typeof b === 'bigint')
@@ -156,7 +155,7 @@ class PrimeField {
             rValues[i] = this.mod(sValues[i] ? rValues[i] * inv : 0n);
             inv = this.mul(inv, sValues[i] || 1n);
         }
-        return new JsVector_1.JsVector(rValues, this.elementSize);
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     combineVectors(a, b) {
         const aValues = a.toValues(), bValues = b.toValues();
@@ -226,7 +225,7 @@ class PrimeField {
         for (let i = 0; i < rValues.length; i++) {
             rValues[i] = op.call(this, aValues[i], bValues[i]);
         }
-        return new JsVector_1.JsVector(rValues, this.elementSize);
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     vectorScalarOp(op, a, b) {
         const aValues = a.toValues();
@@ -234,7 +233,7 @@ class PrimeField {
         for (let i = 0; i < rValues.length; i++) {
             rValues[i] = op.call(this, aValues[i], b);
         }
-        return new JsVector_1.JsVector(rValues, this.elementSize);
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
@@ -243,10 +242,10 @@ class PrimeField {
         for (let i = 0; i < rows; i++) {
             values[i] = new Array(columns);
         }
-        return new JsMatrix_1.JsMatrix(values, this.elementSize);
+        return new structures_1.JsMatrix(values, this.elementSize);
     }
     newMatrixFrom(values) {
-        return new JsMatrix_1.JsMatrix(values, this.elementSize);
+        return new structures_1.JsMatrix(values, this.elementSize);
     }
     addMatrixElements(a, b) {
         return (typeof b === 'bigint')
@@ -327,7 +326,7 @@ class PrimeField {
             }
             rValues[i] = s;
         }
-        return new JsVector_1.JsVector(rValues, this.elementSize);
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     mulMatrixRows(m, v) {
         if (m.colCount !== v.length) {
@@ -565,7 +564,7 @@ class PrimeField {
             denominators[i] = this.evalPolyAt(numerators[i], xsValues[i]);
         }
         const invDenValues = this.invVectorElements(this.newVectorFrom(denominators)).values;
-        if (ys instanceof JsVector_1.JsVector) {
+        if (ys instanceof structures_1.JsVector) {
             if (xs.length !== ys.length) {
                 throw new Error('Number of x coordinates must be the same as number of y coordinates');
             }
@@ -581,7 +580,7 @@ class PrimeField {
             }
             return this.newVectorFrom(rValues);
         }
-        else if (ys instanceof JsMatrix_1.JsMatrix) {
+        else if (ys instanceof structures_1.JsMatrix) {
             const yValues = ys.toValues();
             const rValues = new Array(ys.rowCount);
             for (let i = 0; i < ys.rowCount; i++) {
@@ -618,7 +617,7 @@ class PrimeField {
             reversedRoots[j] = rouValues[i];
         }
         // run FFT to compute the interpolation
-        if (ys instanceof JsVector_1.JsVector) {
+        if (ys instanceof structures_1.JsVector) {
             if (rootsOfUnity.length !== ys.length) {
                 throw new Error('Number of roots of unity must be the same as number of y coordinates');
             }
@@ -629,7 +628,7 @@ class PrimeField {
             }
             return this.newVectorFrom(rValues);
         }
-        else if (ys instanceof JsMatrix_1.JsMatrix) {
+        else if (ys instanceof structures_1.JsMatrix) {
             const yValues = ys.toValues();
             const rValues = new Array(ys.rowCount);
             for (let i = 0; i < ys.rowCount; i++) {

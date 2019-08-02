@@ -2,8 +2,7 @@
 // ================================================================================================
 import { FiniteField, Polynom, Vector, Matrix } from '@guildofweavers/galois';
 import * as crypto from 'crypto';
-import { JsVector } from './JsVector';
-import { JsMatrix } from './JsMatrix';
+import { JsVector, JsMatrix } from './structures';
 import { isPowerOf2, sha256 } from './utils';
 
 // INTERFACES

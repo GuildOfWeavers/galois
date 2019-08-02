@@ -1,7 +1,6 @@
 // IMPORTS
 // ================================================================================================
-import { Matrix, Vector } from '@guildofweavers/galois';
-import { JsVector } from './JsVector';
+import { Matrix } from '@guildofweavers/galois';
 
 // VECTOR CLASS
 // ================================================================================================
