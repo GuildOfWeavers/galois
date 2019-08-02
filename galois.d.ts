@@ -180,10 +180,13 @@ declare module '@guildofweavers/galois' {
 
         /**
          * Computes a vector of length m which is a product of matrix a and vector b
-         * @param a Matrix with dimensions [m,n]
-         * @param b Vector of length n
+         * @param m Matrix with dimensions [m,n]
+         * @param v Vector of length n
          */
         mulMatrixByVector(m: Matrix, v: Vector): Vector;
+
+        /** Computes a new matrix n such that n[i,j] = m[i,j] * v[i] for all i and j */
+        mulMatrixRows(m: Matrix, v: Vector): Matrix;
 
         /** Creates an array of vectors corresponding to matrixes' rows */
         matrixRowsToVectors(m: Matrix): Vector[];

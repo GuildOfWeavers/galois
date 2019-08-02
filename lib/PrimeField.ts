@@ -400,6 +400,34 @@ export class PrimeField implements FiniteField {
         return new JsVector(rValues, this.elementSize);
     }
 
+    mulMatrixRows(m: Matrix, v: Vector): JsMatrix {
+        if (m.colCount !== v.length) {
+            throw new Error('Vector length must match the number of matrix columns');
+        }
+
+        let mValues = m.toValues();
+        let vValues = v.toValues();
+        let rValues = new Array<bigint[]>(m.rowCount);
+        
+        for (let i = 0; i < m.rowCount; i++) {
+            let row = new Array<bigint>(v.length);
+            for (let j = 0; j < v.length; j++) {
+                row[j] = this.mod(mValues[i][j] * vValues[j]);
+            }
+            rValues[i] = row;
+        }
+        return this.newMatrixFrom(rValues);
+    }
+
+    matrixRowsToVectors(m: Matrix): JsVector[] {
+        const mValues = m.toValues();
+        const result = new Array<JsVector>(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            result[i] = this.newVectorFrom(mValues[i]);
+        }
+        return result;
+    }
+
     private matrixElementsOp(op: ArithmeticOperation, a: Matrix, b: Matrix): JsMatrix {
         const aValues = a.toValues(), bValues = b.toValues();
         const rValues = new Array<bigint[]>(a.rowCount);
@@ -450,15 +478,6 @@ export class PrimeField implements FiniteField {
             powers[i] = this.mul(powers[i-1], seed);
         }
         return this.newVectorFrom(powers);
-    }
-
-    matrixRowsToVectors(m: Matrix): JsVector[] {
-        const mValues = m.toValues();
-        const result = new Array<JsVector>(m.rowCount);
-        for (let i = 0; i < m.rowCount; i++) {
-            result[i] = this.newVectorFrom(mValues[i]);
-        }
-        return result;
     }
 
     // POLYNOMIALS

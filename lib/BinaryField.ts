@@ -209,6 +209,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    mulMatrixRows(m: Matrix, v: Vector): Matrix {
+        throw new Error('Not implemented');
+    }
+
     matrixRowsToVectors(m: Matrix): Vector[] {
         throw new Error('Not implemented');
     }

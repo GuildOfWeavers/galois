@@ -159,6 +159,9 @@ class BinaryField {
     mulMatrixByVector(m, v) {
         throw new Error('Not implemented');
     }
+    mulMatrixRows(m, v) {
+        throw new Error('Not implemented');
+    }
     matrixRowsToVectors(m) {
         throw new Error('Not implemented');
     }

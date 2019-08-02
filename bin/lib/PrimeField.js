@@ -329,6 +329,30 @@ class PrimeField {
         }
         return new JsVector_1.JsVector(rValues, this.elementSize);
     }
+    mulMatrixRows(m, v) {
+        if (m.colCount !== v.length) {
+            throw new Error('Vector length must match the number of matrix columns');
+        }
+        let mValues = m.toValues();
+        let vValues = v.toValues();
+        let rValues = new Array(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            let row = new Array(v.length);
+            for (let j = 0; j < v.length; j++) {
+                row[j] = this.mod(mValues[i][j] * vValues[j]);
+            }
+            rValues[i] = row;
+        }
+        return this.newMatrixFrom(rValues);
+    }
+    matrixRowsToVectors(m) {
+        const mValues = m.toValues();
+        const result = new Array(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            result[i] = this.newVectorFrom(mValues[i]);
+        }
+        return result;
+    }
     matrixElementsOp(op, a, b) {
         const aValues = a.toValues(), bValues = b.toValues();
         const rValues = new Array(a.rowCount);
@@ -375,14 +399,6 @@ class PrimeField {
             powers[i] = this.mul(powers[i - 1], seed);
         }
         return this.newVectorFrom(powers);
-    }
-    matrixRowsToVectors(m) {
-        const mValues = m.toValues();
-        const result = new Array(m.rowCount);
-        for (let i = 0; i < m.rowCount; i++) {
-            result[i] = this.newVectorFrom(mValues[i]);
-        }
-        return result;
     }
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------
