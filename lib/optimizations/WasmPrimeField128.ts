@@ -1,16 +1,14 @@
 // IMPORTS
 // ================================================================================================
-import { FiniteField, Polynom, Vector, Matrix } from '@guildofweavers/galois';
-import { WasmPrime128 } from './assembly';
-import { PrimeField } from './PrimeField';
-import { WasmVector128, WasmMatrix128 } from './structures';
-import { isPowerOf2, } from './utils';
+import { FiniteField, Vector, Matrix, WasmOptions } from '@guildofweavers/galois';
+import { WasmPrime128, instantiatePrime128 } from '../assembly';
+import { PrimeField } from '../PrimeField';
+import { WasmVector128, WasmMatrix128 } from '../structures';
+import { isPowerOf2, } from '../utils';
 
 // CONSTANTS
 // ================================================================================================
-const VALUE_BITS = 128;
-const VALUE_SIZE = VALUE_BITS / 8;
-const MAX_VALUE = 2n**BigInt(VALUE_BITS) - 1n;
+const MASK_32B = 0xFFFFFFFFn;
 const MASK_64B = 0xFFFFFFFFFFFFFFFFn;
 
 // CLASS DEFINITION
@@ -26,12 +24,19 @@ export class WasmPrimeField128 implements FiniteField {
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(modulus: bigint) {
-        this.wasm = undefined as any; // TODO
+    constructor(modulus: bigint, options?: WasmOptions) {
+        this.wasm = instantiatePrime128(options);
         this.inputsIdx = this.wasm.getInputsPtr() >>> 3;
         this.outputsIdx = this.wasm.getOutputsPtr() >>> 3;
         this.jsField = new PrimeField(modulus);
         this.elementSize = this.jsField.elementSize;
+
+        // set modulus in WASM module
+        const mLo2 = Number.parseInt((modulus & MASK_32B) as any);
+        const mLo1 = Number.parseInt(((modulus >> 32n) & MASK_32B) as any);
+        const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B) as any);
+        const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B) as any);
+        this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
     }
 
     // PUBLIC ACCESSORS
@@ -94,7 +99,6 @@ export class WasmPrimeField128 implements FiniteField {
         if (length === undefined) {
             return this.jsField.prng(seed);
         }
-
         const result = this.jsField.prng(seed, length);
         return this.newVectorFrom(result.values);
     }
@@ -114,14 +118,16 @@ export class WasmPrimeField128 implements FiniteField {
     addVectorElements(a: Vector, b: bigint | Vector): WasmVector128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.addArrayElements2((a as WasmVector128).base, 0, a.length);
+            const aw = a as WasmVector128;
+            const base = this.wasm.addArrayElements2(aw.base, 0, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot add vector elements: vectors have different lengths');
             }
-            const base = this.wasm.addArrayElements((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+            const aw = a as WasmVector128, bw = b as WasmVector128;
+            const base = this.wasm.addArrayElements(aw.base, bw.base, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
     }
@@ -129,14 +135,16 @@ export class WasmPrimeField128 implements FiniteField {
     subVectorElements(a: Vector, b: bigint | Vector): WasmVector128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.subArrayElements2((a as WasmVector128).base, 0, a.length);
+            const aw = a as WasmVector128;
+            const base = this.wasm.subArrayElements2(aw.base, 0, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot subtract vector elements: vectors have different lengths');
             }
-            const base = this.wasm.subArrayElements((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+            const aw = a as WasmVector128, bw = b as WasmVector128;
+            const base = this.wasm.subArrayElements(aw.base, bw.base, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
     }
@@ -144,14 +152,16 @@ export class WasmPrimeField128 implements FiniteField {
     mulVectorElements(a: Vector, b: bigint | Vector): WasmVector128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.mulArrayElements2((a as WasmVector128).base, 0, a.length);
+            const aw = a as WasmVector128;
+            const base = this.wasm.mulArrayElements2(aw.base, 0, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot multiply vector elements: vectors have different lengths');
             }
-            const base = this.wasm.mulArrayElements((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+            const aw = a as WasmVector128, bw = b as WasmVector128;
+            const base = this.wasm.mulArrayElements(aw.base, bw.base, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
     }
@@ -159,14 +169,16 @@ export class WasmPrimeField128 implements FiniteField {
     divVectorElements(a: Vector, b: bigint | Vector): WasmVector128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.divArrayElements2((a as WasmVector128).base, 0, a.length);
+            const aw = a as WasmVector128;
+            const base = this.wasm.divArrayElements2(aw.base, 0, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot divide vector elements: vectors have different lengths');
             }
-            const base = this.wasm.divArrayElements((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+            const aw = a as WasmVector128, bw = b as WasmVector128;
+            const base = this.wasm.divArrayElements(aw.base, bw.base, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
     }
@@ -174,50 +186,59 @@ export class WasmPrimeField128 implements FiniteField {
     expVectorElements(a: Vector, b: bigint | Vector): WasmVector128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.expArrayElements2((a as WasmVector128).base, 0, a.length);
+            const aw = a as WasmVector128;
+            const base = this.wasm.expArrayElements2(aw.base, 0, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot exponentiate vector elements: vectors have different lengths');
             }
-            const base = this.wasm.expArrayElements((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+            const aw = a as WasmVector128, bw = b as WasmVector128;
+            const base = this.wasm.expArrayElements(aw.base, bw.base, a.length);
             return new WasmVector128(this.wasm, a.length, base);
         }
     }
 
     invVectorElements(source: Vector): WasmVector128 {
-        const v = source as WasmVector128;
-        const base = this.wasm.invArrayElements(v.base, v.length);
-        return new WasmVector128(this.wasm, v.length, base);
+        const sw = source as WasmVector128;
+        const base = this.wasm.invArrayElements(sw.base, sw.length);
+        return new WasmVector128(this.wasm, sw.length, base);
     }
 
     combineVectors(a: Vector, b: Vector): bigint {
         if (a.length !== b.length) {
             throw new Error('Cannot combine vectors: vectors have different lengths');
         }
-        const idx = this.wasm.combineVectors((a as WasmVector128).base, (b as WasmVector128).base, a.length);
+        const aw = a as WasmVector128, bw = b as WasmVector128;
+        const idx = this.wasm.combineVectors(aw.base, bw.base, a.length);
         return this.readOutput(idx);
     }
 
     combineManyVectors(v: Vector[], k: Vector): WasmVector128 {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); // TODO
     }
 
     pluckVector(v: Vector, skip: number, times: number): WasmVector128 {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); // TODO
     }
 
     truncateVector(v: Vector, newLength: number): WasmVector128 {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); //TODO
     }
 
     duplicateVector(v: Vector, times = 1): WasmVector128 {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); //TODO
     }
 
     vectorToMatrix(v: Vector, columns: number): WasmMatrix128 {
-        throw new Error('Not implemented');
+        const rowCount = v.length / columns;
+        if (!Number.isInteger(rowCount)) {
+            throw new Error('Number of columns does not evenly divide vector length');
+        }
+        const vw = v as WasmVector128;
+        const base = this.wasm.transposeArray(vw.base, rowCount, columns);
+        return new WasmMatrix128(this.wasm, rowCount, columns, base);
     }
 
     // MATRIX OPERATIONS
@@ -227,7 +248,11 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     newMatrixFrom(values: bigint[][]): WasmMatrix128 {
-        throw new Error('Not implemented');
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new WasmMatrix128(this.wasm, rows, columns);
+        result.load(values);
+        return result;
     }
 
     addMatrixElements(a: Matrix, b: bigint | Matrix): WasmMatrix128 {
@@ -360,7 +385,13 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     matrixRowsToVectors(m: Matrix): WasmVector128[] {
-        throw new Error('Not implemented');
+        const result = new Array<WasmVector128>(m.rowCount);
+        const mw = m as WasmMatrix128;
+        let vBase = mw.base;
+        for (let i = 0; i < m.rowCount; i++, vBase += mw.rowSize) {
+            result[i] = new WasmVector128(this.wasm, m.colCount, vBase);
+        }
+        return result;
     }
 
     // OTHER OPERATIONS
@@ -448,11 +479,11 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): WasmVector128 {
-        if (p.length > rootsOfUnity.length) {
-            throw new Error('Number of roots of unity cannot be smaller than number of values');
+        if (!isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
         }
-        else if (!isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+        if (p.length > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
 
         const pw = p as WasmVector128, xw = rootsOfUnity as WasmVector128;
@@ -461,11 +492,24 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): WasmMatrix128 {
-        throw new Error('Not implemented');
+        if (!isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
+        }
+        if (p.colCount > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
+        }
+
+        throw new Error('Not implemented'); // TODO
     }
 
     evalQuarticBatch(polys: Matrix, xs: Vector): WasmVector128 {
-        // TODO: make sure the matrix has exactly 4 columns
+        if (polys.colCount !== 4) {
+            throw new Error('Quartic polynomials must have exactly 4 terms');
+        }
+        else if (polys.rowCount !== xs.length) {
+            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+        }
+
         const pw = polys as WasmMatrix128, xw = xs as WasmVector128;
         const base = this.wasm.evalQuarticBatch(pw.base, xw.base, polys.rowCount);
         return new WasmVector128(this.wasm, polys.rowCount, base);
@@ -477,11 +521,17 @@ export class WasmPrimeField128 implements FiniteField {
     interpolate(xs: Vector, ys: Matrix): WasmMatrix128
     interpolate(xs: Vector, ys: Vector | Matrix): WasmVector128 | WasmMatrix128 {
         if (ys instanceof WasmVector128) {
+            if (xs.length !== ys.length) {
+                throw new Error('');    // TODO
+            }
             const xw = xs as WasmVector128;
             const base = this.wasm.interpolate(xw.base, ys.base, xs.length);
             return new WasmVector128(this.wasm, xs.length + 1, base);
         }
         else if (ys instanceof WasmMatrix128) {
+            if(xs.length !== ys.rowCount) {
+                throw new Error('');    // TODO
+            }
             throw new Error('Not implemented');
         }
         else {
@@ -498,11 +548,17 @@ export class WasmPrimeField128 implements FiniteField {
 
         const rw = rootsOfUnity as WasmVector128;
         if (ys instanceof WasmVector128) {
+            if (rootsOfUnity.length !== ys.length) {
+                throw new Error('');    // TODO
+            }
             const result = new WasmVector128(this.wasm, rootsOfUnity.length);
             this.wasm.interpolateRoots(rw.base, ys.base, result.base, ys.length);
             return result;
         }
         else if (ys instanceof WasmMatrix128) {
+            if(rootsOfUnity.length !== ys.rowCount) {
+                throw new Error('');    // TODO
+            }
             const result = new WasmMatrix128(this.wasm, ys.rowCount, ys.colCount);
             let yRef = ys.base, resRef = result.base;
             for (let i = 0; i < ys.rowCount; i++) {
@@ -518,7 +574,12 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): WasmMatrix128 {
-        // TODO: check dimensions
+        if (xSets.colCount !== 4 || ySets.colCount !== 4) {
+            throw new Error('');    // TODO
+        }
+        else if (xSets.rowCount !== ySets.rowCount) {
+            throw new Error('');    // TODO
+        }
         const xw = xSets as WasmMatrix128, yw = ySets as WasmMatrix128;
         const base = this.wasm.interpolateQuarticBatch(xw.base, yw.base, xw.rowCount);
         return new WasmMatrix128(this.wasm, xw.rowCount, xw.colCount, base);

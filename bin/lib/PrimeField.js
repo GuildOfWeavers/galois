@@ -489,11 +489,11 @@ class PrimeField {
         }
     }
     evalPolyAtRoots(p, rootsOfUnity) {
-        if (p.length > rootsOfUnity.length) {
-            throw new Error('Number of roots of unity cannot be smaller than number of values');
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
         }
-        else if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+        if (p.length > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
         let pValues = p.toValues();
         // make sure values and roots of unity are of the same length
@@ -510,7 +510,7 @@ class PrimeField {
     }
     evalPolysAtRoots(p, rootsOfUnity) {
         if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+            throw new Error('Number of roots of unity must be a power of 2');
         }
         const pValues = p.toValues();
         const polys = new Array(p.rowCount);
@@ -528,7 +528,7 @@ class PrimeField {
                 polys[i] = tValues;
             }
             else {
-                throw new Error('Number of roots of unity cannot be smaller than number of values');
+                throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
             }
         }
         const xValues = rootsOfUnity.toValues();

@@ -3,6 +3,10 @@ declare module '@guildofweavers/galois' {
     /** Polynomial represented in reverse-coefficient form */
     export type Polynom = Vector;
 
+    export interface WasmOptions {
+        readonly initialMemory  : number;
+    }
+
     export interface FiniteField {
 
         /** Characteristic of the field: p in GF(p**n) */
@@ -359,6 +363,6 @@ declare module '@guildofweavers/galois' {
 
     // GLOBAL FUNCTIONS
     // ----------------------------------------------------------------------------------------
-    export function createPrimeField(modulus: bigint): FiniteField;
+    export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | null): FiniteField;
 
 }

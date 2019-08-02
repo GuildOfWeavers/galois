@@ -65,4 +65,16 @@ export class WasmMatrix128 implements Matrix {
         }
         return values;
     }
+
+    load(values: bigint[][]): void {
+        let idx = this.base >>> 3;
+        for (let i = 0; i < this.rowCount; i++) {
+            let row = values[i];
+            for (let j = 0; j < this.colCount; j++, idx += 2) {
+                let value = row[j];
+                this.wasm.U64[idx] = value & MASK_64B
+                this.wasm.U64[idx + 1] = value >> 64n;
+            }
+        }
+    }
 }

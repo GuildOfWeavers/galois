@@ -1,25 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const PrimeField_1 = require("./PrimeField");
-const structures_1 = require("./structures");
-const utils_1 = require("./utils");
+const assembly_1 = require("../assembly");
+const PrimeField_1 = require("../PrimeField");
+const structures_1 = require("../structures");
+const utils_1 = require("../utils");
 // CONSTANTS
 // ================================================================================================
-const VALUE_BITS = 128;
-const VALUE_SIZE = VALUE_BITS / 8;
-const MAX_VALUE = 2n ** BigInt(VALUE_BITS) - 1n;
+const MASK_32B = 0xffffffffn;
 const MASK_64B = 0xffffffffffffffffn;
 // CLASS DEFINITION
 // ================================================================================================
 class WasmPrimeField128 {
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(modulus) {
-        this.wasm = undefined; // TODO
+    constructor(modulus, options) {
+        this.wasm = assembly_1.instantiatePrime128(options);
         this.inputsIdx = this.wasm.getInputsPtr() >>> 3;
         this.outputsIdx = this.wasm.getOutputsPtr() >>> 3;
         this.jsField = new PrimeField_1.PrimeField(modulus);
         this.elementSize = this.jsField.elementSize;
+        // set modulus in WASM module
+        const mLo2 = Number.parseInt((modulus & MASK_32B));
+        const mLo1 = Number.parseInt(((modulus >> 32n) & MASK_32B));
+        const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B));
+        const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B));
+        this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
@@ -83,99 +88,116 @@ class WasmPrimeField128 {
     addVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.addArrayElements2(a.base, 0, a.length);
+            const aw = a;
+            const base = this.wasm.addArrayElements2(aw.base, 0, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot add vector elements: vectors have different lengths');
             }
-            const base = this.wasm.addArrayElements(a.base, b.base, a.length);
+            const aw = a, bw = b;
+            const base = this.wasm.addArrayElements(aw.base, bw.base, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
     }
     subVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.subArrayElements2(a.base, 0, a.length);
+            const aw = a;
+            const base = this.wasm.subArrayElements2(aw.base, 0, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot subtract vector elements: vectors have different lengths');
             }
-            const base = this.wasm.subArrayElements(a.base, b.base, a.length);
+            const aw = a, bw = b;
+            const base = this.wasm.subArrayElements(aw.base, bw.base, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
     }
     mulVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.mulArrayElements2(a.base, 0, a.length);
+            const aw = a;
+            const base = this.wasm.mulArrayElements2(aw.base, 0, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot multiply vector elements: vectors have different lengths');
             }
-            const base = this.wasm.mulArrayElements(a.base, b.base, a.length);
+            const aw = a, bw = b;
+            const base = this.wasm.mulArrayElements(aw.base, bw.base, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
     }
     divVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.divArrayElements2(a.base, 0, a.length);
+            const aw = a;
+            const base = this.wasm.divArrayElements2(aw.base, 0, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot divide vector elements: vectors have different lengths');
             }
-            const base = this.wasm.divArrayElements(a.base, b.base, a.length);
+            const aw = a, bw = b;
+            const base = this.wasm.divArrayElements(aw.base, bw.base, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
     }
     expVectorElements(a, b) {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
-            const base = this.wasm.expArrayElements2(a.base, 0, a.length);
+            const aw = a;
+            const base = this.wasm.expArrayElements2(aw.base, 0, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot exponentiate vector elements: vectors have different lengths');
             }
-            const base = this.wasm.expArrayElements(a.base, b.base, a.length);
+            const aw = a, bw = b;
+            const base = this.wasm.expArrayElements(aw.base, bw.base, a.length);
             return new structures_1.WasmVector128(this.wasm, a.length, base);
         }
     }
     invVectorElements(source) {
-        const v = source;
-        const base = this.wasm.invArrayElements(v.base, v.length);
-        return new structures_1.WasmVector128(this.wasm, v.length, base);
+        const sw = source;
+        const base = this.wasm.invArrayElements(sw.base, sw.length);
+        return new structures_1.WasmVector128(this.wasm, sw.length, base);
     }
     combineVectors(a, b) {
         if (a.length !== b.length) {
             throw new Error('Cannot combine vectors: vectors have different lengths');
         }
-        const idx = this.wasm.combineVectors(a.base, b.base, a.length);
+        const aw = a, bw = b;
+        const idx = this.wasm.combineVectors(aw.base, bw.base, a.length);
         return this.readOutput(idx);
     }
     combineManyVectors(v, k) {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); // TODO
     }
     pluckVector(v, skip, times) {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); // TODO
     }
     truncateVector(v, newLength) {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); //TODO
     }
     duplicateVector(v, times = 1) {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented'); //TODO
     }
     vectorToMatrix(v, columns) {
-        throw new Error('Not implemented');
+        const rowCount = v.length / columns;
+        if (!Number.isInteger(rowCount)) {
+            throw new Error('Number of columns does not evenly divide vector length');
+        }
+        const vw = v;
+        const base = this.wasm.transposeArray(vw.base, rowCount, columns);
+        return new structures_1.WasmMatrix128(this.wasm, rowCount, columns, base);
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
@@ -183,7 +205,11 @@ class WasmPrimeField128 {
         return new structures_1.WasmMatrix128(this.wasm, rows, columns);
     }
     newMatrixFrom(values) {
-        throw new Error('Not implemented');
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new structures_1.WasmMatrix128(this.wasm, rows, columns);
+        result.load(values);
+        return result;
     }
     addMatrixElements(a, b) {
         if (typeof b === 'bigint') {
@@ -303,7 +329,13 @@ class WasmPrimeField128 {
         return result;
     }
     matrixRowsToVectors(m) {
-        throw new Error('Not implemented');
+        const result = new Array(m.rowCount);
+        const mw = m;
+        let vBase = mw.base;
+        for (let i = 0; i < m.rowCount; i++, vBase += mw.rowSize) {
+            result[i] = new structures_1.WasmVector128(this.wasm, m.colCount, vBase);
+        }
+        return result;
     }
     // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
@@ -381,32 +413,49 @@ class WasmPrimeField128 {
         return this.readOutput(idx);
     }
     evalPolyAtRoots(p, rootsOfUnity) {
-        if (p.length > rootsOfUnity.length) {
-            throw new Error('Number of roots of unity cannot be smaller than number of values');
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
         }
-        else if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+        if (p.length > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
         const pw = p, xw = rootsOfUnity;
         const base = this.wasm.evalPolyAtRoots(pw.base, xw.base, pw.length, xw.length);
         return new structures_1.WasmVector128(this.wasm, p.length, base);
     }
     evalPolysAtRoots(p, rootsOfUnity) {
-        throw new Error('Not implemented');
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
+        }
+        if (p.colCount > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
+        }
+        throw new Error('Not implemented'); // TODO
     }
     evalQuarticBatch(polys, xs) {
-        // TODO: make sure the matrix has exactly 4 columns
+        if (polys.colCount !== 4) {
+            throw new Error('Quartic polynomials must have exactly 4 terms');
+        }
+        else if (polys.rowCount !== xs.length) {
+            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+        }
         const pw = polys, xw = xs;
         const base = this.wasm.evalQuarticBatch(pw.base, xw.base, polys.rowCount);
         return new structures_1.WasmVector128(this.wasm, polys.rowCount, base);
     }
     interpolate(xs, ys) {
         if (ys instanceof structures_1.WasmVector128) {
+            if (xs.length !== ys.length) {
+                throw new Error(''); // TODO
+            }
             const xw = xs;
             const base = this.wasm.interpolate(xw.base, ys.base, xs.length);
             return new structures_1.WasmVector128(this.wasm, xs.length + 1, base);
         }
         else if (ys instanceof structures_1.WasmMatrix128) {
+            if (xs.length !== ys.rowCount) {
+                throw new Error(''); // TODO
+            }
             throw new Error('Not implemented');
         }
         else {
@@ -419,11 +468,17 @@ class WasmPrimeField128 {
         }
         const rw = rootsOfUnity;
         if (ys instanceof structures_1.WasmVector128) {
+            if (rootsOfUnity.length !== ys.length) {
+                throw new Error(''); // TODO
+            }
             const result = new structures_1.WasmVector128(this.wasm, rootsOfUnity.length);
             this.wasm.interpolateRoots(rw.base, ys.base, result.base, ys.length);
             return result;
         }
         else if (ys instanceof structures_1.WasmMatrix128) {
+            if (rootsOfUnity.length !== ys.rowCount) {
+                throw new Error(''); // TODO
+            }
             const result = new structures_1.WasmMatrix128(this.wasm, ys.rowCount, ys.colCount);
             let yRef = ys.base, resRef = result.base;
             for (let i = 0; i < ys.rowCount; i++) {
@@ -438,7 +493,12 @@ class WasmPrimeField128 {
         }
     }
     interpolateQuarticBatch(xSets, ySets) {
-        // TODO: check dimensions
+        if (xSets.colCount !== 4 || ySets.colCount !== 4) {
+            throw new Error(''); // TODO
+        }
+        else if (xSets.rowCount !== ySets.rowCount) {
+            throw new Error(''); // TODO
+        }
         const xw = xSets, yw = ySets;
         const base = this.wasm.interpolateQuarticBatch(xw.base, yw.base, xw.rowCount);
         return new structures_1.WasmMatrix128(this.wasm, xw.rowCount, xw.colCount, base);

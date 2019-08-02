@@ -1,13 +1,14 @@
 // IMPORTS
 // ================================================================================================
-import * as Wasm from '../lib/assembly';
-import { PrimeField } from '../lib/PrimeField';
+import { createPrimeField } from '../index';
+import { JsVector, JsMatrix } from '../lib/structures';
 
 // SETUP
 // ================================================================================================
+const modulus128 = 2n**128n - 9n * 2n**32n + 1n; // 2n**128n - 159n
 const elements = 2**18;
-const f1 = new PrimeField(2n**128n - 9n * 2n**32n + 1n); // 2n**128n - 159n
-const f2 = new PrimeField(2n**256n - 189n);
+const f1 = createPrimeField(modulus128, null);
+const f2 = createPrimeField(2n**256n - 189n);
 
 const root128 = f1.getRootOfUnity(elements);
 
@@ -22,17 +23,17 @@ const quarticPolyCount = elements / quartic;
 const polyDegree1 = 1024;
 const polyDegree2 = 2048;
 
-const wasm128 = Wasm.instantiate(f1.modulus, { initialMemory: 128 * 1024 * 1024 }); // 128 MB
+const wasm128 = createPrimeField(modulus128, { initialMemory: 128 * 1024 * 1024 }); // 128 MB
 
 // 128 BIT FIELD JS
 // ================================================================================================
 console.log('128-bit prime field (JS)');
 
 let start = Date.now();
-const v1 = f1.prng(42n, elements);
-const v2 = f1.prng(43n, elements);
-const v3 = f1.prng(44n, m1Cols);
-const v4 = f1.prng(45n, quarticPolyCount);
+const v1 = f1.prng(42n, elements) as JsVector;
+const v2 = f1.prng(43n, elements) as JsVector;
+const v3 = f1.prng(44n, m1Cols) as JsVector;
+const v4 = f1.prng(45n, quarticPolyCount) as JsVector;
 console.log(`Generated ${elements}x2 random field elements in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -41,14 +42,14 @@ for (let i = 0; i < temp.length; i++) {
     let row = v1.values.slice(i * m1Cols, i * m1Cols + m1Cols);
     temp[i] = row;
 }
-const m1 = f1.newMatrixFrom(temp);
+const m1 = f1.newMatrixFrom(temp) as JsMatrix;
 
 temp = new Array<bigint[]>(m2Rows);
 for (let i = 0; i < temp.length; i++) {
     let row = v2.values.slice(i * m2Cols, i * m2Cols + m2Cols);
     temp[i] = row;
 }
-const m2 = f1.newMatrixFrom(temp);
+const m2 = f1.newMatrixFrom(temp) as JsMatrix;
 console.log(`Built matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();

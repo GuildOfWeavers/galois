@@ -581,11 +581,11 @@ export class PrimeField implements FiniteField {
     }
 
     evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): JsVector {
-        if (p.length > rootsOfUnity.length) {
-            throw new Error('Number of roots of unity cannot be smaller than number of values');
+        if (!isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
         }
-        else if (!isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+        if (p.length > rootsOfUnity.length) {
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
 
         let pValues = p.toValues();
@@ -606,7 +606,7 @@ export class PrimeField implements FiniteField {
 
     evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): JsMatrix {
         if (!isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
+            throw new Error('Number of roots of unity must be a power of 2');
         }
 
         const pValues = p.toValues();
@@ -625,7 +625,7 @@ export class PrimeField implements FiniteField {
                 polys[i] = tValues;
             }
             else {
-                throw new Error('Number of roots of unity cannot be smaller than number of values');
+                throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
             }
         }
         
