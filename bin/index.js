@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const PrimeField_1 = require("./lib/PrimeField");
-const optimizations_1 = require("./lib/optimizations");
+const subfields_1 = require("./lib/subfields");
 // CONSTANTS
 // ================================================================================================
 const P128 = 2n ** 128n;
@@ -13,7 +13,7 @@ function createPrimeField(modulus, wasmOptions) {
         return new PrimeField_1.PrimeField(modulus);
     }
     if (modulus < P128 && modulus > (P128 - P64)) {
-        return new optimizations_1.WasmPrimeField128(modulus, wasmOptions);
+        return new subfields_1.WasmPrimeField128(modulus, wasmOptions);
     }
     else {
         return new PrimeField_1.PrimeField(modulus);

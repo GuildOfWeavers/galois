@@ -2,7 +2,7 @@
 // ================================================================================================
 import { WasmOptions, FiniteField } from '@guildofweavers/galois';
 import { PrimeField } from './lib/PrimeField';
-import { WasmPrimeField128 } from './lib/optimizations';
+import { WasmPrimeField128 } from './lib/subfields';
 
 // CONSTANTS
 // ================================================================================================
