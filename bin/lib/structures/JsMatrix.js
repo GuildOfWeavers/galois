@@ -14,7 +14,7 @@ class JsMatrix {
     // PROPERTIES
     // --------------------------------------------------------------------------------------------
     get byteLength() {
-        return this.values.length * this.elementSize;
+        return this.rowCount * this.colCount * this.elementSize;
     }
     // VALUE ACCESSORS
     // --------------------------------------------------------------------------------------------

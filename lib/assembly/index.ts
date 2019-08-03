@@ -40,7 +40,7 @@ export type WasmPrime128 = loader.ASUtil & {
     divPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void;
 
     evalPolyAt(pRef: number, xIdx: number, elementCount: number): number;
-    evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number; // TODO
+    evalPolyAtRoots(pRef: number, xRef: number, resRef: number, degreePlus1: number, rootCount: number): void;
     evalQuarticBatch(pRef: number, xRef: number, resRef: number, polyCount: number): void;
 
     interpolate(xRef: number, yRef: number, elementCount: number): number;  // TODO

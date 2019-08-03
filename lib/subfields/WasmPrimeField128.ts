@@ -515,8 +515,9 @@ export class WasmPrimeField128 implements FiniteField {
         }
 
         const pw = p as WasmVector128, xw = rootsOfUnity as WasmVector128;
-        const base = this.wasm.evalPolyAtRoots(pw.base, xw.base, pw.length, xw.length);
-        return new WasmVector128(this.wasm, p.length, base);
+        const result = this.newVector(xw.length);
+        this.wasm.evalPolyAtRoots(pw.base, xw.base, result.base, pw.length, xw.length);
+        return result;
     }
 
     evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): WasmMatrix128 {
@@ -527,7 +528,15 @@ export class WasmPrimeField128 implements FiniteField {
             throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
 
-        throw new Error('Not implemented'); // TODO
+        const pw = p as WasmMatrix128, xw = rootsOfUnity as WasmVector128;
+        const result = this.newMatrix(p.rowCount, xw.length);
+        let pRef = pw.base, resRef = result.base;
+        for (let i = 0; i < p.rowCount; i++) {
+            this.wasm.evalPolyAtRoots(pRef, xw.base, resRef, pw.colCount, xw.length);
+            pRef += pw.rowSize;
+            resRef += result.rowSize;
+        }
+        return result;
     }
 
     evalQuarticBatch(polys: Matrix, xs: Vector): WasmVector128 {

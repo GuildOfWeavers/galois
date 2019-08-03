@@ -448,8 +448,9 @@ class WasmPrimeField128 {
             throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
         const pw = p, xw = rootsOfUnity;
-        const base = this.wasm.evalPolyAtRoots(pw.base, xw.base, pw.length, xw.length);
-        return new structures_1.WasmVector128(this.wasm, p.length, base);
+        const result = this.newVector(xw.length);
+        this.wasm.evalPolyAtRoots(pw.base, xw.base, result.base, pw.length, xw.length);
+        return result;
     }
     evalPolysAtRoots(p, rootsOfUnity) {
         if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
@@ -458,7 +459,15 @@ class WasmPrimeField128 {
         if (p.colCount > rootsOfUnity.length) {
             throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
-        throw new Error('Not implemented'); // TODO
+        const pw = p, xw = rootsOfUnity;
+        const result = this.newMatrix(p.rowCount, xw.length);
+        let pRef = pw.base, resRef = result.base;
+        for (let i = 0; i < p.rowCount; i++) {
+            this.wasm.evalPolyAtRoots(pRef, xw.base, resRef, pw.colCount, xw.length);
+            pRef += pw.rowSize;
+            resRef += result.rowSize;
+        }
+        return result;
     }
     evalQuarticBatch(polys, xs) {
         if (polys.colCount !== 4) {

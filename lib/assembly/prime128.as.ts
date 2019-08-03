@@ -402,6 +402,8 @@ export function divPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: 
     }
 }
 
+// POLYNOMIAL EVALUATION
+// ================================================================================================
 export function evalPolyAt(pRef: usize, xIdx: u32, degreePlus1: u32): u32 {
 
     // load x value
@@ -420,13 +422,151 @@ export function evalPolyAt(pRef: usize, xIdx: u32, degreePlus1: u32): u32 {
     return 0;
 }
 
-export function evalPolyAtRoots(pRef: usize, xRef: usize, degreePlus1: u32, rootCount: u32): ArrayBuffer {
+export function evalPolyAtRoots(pRef: usize, xRef: usize, resRef: usize, degreePlus1: u32, rootCount: u32): void {
 
     let vRefEnd = pRef + degreePlus1 * VALUE_SIZE;
-    let result = fastFT(pRef, xRef, rootCount, vRefEnd, 0, 0);
-    return result;
+
+    // if only 4 values left, use simple FT
+    if (rootCount <= 4) {
+        let result = baseFT(pRef, xRef, vRefEnd, VALUE_SIZE, 0);
+        let rRef = changetype<usize>(result);
+        for (let i = 0; i < 64; i += 8) {
+            let v = load<u64>(rRef + i);
+            store<u64>(resRef + i, v);
+        }
+        return;
+    }
+    
+    let even = fastFT(pRef, xRef, rootCount, vRefEnd, 1, 0);
+    let eRef = changetype<usize>(even);
+    let odd  = fastFT(pRef, xRef, rootCount, vRefEnd, 1, VALUE_SIZE);
+    let oRef = changetype<usize>(odd);
+
+    let halfResultLength = (rootCount * VALUE_SIZE) >> 1;
+    let endRef = resRef + halfResultLength;
+    while (resRef < endRef) {
+        let yLo = load<u64>(oRef);
+        let yHi = load<u64>(oRef, HALF_OFFSET);
+
+        let xLo = load<u64>(xRef);
+        let xHi = load<u64>(xRef, HALF_OFFSET);
+
+        // yr = (y * r) % m
+        modMul(yHi, yLo, xHi, xLo);
+        yLo = _rLo, yHi = _rHi;
+
+        xLo = load<u64>(eRef);
+        xHi = load<u64>(eRef, HALF_OFFSET);
+
+        // result[i] = (x + yr) % m
+        modAdd(xHi, xLo, yHi, yLo);
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        // result[i + halfLength] = (x - yr) % m
+        modSub(xHi, xLo, yHi, yLo);
+        store<u64>(resRef + halfResultLength, _rLo);
+        store<u64>(resRef + halfResultLength, _rHi, HALF_OFFSET);
+
+        oRef += VALUE_SIZE;
+        eRef += VALUE_SIZE;
+        xRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
+    }
 }
 
+export function evalQuarticBatch(pRef: usize, xRef: usize, resRef: usize, polyCount: u32): void {
+    let resultLength = polyCount * VALUE_SIZE;
+    let refEnd = resRef + resultLength;
+    let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
+
+    let kLo: u64, kHi: u64, xLo: u64, xHi: u64, xpLo: u64, xpHi: u64, rLo: u64, rHi: u64;
+
+    while (resRef < refEnd) {
+        // term 0
+        rLo = load<u64>(pRef);
+        rHi = load<u64>(pRef, HALF_OFFSET);
+
+        // term 1
+        kLo = load<u64>(pRef, VALUE_SIZE);
+        kHi = load<u64>(pRef, VALUE_SIZE + HALF_OFFSET);
+
+        xLo = load<u64>(xRef);
+        xHi = load<u64>(xRef, HALF_OFFSET);
+
+        modMul(kHi, kLo, xHi, xLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 2
+        kLo = load<u64>(pRef, VALUE_SIZE * 2);
+        kHi = load<u64>(pRef, VALUE_SIZE * 2 + HALF_OFFSET);
+
+        modMul(xHi, xLo, xHi, xLo);
+        xpLo = _rLo; xpHi = _rHi;   // xp = x*x
+
+        modMul(kHi, kLo, xpHi, xpLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 3
+        kLo = load<u64>(pRef, VALUE_SIZE * 3);
+        kHi = load<u64>(pRef, VALUE_SIZE * 3 + HALF_OFFSET);
+
+        modMul(xpHi, xpLo, xHi, xLo);   // x*x*x
+        modMul(kHi, kLo, _rHi, _rLo);
+        modAdd(rHi, rLo, _rHi, _rLo);
+
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        resRef += VALUE_SIZE;
+        xRef += VALUE_SIZE;
+        pRef += rowSize;
+    }
+}
+
+function evalPoly(pRef: usize, xHi: u64, xLo: u64, degreePlus1: u32): void {
+
+    // set y to degree 0 term
+    let yLo = load<u64>(pRef);
+    let yHi = load<u64>(pRef, HALF_OFFSET);
+    
+    if (degreePlus1 > 1) {
+        let pRefEnd = pRef + degreePlus1 * VALUE_SIZE;
+        pRef += VALUE_SIZE;
+    
+        // compute degree 1 term
+        let kLo = load<u64>(pRef);
+        let kHi = load<u64>(pRef, HALF_OFFSET);
+        modMul(kHi, kLo, xHi, xLo);
+        modAdd(yHi, yLo, _rHi, _rLo);
+        yLo = _rLo; yHi = _rHi;
+
+        // compute all other terms
+        pRef += VALUE_SIZE;
+        let pxLo = xLo, pxHi = xHi;
+        while (pRef < pRefEnd) {
+            let kLo = load<u64>(pRef);
+            let kHi = load<u64>(pRef, HALF_OFFSET);
+    
+            modMul(pxHi, pxLo, xHi, xLo);
+            pxLo = _rLo; pxHi = _rHi;
+
+            modMul(kHi, kLo, pxHi, pxLo);
+            modAdd(yHi, yLo, _rHi, _rLo);
+            yLo = _rLo; yHi = _rHi;
+    
+            pRef += VALUE_SIZE;
+        }
+    }
+
+    // return the result
+    _rLo = yLo; _rHi = yHi;
+}
+
+// POLYNOMIAL INTERPOLATION
+// ================================================================================================
 export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayBuffer {
 
     let resultLength = elementCount * VALUE_SIZE;
@@ -578,57 +718,6 @@ export function interpolateRoots(rRef: usize, vRef: usize, resRef: usize, elemen
 
         resRef += VALUE_SIZE;
         fftRef += VALUE_SIZE;
-    }
-}
-
-export function evalQuarticBatch(pRef: usize, xRef: usize, resRef: usize, polyCount: u32): void {
-    let resultLength = polyCount * VALUE_SIZE;
-    let refEnd = resRef + resultLength;
-    let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
-
-    let kLo: u64, kHi: u64, xLo: u64, xHi: u64, xpLo: u64, xpHi: u64, rLo: u64, rHi: u64;
-
-    while (resRef < refEnd) {
-        // term 0
-        rLo = load<u64>(pRef);
-        rHi = load<u64>(pRef, HALF_OFFSET);
-
-        // term 1
-        kLo = load<u64>(pRef, VALUE_SIZE);
-        kHi = load<u64>(pRef, VALUE_SIZE + HALF_OFFSET);
-
-        xLo = load<u64>(xRef);
-        xHi = load<u64>(xRef, HALF_OFFSET);
-
-        modMul(kHi, kLo, xHi, xLo);
-        modAdd(rHi, rLo, _rHi, _rLo);
-        rLo = _rLo; rHi = _rHi;
-
-        // term 2
-        kLo = load<u64>(pRef, VALUE_SIZE * 2);
-        kHi = load<u64>(pRef, VALUE_SIZE * 2 + HALF_OFFSET);
-
-        modMul(xHi, xLo, xHi, xLo);
-        xpLo = _rLo; xpHi = _rHi;   // xp = x*x
-
-        modMul(kHi, kLo, xpHi, xpLo);
-        modAdd(rHi, rLo, _rHi, _rLo);
-        rLo = _rLo; rHi = _rHi;
-
-        // term 3
-        kLo = load<u64>(pRef, VALUE_SIZE * 3);
-        kHi = load<u64>(pRef, VALUE_SIZE * 3 + HALF_OFFSET);
-
-        modMul(xpHi, xpLo, xHi, xLo);   // x*x*x
-        modMul(kHi, kLo, _rHi, _rLo);
-        modAdd(rHi, rLo, _rHi, _rLo);
-
-        store<u64>(resRef, _rLo);
-        store<u64>(resRef, _rHi, HALF_OFFSET);
-
-        resRef += VALUE_SIZE;
-        xRef += VALUE_SIZE;
-        pRef += rowSize;
     }
 }
 
@@ -791,45 +880,6 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, resRef: usize,
     }
 }
 
-function evalPoly(pRef: usize, xHi: u64, xLo: u64, degreePlus1: u32): void {
-
-    // set y to degree 0 term
-    let yLo = load<u64>(pRef);
-    let yHi = load<u64>(pRef, HALF_OFFSET);
-    
-    if (degreePlus1 > 1) {
-        let pRefEnd = pRef + degreePlus1 * VALUE_SIZE;
-        pRef += VALUE_SIZE;
-    
-        // compute degree 1 term
-        let kLo = load<u64>(pRef);
-        let kHi = load<u64>(pRef, HALF_OFFSET);
-        modMul(kHi, kLo, xHi, xLo);
-        modAdd(yHi, yLo, _rHi, _rLo);
-        yLo = _rLo; yHi = _rHi;
-
-        // compute all other terms
-        pRef += VALUE_SIZE;
-        let pxLo = xLo, pxHi = xHi;
-        while (pRef < pRefEnd) {
-            let kLo = load<u64>(pRef);
-            let kHi = load<u64>(pRef, HALF_OFFSET);
-    
-            modMul(pxHi, pxLo, xHi, xLo);
-            pxLo = _rLo; pxHi = _rHi;
-
-            modMul(kHi, kLo, pxHi, pxLo);
-            modAdd(yHi, yLo, _rHi, _rLo);
-            yLo = _rLo; yHi = _rHi;
-    
-            pRef += VALUE_SIZE;
-        }
-    }
-
-    // return the result
-    _rLo = yLo; _rHi = yHi;
-}
-
 // FAST FOURIER TRANSFORM
 // ================================================================================================
 function fastFT(vRef: usize, rRef: usize, rootCount: u32, vRefEnd: u32, depth: u32, offset: u32): ArrayBuffer {
@@ -850,31 +900,31 @@ function fastFT(vRef: usize, rRef: usize, rootCount: u32, vRefEnd: u32, depth: u
     let result = new ArrayBuffer(resultLength);
     let resRef = changetype<usize>(result);
     
-    let halfLength = resultLength >> 1;
-    let endRef = resRef + halfLength;
+    let halfResultLength = resultLength >> 1;
+    let endRef = resRef + halfResultLength;
     while (resRef < endRef) {
         let yLo = load<u64>(oRef);
         let yHi = load<u64>(oRef, HALF_OFFSET);
 
-        let rLo = load<u64>(rRef);
-        let rHi = load<u64>(rRef, HALF_OFFSET);
+        let xLo = load<u64>(rRef);
+        let xHi = load<u64>(rRef, HALF_OFFSET);
 
         // yr = (y * r) % m
-        modMul(yHi, yLo, rHi, rLo);
-        let yrLo = _rLo, yrHi = _rHi;
+        modMul(yHi, yLo, xHi, xLo);
+        yLo = _rLo, yHi = _rHi;
 
-        let xLo = load<u64>(eRef);
-        let xHi = load<u64>(eRef, HALF_OFFSET);
+        xLo = load<u64>(eRef);
+        xHi = load<u64>(eRef, HALF_OFFSET);
 
         // result[i] = (x + yr) % m
-        modAdd(xHi, xLo, yrHi, yrLo);
+        modAdd(xHi, xLo, yHi, yLo);
         store<u64>(resRef, _rLo);
         store<u64>(resRef, _rHi, HALF_OFFSET);
 
         // result[i + halfLength] = (x - yr) % m
-        modSub(xHi, xLo, yrHi, yrLo);
-        store<u64>(resRef + halfLength, _rLo);
-        store<u64>(resRef + halfLength, _rHi, HALF_OFFSET);
+        modSub(xHi, xLo, yHi, yLo);
+        store<u64>(resRef + halfResultLength, _rLo);
+        store<u64>(resRef + halfResultLength, _rHi, HALF_OFFSET);
 
         oRef += VALUE_SIZE;
         eRef += VALUE_SIZE;

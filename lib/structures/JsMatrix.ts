@@ -23,7 +23,7 @@ export class JsMatrix implements Matrix {
     // PROPERTIES
     // --------------------------------------------------------------------------------------------
     get byteLength(): number {
-        return this.values.length * this.elementSize;
+        return this.rowCount * this.colCount * this.elementSize;
     }
 
     // VALUE ACCESSORS
