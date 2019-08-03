@@ -143,16 +143,18 @@ class WasmPrimeField128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
             const aw = a;
-            const base = this.wasm.divArrayElements2(aw.base, 0, a.length);
-            return new structures_1.WasmVector128(this.wasm, a.length, base);
+            const result = this.newVector(a.length);
+            this.wasm.divArrayElements2(aw.base, 0, result.base, a.length);
+            return result;
         }
         else {
             if (a.length !== b.length) {
                 throw new Error('Cannot divide vector elements: vectors have different lengths');
             }
             const aw = a, bw = b;
-            const base = this.wasm.divArrayElements(aw.base, bw.base, a.length);
-            return new structures_1.WasmVector128(this.wasm, a.length, base);
+            const result = this.newVector(a.length);
+            this.wasm.divArrayElements1(aw.base, bw.base, result.base, a.length);
+            return result;
         }
     }
     expVectorElements(a, b) {
@@ -175,8 +177,9 @@ class WasmPrimeField128 {
     }
     invVectorElements(source) {
         const sw = source;
-        const base = this.wasm.invArrayElements(sw.base, sw.length);
-        return new structures_1.WasmVector128(this.wasm, sw.length, base);
+        const result = this.newVector(sw.length);
+        this.wasm.invArrayElements(sw.base, result.base, sw.length);
+        return result;
     }
     combineVectors(a, b) {
         if (a.length !== b.length) {
@@ -278,16 +281,18 @@ class WasmPrimeField128 {
         if (typeof b === 'bigint') {
             this.loadInput(b, 0);
             const aw = a;
-            const base = this.wasm.divArrayElements2(aw.base, 0, aw.elementCount);
-            return new structures_1.WasmMatrix128(this.wasm, a.rowCount, a.colCount, base);
+            const result = this.newMatrix(a.rowCount, a.colCount);
+            this.wasm.divArrayElements2(aw.base, 0, result.base, aw.elementCount);
+            return result;
         }
         else {
             if (a.rowCount !== b.rowCount || a.colCount !== b.colCount) {
                 throw new Error('Cannot divide matrix elements: matrixes have different dimensions');
             }
             const aw = a, bw = b;
-            const base = this.wasm.divArrayElements(aw.base, bw.base, aw.elementCount);
-            return new structures_1.WasmMatrix128(this.wasm, a.rowCount, a.colCount, base);
+            const result = this.newMatrix(a.rowCount, b.rowCount);
+            this.wasm.divArrayElements1(aw.base, bw.base, result.base, aw.elementCount);
+            return result;
         }
     }
     expMatrixElements(a, b) {
@@ -310,8 +315,9 @@ class WasmPrimeField128 {
     }
     invMatrixElements(source) {
         const sw = source;
-        const base = this.wasm.invArrayElements(sw.base, sw.elementCount);
-        return new structures_1.WasmMatrix128(this.wasm, sw.rowCount, sw.colCount, base);
+        const result = this.newMatrix(sw.rowCount, sw.colCount);
+        this.wasm.invArrayElements(sw.base, result.base, sw.elementCount);
+        return result;
     }
     mulMatrixes(a, b) {
         const n = a.rowCount, m = a.colCount, p = b.colCount;

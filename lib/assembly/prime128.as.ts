@@ -112,17 +112,25 @@ export function mulArrayElements2(aRef: usize, bIdx: u32, resRef: usize, element
     arrayScalarOp(aRef, bRef, resRef, elementCount, modMul);
 }
 
-export function divArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
-    let result = invArrayElements(bRef, elementCount);
-    let rRef = changetype<usize>(result);
-    arrayElementOp(aRef, rRef, rRef, elementCount, modMul);
-    return result;
+export function divArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
+    let rRef = resRef;
+    if (aRef == resRef) {
+        // @ts-ignore
+        rRef = __retain(__alloc(elementCount * VALUE_SIZE,0));
+    }
+
+    invArrayElements(bRef, rRef, elementCount);
+    arrayElementOp(aRef, rRef, resRef, elementCount, modMul);
+
+    if (aRef == resRef) {
+        // @ts-ignore
+        __release(rRef);
+    }
 }
 
-export function divArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+export function divArrayElements2(aRef: usize, bIdx: u32, resRef: usize, elementCount: u32): void {
+    
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
-
     let bLo = load<u64>(bRef);
     let bHi = load<u64>(bRef, HALF_OFFSET);
 
@@ -130,9 +138,7 @@ export function divArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): Ar
     store<u64>(bRef, _rLo);
     store<u64>(bRef, _rHi, HALF_OFFSET);
 
-    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
-
-    return result;
+    arrayScalarOp(aRef, bRef, resRef, elementCount, modMul);
 }
 
 export function expArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
@@ -144,15 +150,20 @@ export function expArrayElements2(aRef: usize, bIdx: u32, resRef: usize, element
     arrayScalarOp(aRef, bRef, resRef, elementCount, modExp);
 }
 
-export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    let rRef = changetype<usize>(result);
+export function invArrayElements(sRef: usize, resRef: usize, elementCount: u32): void {
 
+    let resultLength: i32 = elementCount * VALUE_SIZE;
     let sHi: u64, sLo: u64, rHi: u64, rLo: u64;
+    let rRef = resRef;
 
-    let lastHi: u64 = 0;
-    let lastLo: u64 = 1;
-    for (let i = 0; i < result.byteLength; i += VALUE_SIZE) {
+    // handle the case if source and result arrays are the same
+    if (sRef == resRef) {
+        // @ts-ignore
+        rRef = __retain(__alloc(resultLength, 0));
+    }
+
+    let lastLo: u64 = 1, lastHi: u64 = 0;
+    for (let i = 0; i < resultLength; i += VALUE_SIZE) {
         // result[i] = last;
         store<u64>(rRef + i, lastLo);
         store<u64>(rRef + i, lastHi, HALF_OFFSET);
@@ -170,7 +181,7 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
     modInv(lastHi, lastLo);
     let invHi = _rHi, invLo = _rLo;
 
-    for (let i: i32 = result.byteLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
+    for (let i: i32 = resultLength - VALUE_SIZE; i >= 0; i -= VALUE_SIZE) {
         sLo = load<u64>(sRef + i);
         sHi = load<u64>(sRef + i, HALF_OFFSET);
 
@@ -183,17 +194,20 @@ export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
             rLo = load<u64>(rRef + i);
             rHi = load<u64>(rRef + i, HALF_OFFSET);
             modMul(rHi, rLo, invHi, invLo);
-            rHi = _rHi; rLo = _rLo;
+            rLo = _rLo; rHi = _rHi;
         }
-        store<u64>(rRef + i, rLo);
-        store<u64>(rRef + i, rHi, HALF_OFFSET);
+        store<u64>(resRef + i, rLo);
+        store<u64>(resRef + i, rHi, HALF_OFFSET);
 
         // inv = mul(inv, source[i] || 1n);
         modMul(invHi, invLo, sHi, sLo);
-        invHi = _rHi; invLo = _rLo;
+        invLo = _rLo; invHi = _rHi;
     }
 
-    return result;
+    if (sRef == resRef) {
+        // @ts-ignore
+        __release(rRef);
+    }
 }
 
 function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
@@ -484,8 +498,9 @@ export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayB
     }
 
     // 4 --- compute the inverse
-    let invDenominators = invArrayElements(denRef, elementCount);
+    let invDenominators = new ArrayBuffer(elementCount * VALUE_SIZE);
     let iRef = changetype<usize>(invDenominators);
+    invArrayElements(denRef, iRef, elementCount);
 
     // 5 --- finish interpolation
     numRef = changetype<usize>(numerators);
@@ -740,8 +755,9 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, resRef: usize,
     
     evalQuarticBatch(eqRef, xRefOrig, resRef, elementCount);
 
-    let invEvaluations = invArrayElements(resRef, elementCount);
+    let invEvaluations = new ArrayBuffer(elementCount * VALUE_SIZE);
     let iyRef = changetype<usize>(invEvaluations);
+    invArrayElements(resRef, iyRef, elementCount);
     arrayElementOp(iyRef, yRef, iyRef, elementCount, modMul);
 
     let temp = new ArrayBuffer(equationSize);

@@ -24,11 +24,11 @@ export type WasmPrime128 = loader.ASUtil & {
     subArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
     mulArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
     mulArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
-    divArrayElements(aRef: number, bRef: number, elementCount: number): number;     // TODO
-    divArrayElements2(aRef: number, bIdx: number, elementCount: number): number;    // TODO
+    divArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
+    divArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
     expArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
     expArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
-    invArrayElements(sourceRef: number, elementCount: number): number;  // TODO
+    invArrayElements(sourceRef: number, resRef: number, elementCount: number): void;
 
     getPowerSeries(seedIdx: number, resRef: number, length: number): void;
 
