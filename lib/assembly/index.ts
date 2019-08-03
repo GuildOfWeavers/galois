@@ -16,37 +16,36 @@ export type WasmPrime128 = loader.ASUtil & {
     setModulus(mHi1: number, mHi2: number, mLo1: number, mLo2: number): void;
 
     newArray(elementCount: number, sRef: number, sElementCount: number): number;
-    transposeArray(vRef: number, rowCount: number, colCount: number): number;
+    transposeArray(vRef: number, resRef: number, rowCount: number, colCount: number): void;
 
-    addArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    addArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
-    subArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    subArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
-    mulArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    mulArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
-    mulArrayElements3(aRef: number, bRef: number, rRef: number, elementCount: number): void;
-    divArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    divArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
-    expArrayElements(aRef: number, bRef: number, elementCount: number): number;
-    expArrayElements2(aRef: number, bIdx: number, elementCount: number): number;
-    invArrayElements(sourceRef: number, elementCount: number): number;
+    addArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
+    addArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
+    subArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
+    subArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
+    mulArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
+    mulArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
+    divArrayElements(aRef: number, bRef: number, elementCount: number): number;     // TODO
+    divArrayElements2(aRef: number, bIdx: number, elementCount: number): number;    // TODO
+    expArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
+    expArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
+    invArrayElements(sourceRef: number, elementCount: number): number;  // TODO
 
-    getPowerSeries(length: number, seedIdx: number): number;
+    getPowerSeries(seedIdx: number, resRef: number, length: number): void;
 
     combineVectors(aRef: number, bRef: number, elementCount: number): number;
 
-    mulMatrixes(aRef: number, bRef: number, n: number, m: number, p: number): number;
+    mulMatrixes(aRef: number, bRef: number, resRef: number, n: number, m: number, p: number): void;
 
-    mulPolys(aRef: number, bRef: number, aElementCount: number, bElementCount: number): number;
-    divPolys(aRef: number, bRef: number, aElementCount: number, bElementCount: number): number
+    mulPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void;
+    divPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void;
 
     evalPolyAt(pRef: number, xIdx: number, elementCount: number): number;
-    evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number;
-    evalQuarticBatch(pRef: number, xRef: number, polyCount: number): number;
+    evalPolyAtRoots(pRef: number, rRef: number, polyDegree: number, rootCount: number): number; // TODO
+    evalQuarticBatch(pRef: number, xRef: number, resRef: number, polyCount: number): void;
 
-    interpolate(xRef: number, yRef: number, elementCount: number): number;
-    interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): number;
-    interpolateQuarticBatch(xRef: number, yRef: number, rowCount: number): number;
+    interpolate(xRef: number, yRef: number, elementCount: number): number;  // TODO
+    interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): void;
+    interpolateQuarticBatch(xRef: number, yRef: number, resRef: number, rowCount: number): void;
 }
 
 // PUBLIC MODULE

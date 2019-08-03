@@ -62,73 +62,54 @@ export function newArray(elementCount: u32, sRef: usize, sElementCount: u32): Ar
     return result;
 }
 
-export function transposeArray(vRef: usize, rowCount: u32, colCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(rowCount * colCount * VALUE_SIZE);
-    let rRef = changetype<usize>(result);
-
-    let rEndRef = rRef + result.byteLength;
-    let vEndRef = vRef + result.byteLength;
+export function transposeArray(vRef: usize, resRef: usize, rowCount: u32, colCount: u32): void {
+    
+    let resultLength = rowCount * colCount * VALUE_SIZE;
+    let rEndRef = resRef + resultLength;
+    let vEndRef = vRef + resultLength;
     let colLength = rowCount * VALUE_SIZE;
 
-    while (rRef < rEndRef) {
+    while (resRef < rEndRef) {
         let viRef = vRef;
         while (viRef < vEndRef) {
             let vLo = load<u64>(viRef);
             let vHi = load<u64>(viRef, HALF_OFFSET);
 
-            store<u64>(rRef, vLo);
-            store<u64>(rRef, vHi, HALF_OFFSET);
+            store<u64>(resRef, vLo);
+            store<u64>(resRef, vHi, HALF_OFFSET);
 
-            rRef += VALUE_SIZE;
+            resRef += VALUE_SIZE;
             viRef += colLength;
         }
         vRef += VALUE_SIZE;
     }
-
-    return result;
 }
 
-export function addArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modAdd);
-    return result;
+export function addArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
+    arrayElementOp(aRef, bRef, resRef, elementCount, modAdd);
 }
 
-export function addArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+export function addArrayElements2(aRef: usize, bIdx: u32, resRef: usize, elementCount: u32): void {
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
-    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modAdd);
-    return result;
+    arrayScalarOp(aRef, bRef, resRef, elementCount, modAdd);
 }
 
-export function subArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modSub);
-    return result;
+export function subArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
+    arrayElementOp(aRef, bRef, resRef, elementCount, modSub);
 }
 
-export function subArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+export function subArrayElements2(aRef: usize, bIdx: u32, resRef: usize, elementCount: u32): void {
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
-    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modSub);
-    return result;
+    arrayScalarOp(aRef, bRef, resRef, elementCount, modSub);
 }
 
-export function mulArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
-    return result;
+export function mulArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
+    arrayElementOp(aRef, bRef, resRef, elementCount, modMul);
 }
 
-export function mulArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+export function mulArrayElements2(aRef: usize, bIdx: u32, resRef: usize, elementCount: u32): void {
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
-    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modMul);
-    return result;
-}
-
-export function mulArrayElements3(aRef: usize, bRef: usize, rRef: usize, elementCount: u32): void {
-    arrayElementOp(aRef, bRef, rRef, elementCount, modMul);
+    arrayScalarOp(aRef, bRef, resRef, elementCount, modMul);
 }
 
 export function divArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
@@ -154,17 +135,13 @@ export function divArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): Ar
     return result;
 }
 
-export function expArrayElements(aRef: usize, bRef: usize, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    arrayElementOp(aRef, bRef, changetype<usize>(result), elementCount, modExp);
-    return result;
+export function expArrayElements1(aRef: usize, bRef: usize, resRef: usize, elementCount: u32): void {
+    arrayElementOp(aRef, bRef, resRef, elementCount, modExp);
 }
 
-export function expArrayElements2(aRef: usize, bIdx: u32, elementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
+export function expArrayElements2(aRef: usize, bIdx: u32, resRef: usize, elementCount: u32): void {
     let bRef = changetype<usize>(_inputs) + bIdx * VALUE_SIZE;
-    arrayScalarOp(aRef, bRef, changetype<usize>(result), elementCount, modExp);
-    return result;
+    arrayScalarOp(aRef, bRef, resRef, elementCount, modExp);
 }
 
 export function invArrayElements(sRef: usize, elementCount: u32): ArrayBuffer {
@@ -294,9 +271,7 @@ export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32
 
 // MATRIX FUNCTIONS
 // ================================================================================================
-export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): ArrayBuffer {
-    let result = new ArrayBuffer(n * p * VALUE_SIZE);
-    let rRef = changetype<usize>(result);
+export function mulMatrixes(aRef: usize, bRef: usize, resRef: usize, n: u32, m: u32, p: u32): void {
 
     let aLo: u64, aHi: u64, bLo: u64, bHi: u64, sHi: u64, sLo: u64;
     let aRowSize = m * VALUE_SIZE;
@@ -322,51 +297,44 @@ export function mulMatrixes(aRef: usize, bRef: usize, n: u32, m: u32, p: u32): A
                 sHi = _rHi; sLo = _rLo;
             }
 
-            let rValueRef = rRef + bRowSize * i + j * VALUE_SIZE;
+            let rValueRef = resRef + bRowSize * i + j * VALUE_SIZE;
             store<u64>(rValueRef, sLo);
             store<u64>(rValueRef, sHi, HALF_OFFSET);
         }
     }
-
-    return result;
 }
 
 // POWER FUNCTIONS
 // ================================================================================================
-export function getPowerSeries(length: u32, seedIdx: u32): ArrayBuffer {
-    let arraySize = length * VALUE_SIZE;
-    let result = new ArrayBuffer(arraySize);
-    let rRef = changetype<usize>(result);
-    let endRef = rRef + arraySize;
+export function getPowerSeries(seedIdx: u32, resRef: usize, length: u32): void {
+    let resultLength = length * VALUE_SIZE;
+    let endRef = resRef + resultLength;
 
     let sRef = changetype<usize>(_inputs) + seedIdx * VALUE_SIZE;
     let sLo = load<u64>(sRef);
     let sHi = load<u64>(sRef, HALF_OFFSET);
 
     let pLo: u64 = 1, pHi: u64 = 0;
-    store<u64>(rRef, pLo);
-    store<u64>(rRef, pHi, HALF_OFFSET);
+    store<u64>(resRef, pLo);
+    store<u64>(resRef, pHi, HALF_OFFSET);
+    resRef += VALUE_SIZE;
 
-    for (let riRef: u32 = rRef + VALUE_SIZE; riRef < endRef; riRef += VALUE_SIZE) {
+    while (resRef < endRef) {
         modMul(pHi, pLo, sHi, sLo);
         pLo = _rLo; pHi = _rHi;
 
-        store<u64>(riRef, pLo);
-        store<u64>(riRef, pHi, HALF_OFFSET);
-    }
+        store<u64>(resRef, pLo);
+        store<u64>(resRef, pHi, HALF_OFFSET);
 
-    return result;
+        resRef += VALUE_SIZE;
+    }
 }
 
 // POLYNOMIAL FUNCTIONS
 // ================================================================================================
-export function mulPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementCount: u32): ArrayBuffer {
-    let aLength = aElementCount * VALUE_SIZE;
-    let bLength = bElementCount * VALUE_SIZE;
-
-    let resultLength = aLength + bLength - VALUE_SIZE;
-    let result = new ArrayBuffer(resultLength);
-    let resRef = changetype<usize>(result);
+export function mulPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: u32, bDegreePlus1: u32): void {
+    let aLength = aDegreePlus1 * VALUE_SIZE;
+    let bLength = bDegreePlus1 * VALUE_SIZE;
 
     for (let i: u32 = 0; i < aLength; i += VALUE_SIZE) {
         for (let j: u32 = 0; j < bLength; j += VALUE_SIZE) {
@@ -382,26 +350,16 @@ export function mulPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementC
             store<u64>(rRef, _rHi, HALF_OFFSET);
         }
     }
-
-    return result;
 }
 
-export function divPolys(aRef: usize, bRef: usize, aElementCount: u32, bElementCount: u32): ArrayBuffer {
-    let resultLength = (aElementCount - bElementCount) * VALUE_SIZE + VALUE_SIZE;
-    let result = new ArrayBuffer(resultLength);
-    let resRef = changetype<usize>(result);
-    divPolys2(aRef, bRef, resRef, aElementCount, bElementCount);
-    return result;
-}
-
-export function divPolys2(aRef: usize, bRef: usize, resRef: usize, aElementCount: u32, bElementCount: u32): void {
-    let aPos = <i32>(aElementCount * VALUE_SIZE - VALUE_SIZE);
-    let bPos = <i32>(bElementCount * VALUE_SIZE - VALUE_SIZE);
+export function divPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: u32, bDegreePlus1: u32): void {
+    let aPos = <i32>(aDegreePlus1 * VALUE_SIZE - VALUE_SIZE);
+    let bPos = <i32>(bDegreePlus1 * VALUE_SIZE - VALUE_SIZE);
 
     let diff = <i32>(aPos - bPos);
     let resultLength = diff + VALUE_SIZE;
     
-    let aCopy = newArray(aElementCount, aRef, aElementCount);
+    let aCopy = newArray(aDegreePlus1, aRef, aDegreePlus1);
     aRef = changetype<usize>(aCopy);
     
     for (let p = resultLength - VALUE_SIZE; diff >= 0; diff -= VALUE_SIZE, aPos -= VALUE_SIZE, p -= VALUE_SIZE) {
@@ -448,10 +406,10 @@ export function evalPolyAt(pRef: usize, xIdx: u32, degreePlus1: u32): u32 {
     return 0;
 }
 
-export function evalPolyAtRoots(pRef: usize, rRef: usize, polyDegree: u32, rootCount: u32): ArrayBuffer {
+export function evalPolyAtRoots(pRef: usize, xRef: usize, degreePlus1: u32, rootCount: u32): ArrayBuffer {
 
-    let vRefEnd = pRef + polyDegree * VALUE_SIZE;
-    let result = fastFT(pRef, rRef, rootCount, vRefEnd, 0, 0);
+    let vRefEnd = pRef + degreePlus1 * VALUE_SIZE;
+    let result = fastFT(pRef, xRef, rootCount, vRefEnd, 0, 0);
     return result;
 }
 
@@ -508,7 +466,7 @@ export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayB
         store<u64>(divRef, _rLo);
         store<u64>(divRef, _rHi, HALF_OFFSET);
 
-        divPolys2(zRef, divRef, numRef, elementCount + 1, 2);
+        divPolys(zRef, divRef, numRef, elementCount + 1, 2);
     }
 
     // 3 --- build denominators
@@ -608,15 +566,14 @@ export function interpolateRoots(rRef: usize, vRef: usize, resRef: usize, elemen
     }
 }
 
-export function evalQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(polyCount * VALUE_SIZE);
-    let rRef = changetype<usize>(result);
-    let refEnd = rRef + result.byteLength;
+export function evalQuarticBatch(pRef: usize, xRef: usize, resRef: usize, polyCount: u32): void {
+    let resultLength = polyCount * VALUE_SIZE;
+    let refEnd = resRef + resultLength;
     let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
 
     let kLo: u64, kHi: u64, xLo: u64, xHi: u64, xpLo: u64, xpHi: u64, rLo: u64, rHi: u64;
 
-    while (rRef < refEnd) {
+    while (resRef < refEnd) {
         // term 0
         rLo = load<u64>(pRef);
         rHi = load<u64>(pRef, HALF_OFFSET);
@@ -651,18 +608,16 @@ export function evalQuarticBatch(pRef: usize, xRef: usize, polyCount: u32): Arra
         modMul(kHi, kLo, _rHi, _rLo);
         modAdd(rHi, rLo, _rHi, _rLo);
 
-        store<u64>(rRef, _rLo);
-        store<u64>(rRef, _rHi, HALF_OFFSET);
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
 
-        rRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
         xRef += VALUE_SIZE;
         pRef += rowSize;
     }
-
-    return result;
 }
 
-export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32): ArrayBuffer {
+export function interpolateQuarticBatch(xRef: usize, yRef: usize, resRef: usize, rowCount: u32): void {
     
     let equationSize = VALUE_SIZE << 2;                             // 4 values per equation
     let eqRowSize = equationSize << 2;                              // 4 equations per row
@@ -783,10 +738,9 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32)
     let elementCount = rowCount << 2;
     eqRef = changetype<usize>(equations);
     
-    let result = evalQuarticBatch(eqRef, xRefOrig, elementCount);
-    let rRef = changetype<usize>(result);
+    evalQuarticBatch(eqRef, xRefOrig, resRef, elementCount);
 
-    let invEvaluations = invArrayElements(rRef, elementCount);
+    let invEvaluations = invArrayElements(resRef, elementCount);
     let iyRef = changetype<usize>(invEvaluations);
     arrayElementOp(iyRef, yRef, iyRef, elementCount, modMul);
 
@@ -795,32 +749,30 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, rowCount: u32)
 
     while (eqRef < eqRefEnd) {
 
-        arrayScalarOp(eqRef, iyRef, rRef, 4, modMul);
+        arrayScalarOp(eqRef, iyRef, resRef, 4, modMul);
 
         iyRef += VALUE_SIZE;
         eqRef += equationSize;
 
         arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
-        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+        arrayElementOp(resRef, tRef, resRef, 4, modAdd);
 
         iyRef += VALUE_SIZE;
         eqRef += equationSize;
 
         arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
-        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+        arrayElementOp(resRef, tRef, resRef, 4, modAdd);
 
         iyRef += VALUE_SIZE;
         eqRef += equationSize;
 
         arrayScalarOp(eqRef, iyRef, tRef, 4, modMul);
-        arrayElementOp(rRef, tRef, rRef, 4, modAdd);
+        arrayElementOp(resRef, tRef, resRef, 4, modAdd);
 
-        rRef += equationSize;
+        resRef += equationSize;
         iyRef += VALUE_SIZE;
         eqRef += equationSize;
     }
-
-    return result;
 }
 
 function evalPoly(pRef: usize, xHi: u64, xLo: u64, degreePlus1: u32): void {
