@@ -9,18 +9,9 @@ const MASK_64B = 0xffffffffffffffffn;
 // CLASS DEFINITION
 // ================================================================================================
 class WasmVector128 {
-    constructor(wasm, length, baseOrSource) {
+    constructor(wasm, length, base) {
         this.wasm = wasm;
-        if (typeof baseOrSource === 'number') {
-            this.base = baseOrSource;
-        }
-        else if (baseOrSource) {
-            let elementsToCopy = Math.min(length, baseOrSource.length);
-            this.base = this.wasm.newArray(length, baseOrSource.base, elementsToCopy);
-        }
-        else {
-            this.base = this.wasm.newArray(length, 0, 0);
-        }
+        this.base = base === undefined ? this.wasm.newArray(length) : base;
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
     }

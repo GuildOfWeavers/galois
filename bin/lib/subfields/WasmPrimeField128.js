@@ -40,6 +40,9 @@ class WasmPrimeField128 {
     get one() {
         return 1n;
     }
+    get memorySize() {
+        return this.wasm.U8.byteLength;
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value) {
@@ -190,16 +193,45 @@ class WasmPrimeField128 {
         return this.readOutput(idx);
     }
     combineManyVectors(v, k) {
-        throw new Error('Not implemented'); // TODO
+        if (v.length != k.length) {
+            throw new Error('Number of vectors must be the same as the number of coefficients');
+        }
+        const vw = v, kw = k;
+        const vRef = this.wasm.newRefArray(v.length);
+        const vIdx = vRef >>> 3;
+        for (let i = 0; i < vw.length; i++) {
+            this.wasm.U64[vIdx + i] = BigInt(vw[i].base);
+        }
+        const resultLength = v[0].length;
+        const result = this.newVector(resultLength);
+        this.wasm.combineManyVectors(vRef, kw.base, result.base, resultLength, k.length);
+        return result;
     }
     pluckVector(v, skip, times) {
-        throw new Error('Not implemented'); // TODO
+        const vw = v;
+        const result = this.newVector(times);
+        this.wasm.pluckArray(vw.base, result.base, skip, vw.length, result.length);
+        return result;
     }
     truncateVector(v, newLength) {
-        throw new Error('Not implemented'); //TODO
+        if (v.length < newLength) {
+            newLength = v.length;
+        }
+        const vw = v;
+        const result = this.newVector(newLength);
+        this.wasm.copyArrayElements(vw.base, result.base, newLength);
+        return result;
     }
     duplicateVector(v, times = 1) {
-        throw new Error('Not implemented'); //TODO
+        let currentLength = v.length;
+        const resultLength = currentLength << times;
+        const result = this.newVector(resultLength);
+        while (currentLength < resultLength) {
+            let offset = currentLength * result.elementSize;
+            this.wasm.copyArrayElements(result.base, result.base + offset, currentLength);
+            currentLength = currentLength << 1;
+        }
+        return result;
     }
     vectorToMatrix(v, columns) {
         const rowCount = v.length / columns;
@@ -344,7 +376,7 @@ class WasmPrimeField128 {
             throw new Error('Number of columns must be the same as vector length');
         }
         const aw = a, bw = b;
-        const result = new structures_1.WasmMatrix128(this.wasm, a.rowCount, a.colCount);
+        const result = this.newMatrix(a.rowCount, a.colCount);
         let aRef = aw.base, rRef = result.base;
         for (let i = 0; i < a.rowCount; i++) {
             this.wasm.mulArrayElements1(aRef, bw.base, rRef, b.length);
@@ -379,14 +411,14 @@ class WasmPrimeField128 {
         // TODO: improve
         let result;
         if (a.length > b.length) {
-            let newB = new structures_1.WasmVector128(this.wasm, a.length, b);
-            result = this.addVectorElements(a, newB);
-            this.wasm.__release(newB.base);
+            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
+            //result = this.addVectorElements(a, newB);
+            //this.wasm.__release(newB.base);
         }
         else if (a.length < b.length) {
-            let newA = new structures_1.WasmVector128(this.wasm, b.length, a);
-            result = this.addVectorElements(newA, b);
-            this.wasm.__release(newA.base);
+            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
+            //result = this.addVectorElements(newA, b);
+            //this.wasm.__release(newA.base);
         }
         else {
             result = this.addVectorElements(a, b);
@@ -397,14 +429,14 @@ class WasmPrimeField128 {
         // TODO: improve
         let result;
         if (a.length > b.length) {
-            let newB = new structures_1.WasmVector128(this.wasm, a.length, b);
-            result = this.subVectorElements(a, newB);
-            this.wasm.__release(newB.base);
+            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
+            //result = this.subVectorElements(a, newB);
+            //this.wasm.__release(newB.base);
         }
         else if (a.length < b.length) {
-            let newA = new structures_1.WasmVector128(this.wasm, b.length, a);
-            result = this.subVectorElements(newA, b);
-            this.wasm.__release(newA.base);
+            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
+            //result = this.subVectorElements(newA, b);
+            //this.wasm.__release(newA.base);
         }
         else {
             result = this.subVectorElements(a, b);
@@ -499,17 +531,17 @@ class WasmPrimeField128 {
         const rw = rootsOfUnity;
         if (ys instanceof structures_1.WasmVector128) {
             if (rootsOfUnity.length !== ys.length) {
-                throw new Error(''); // TODO
+                throw new Error('Number of roots of unity must be the same as the number of y coordinates');
             }
-            const result = new structures_1.WasmVector128(this.wasm, rootsOfUnity.length);
+            const result = this.newVector(rootsOfUnity.length);
             this.wasm.interpolateRoots(rw.base, ys.base, result.base, ys.length);
             return result;
         }
         else if (ys instanceof structures_1.WasmMatrix128) {
             if (rootsOfUnity.length !== ys.rowCount) {
-                throw new Error(''); // TODO
+                throw new Error('Number of roots of unity must be the same as the number of y coordinates');
             }
-            const result = new structures_1.WasmMatrix128(this.wasm, ys.rowCount, ys.colCount);
+            const result = this.newMatrix(ys.rowCount, ys.colCount);
             let yRef = ys.base, resRef = result.base;
             for (let i = 0; i < ys.rowCount; i++) {
                 this.wasm.interpolateRoots(rw.base, yRef, resRef, ys.colCount);

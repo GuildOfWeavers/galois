@@ -20,21 +20,9 @@ export class WasmVector128 implements Vector {
     readonly length         : number;
     readonly byteLength     : number;
 
-    constructor(wasm: WasmPrime128, length: number)
-    constructor(wasm: WasmPrime128, length: number, base: number)
-    constructor(wasm: WasmPrime128, length: number, source: WasmVector128)
-    constructor(wasm: WasmPrime128, length: number, baseOrSource?: number | WasmVector128) {
+    constructor(wasm: WasmPrime128, length: number, base?: number) {
         this.wasm = wasm;
-        if (typeof baseOrSource === 'number') {
-            this.base = baseOrSource;    
-        }
-        else if (baseOrSource) {
-            let elementsToCopy = Math.min(length, baseOrSource.length);
-            this.base = this.wasm.newArray(length, baseOrSource.base, elementsToCopy);
-        }
-        else {
-            this.base = this.wasm.newArray(length, 0, 0);
-        }
+        this.base = base === undefined ? this.wasm.newArray(length) : base;
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
     }

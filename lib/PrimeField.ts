@@ -227,8 +227,8 @@ export class PrimeField implements FiniteField {
         const rValues = new Array<bigint>(resultLength);
         for (let i = 0; i < resultLength; i++) {
             let sum = 0n;
-            for (let j = 0; i < k.length; j++) {
-                sum += kValues[j] * vValues[i][j];
+            for (let j = 0; j < k.length; j++) {
+                sum = this.mod(sum + kValues[j] * vValues[j][i]);
             }
             rValues[i] = sum;
         }

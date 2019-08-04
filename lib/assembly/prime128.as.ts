@@ -3,6 +3,7 @@
 
 // MODULE VARIABLES
 // ================================================================================================
+const REF_SIZE = 8;
 const VALUE_SIZE = 16;
 const HALF_OFFSET = VALUE_SIZE / 2;
 const U64_MAX = 0xFFFFFFFFFFFFFFFF;
@@ -35,31 +36,30 @@ export function getOutputsPtr(): usize {
     return changetype<usize>(_outputs);
 }
 
+export function newRefArray(refCount: i32): ArrayBuffer {
+    return new ArrayBuffer(refCount * REF_SIZE);
+}
+
 // ARRAY OPERATIONS
 // ================================================================================================
 type ArithmeticOp = (aHi: u64, aLo: u64, bHi: u64, bLo: u64) => void;
 
-export function newArray(elementCount: u32, sRef: usize, sElementCount: u32): ArrayBuffer {
-    let result = new ArrayBuffer(elementCount * VALUE_SIZE);
-    if (sRef) {
-        if (sElementCount == 0) {
-            sElementCount = elementCount;
-        }
-        
-        // TODO: replace with bulk memory copy
-        let rRef = changetype<usize>(result);
-        let endRef = sRef + sElementCount * VALUE_SIZE;
-        while (sRef < endRef) {
-            let vLo = load<u64>(sRef);
-            let vHi = load<u64>(sRef, HALF_OFFSET);
-            store<u64>(rRef, vLo);
-            store<u64>(rRef, vHi, HALF_OFFSET);
-    
-            sRef += VALUE_SIZE;
-            rRef += VALUE_SIZE;
-        }
+export function newArray(elementCount: i32): ArrayBuffer {
+    return new ArrayBuffer(elementCount * VALUE_SIZE);
+}
+
+export function copyArrayElements(vRef: usize, resRef: usize, vElementCount: i32): void {
+    // TODO: replace with bulk memory copy
+    let endRef = vRef + vElementCount * VALUE_SIZE;
+    while (vRef < endRef) {
+        let vLo = load<u64>(vRef);
+        let vHi = load<u64>(vRef, HALF_OFFSET);
+        store<u64>(resRef, vLo);
+        store<u64>(resRef, vHi, HALF_OFFSET);
+
+        vRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
     }
-    return result;
 }
 
 export function transposeArray(vRef: usize, resRef: usize, rowCount: u32, colCount: u32): void {
@@ -82,6 +82,23 @@ export function transposeArray(vRef: usize, resRef: usize, rowCount: u32, colCou
             viRef += colLength;
         }
         vRef += VALUE_SIZE;
+    }
+}
+
+export function pluckArray(vRef: usize, resRef: usize, skip: i32, vElementCount: i32, rElementCount: i32): void {
+
+    let arrayLength = vElementCount * VALUE_SIZE;
+    let step = skip * VALUE_SIZE;
+
+    for (let i = 0; i < rElementCount; i++) {
+        let viRef = vRef + (i * step) % arrayLength;
+        let vLo = load<u64>(viRef);
+        let vHi = load<u64>(viRef, HALF_OFFSET);
+
+        store<u64>(resRef, vLo);
+        store<u64>(resRef, vHi, HALF_OFFSET);
+
+        resRef += VALUE_SIZE;
     }
 }
 
@@ -255,6 +272,31 @@ function arrayScalarOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: Ar
     }
 }
 
+function mulAddArrayElements(aRef: usize, bRef: usize, resRef: usize, elementCount: i32): void {
+    let bLo = load<u64>(bRef);
+    let bHi = load<u64>(bRef, HALF_OFFSET);
+
+    let endRef = aRef + elementCount * this.VALUE_SIZE;
+
+    while (aRef < endRef) {
+        let aLo = load<u64>(aRef);
+        let aHi = load<u64>(aRef, HALF_OFFSET);
+
+        modMul(aHi, aLo, bHi, bLo);
+
+        aLo = load<u64>(resRef);
+        aHi = load<u64>(resRef, HALF_OFFSET);
+
+        modAdd(aHi, aLo, _rHi, _rLo);
+
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        aRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
+    }
+}
+
 // VECTOR FUNCTIONS
 // ================================================================================================
 export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32 {
@@ -281,6 +323,25 @@ export function combineVectors(aRef: usize, bRef: usize, elementCount: i32): u32
     store<u64>(rRef, _rHi, HALF_OFFSET);
 
     return 0;
+}
+
+export function combineManyVectors(vRef: usize, kRef: usize, resRef: usize, vCount: i32, kCount: i32): void {
+
+    let refEnd = kRef + kCount * VALUE_SIZE;
+
+    let rRef = <usize>load<u64>(vRef);
+    arrayScalarOp(rRef, kRef, resRef, vCount, modMul);
+
+    vRef += VALUE_SIZE >> 1;
+    kRef += VALUE_SIZE;
+
+    while (kRef <refEnd) {
+        rRef = <usize>load<u64>(vRef);
+        mulAddArrayElements(rRef, kRef, resRef, vCount);
+
+        vRef += VALUE_SIZE >> 1;
+        kRef += VALUE_SIZE;
+    }
 }
 
 // MATRIX FUNCTIONS
@@ -373,7 +434,8 @@ export function divPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: 
     let diff = <i32>(aPos - bPos);
     let resultLength = diff + VALUE_SIZE;
     
-    let aCopy = newArray(aDegreePlus1, aRef, aDegreePlus1);
+    let aCopy = new ArrayBuffer(aDegreePlus1 * VALUE_SIZE);
+    copyArrayElements(aRef, changetype<usize>(aCopy), aDegreePlus1);
     aRef = changetype<usize>(aCopy);
     
     for (let p = resultLength - VALUE_SIZE; diff >= 0; diff -= VALUE_SIZE, aPos -= VALUE_SIZE, p -= VALUE_SIZE) {

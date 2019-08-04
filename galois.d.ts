@@ -75,7 +75,7 @@ declare module '@guildofweavers/galois' {
         newVector(length: number): Vector;
 
         /** Creates a new vector from the specified array of values */
-        newVectorFrom(values: bigint[]): Vector;
+        newVectorFrom(values: readonly bigint[]): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
         addVectorElements(a: Vector, b: Vector): Vector;
@@ -140,7 +140,7 @@ declare module '@guildofweavers/galois' {
         newMatrix(rows: number, columns: number): Matrix;
 
         /** creates a new matrix from the specified 2-dimensional array of values */
-        newMatrixFrom(values: bigint[][]): Matrix;
+        newMatrixFrom(values: readonly bigint[][]): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
         addMatrixElements(a: Matrix, b: Matrix): Matrix;

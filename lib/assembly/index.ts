@@ -15,8 +15,12 @@ export type WasmPrime128 = loader.ASUtil & {
     getOutputsPtr(): number;
     setModulus(mHi1: number, mHi2: number, mLo1: number, mLo2: number): void;
 
-    newArray(elementCount: number, sRef: number, sElementCount: number): number;
+    newArray(elementCount: number): number;
+    newRefArray(refCount: number): number;
+
+    copyArrayElements(vRef: number, resRef: number, vElementCount: number): void;
     transposeArray(vRef: number, resRef: number, rowCount: number, colCount: number): void;
+    pluckArray(vRef: number, resRef: number, skip: number, vElementCount: number, rElementCount: number): void;
 
     addArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
     addArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
@@ -33,6 +37,7 @@ export type WasmPrime128 = loader.ASUtil & {
     getPowerSeries(seedIdx: number, resRef: number, length: number): void;
 
     combineVectors(aRef: number, bRef: number, elementCount: number): number;
+    combineManyVectors(vRef: number, kRef: number, resRef: number, vCount: number, kCount: number): void;
 
     mulMatrixes(aRef: number, bRef: number, resRef: number, n: number, m: number, p: number): void;
 

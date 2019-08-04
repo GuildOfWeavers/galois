@@ -26,7 +26,7 @@ export class WasmMatrix128 implements Matrix {
     constructor(wasm: WasmPrime128, rows: number, columns: number, base?: number) {
         this.wasm = wasm;
         this.elementCount = rows * columns;
-        this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
+        this.base = base === undefined ? this.wasm.newArray(this.elementCount) : base;
         this.rowCount = rows;
         this.colCount = columns;
         this.rowSize = columns * VALUE_SIZE;

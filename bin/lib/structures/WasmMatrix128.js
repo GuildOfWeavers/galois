@@ -12,7 +12,7 @@ class WasmMatrix128 {
     constructor(wasm, rows, columns, base) {
         this.wasm = wasm;
         this.elementCount = rows * columns;
-        this.base = base === undefined ? this.wasm.newArray(this.elementCount, 0, 0) : base;
+        this.base = base === undefined ? this.wasm.newArray(this.elementCount) : base;
         this.rowCount = rows;
         this.colCount = columns;
         this.rowSize = columns * VALUE_SIZE;
