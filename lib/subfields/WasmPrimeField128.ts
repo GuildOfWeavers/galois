@@ -87,8 +87,12 @@ export class WasmPrimeField128 implements FiniteField {
         return this.jsField.exp(base, exponent);
     }
 
-    inv(a: bigint): bigint {
-        return this.jsField.inv(a);
+    inv(value: bigint): bigint {
+        return this.jsField.inv(value);
+    }
+
+    neg(value: bigint): bigint {
+        return this.jsField.neg(value);
     }
 
     // RANDOMNESS

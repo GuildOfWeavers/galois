@@ -90,6 +90,9 @@ class PrimeField {
         }
         return this.mod(lm);
     }
+    neg(value) {
+        return this.mod(0n - value);
+    }
     // RANDOMNESS
     // --------------------------------------------------------------------------------------------
     rand() {
@@ -135,7 +138,7 @@ class PrimeField {
     divVectorElements(a, b) {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.mul, a, this.inv(b))
-            : this.vectorElementsOp(this.div, a, b);
+            : this.vectorElementsOp(this.mul, a, this.invVectorElements(b));
     }
     expVectorElements(a, b) {
         return (typeof b === 'bigint')

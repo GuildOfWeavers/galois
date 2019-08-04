@@ -120,6 +120,10 @@ export class PrimeField implements FiniteField {
         return this.mod(lm);
     }
 
+    neg(value: bigint): bigint {
+        return this.mod(0n - value);
+    }
+
     // RANDOMNESS
     // --------------------------------------------------------------------------------------------
     rand(): bigint {
@@ -175,7 +179,7 @@ export class PrimeField implements FiniteField {
     divVectorElements(a: Vector, b: bigint | Vector): JsVector {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.mul, a, this.inv(b))
-            : this.vectorElementsOp(this.div, a, b);
+            : this.vectorElementsOp(this.mul, a, this.invVectorElements(b));
     }
 
     expVectorElements(a: Vector, b: bigint | Vector): JsVector {

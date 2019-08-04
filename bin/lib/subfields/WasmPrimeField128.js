@@ -63,8 +63,11 @@ class WasmPrimeField128 {
     exp(base, exponent) {
         return this.jsField.exp(base, exponent);
     }
-    inv(a) {
-        return this.jsField.inv(a);
+    inv(value) {
+        return this.jsField.inv(value);
+    }
+    neg(value) {
+        return this.jsField.neg(value);
     }
     // RANDOMNESS
     // --------------------------------------------------------------------------------------------

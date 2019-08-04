@@ -63,10 +63,16 @@ declare module '@guildofweavers/galois' {
         exp(b: bigint, p: bigint): bigint;
 
         /**
-         * Computes modular inverse using Extended Euclidean algorithm
+         * Computes modular multiplicative inverse using Extended Euclidean algorithm
          * @param value Field element to invert
          */
         inv(value: bigint): bigint;
+
+        /**
+         * Computes modular additive inverse
+         * @param value Filed element to negate
+         */
+        neg(value: bigint): bigint;
 
         // VECTOR OPERATIONS
         // ----------------------------------------------------------------------------------------
@@ -175,7 +181,7 @@ declare module '@guildofweavers/galois' {
         /** Computes a new matrix m such that m[i,j] = a[i,j]^b for all i and j */
         expMatrixElements(a: Matrix, b: bigint): Matrix;
 
-        /** Computes modular inverse for all matrix elements using Montgomery batch inversion */
+        /** Computes multiplicative inverse for all matrix elements using Montgomery batch inversion */
         invMatrixElements(m: Matrix): Matrix;
 
         /** Computes additive inverse for all matrix elements */

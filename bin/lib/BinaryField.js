@@ -72,7 +72,10 @@ class BinaryField {
         }
         return result;
     }
-    inv(a) {
+    inv(value) {
+        throw new Error('Not implemented');
+    }
+    neg(value) {
         throw new Error('Not implemented');
     }
     // RANDOMNESS

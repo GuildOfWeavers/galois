@@ -93,7 +93,11 @@ export class BinaryField implements FiniteField {
         return result;
     }
 
-    inv(a: bigint): bigint {
+    inv(value: bigint): bigint {
+        throw new Error('Not implemented');
+    }
+
+    neg(value: bigint): bigint {
         throw new Error('Not implemented');
     }
 
