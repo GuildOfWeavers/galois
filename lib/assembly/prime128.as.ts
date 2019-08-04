@@ -567,7 +567,7 @@ function evalPoly(pRef: usize, xHi: u64, xLo: u64, degreePlus1: u32): void {
 
 // POLYNOMIAL INTERPOLATION
 // ================================================================================================
-export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayBuffer {
+export function interpolate(xRef: usize, yRef: usize, resRef: usize, elementCount: i32): void {
 
     let resultLength = elementCount * VALUE_SIZE;
 
@@ -644,8 +644,6 @@ export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayB
 
     // 5 --- finish interpolation
     numRef = changetype<usize>(numerators);
-    let result = new ArrayBuffer(resultLength);
-    let resRef = changetype<usize>(result);
     for (let i = 0; i < resultLength; i += VALUE_SIZE) {
         let yLo = load<u64>(yRef + i);
         let yHi = load<u64>(yRef + i, HALF_OFFSET);
@@ -672,8 +670,6 @@ export function interpolate(xRef: usize, yRef: usize, elementCount: i32): ArrayB
             }
         }
     }
-
-    return result;
 }
 
 export function interpolateRoots(rRef: usize, vRef: usize, resRef: usize, elementCount: u32): void {

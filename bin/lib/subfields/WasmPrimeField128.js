@@ -481,24 +481,16 @@ class WasmPrimeField128 {
         this.wasm.evalQuarticBatch(pw.base, xw.base, result.base, polys.rowCount);
         return result;
     }
+    // POLYNOMIAL INTERPOLATION
+    // --------------------------------------------------------------------------------------------
     interpolate(xs, ys) {
-        if (ys instanceof structures_1.WasmVector128) {
-            if (xs.length !== ys.length) {
-                throw new Error(''); // TODO
-            }
-            const xw = xs;
-            const base = this.wasm.interpolate(xw.base, ys.base, xs.length);
-            return new structures_1.WasmVector128(this.wasm, xs.length + 1, base);
+        if (xs.length !== ys.length) {
+            throw new Error('Number of x and y coordinates must be the same');
         }
-        else if (ys instanceof structures_1.WasmMatrix128) {
-            if (xs.length !== ys.rowCount) {
-                throw new Error(''); // TODO
-            }
-            throw new Error('Not implemented');
-        }
-        else {
-            throw new Error(`y-coordinates object is invalid`);
-        }
+        const xw = xs, yw = ys;
+        const result = this.newVector(xs.length);
+        this.wasm.interpolate(xw.base, yw.base, result.base, xs.length);
+        return result;
     }
     interpolateRoots(rootsOfUnity, ys) {
         if (!utils_1.isPowerOf2(rootsOfUnity.length)) {

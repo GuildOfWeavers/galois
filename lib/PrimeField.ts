@@ -653,11 +653,12 @@ export class PrimeField implements FiniteField {
 
     // POLYNOMIAL INTERPOLATION
     // --------------------------------------------------------------------------------------------
-    interpolate(xs: Vector, ys: Vector): JsVector
-    interpolate(xs: Vector, ys: Matrix): JsMatrix
-    interpolate(xs: Vector, ys: Vector | Matrix): JsVector | JsMatrix {
+    interpolate(xs: Vector, ys: Vector): JsVector {
+        if (xs.length !== ys.length) {
+            throw new Error('Number of x coordinates must be the same as number of y coordinates');
+        }
+
         const xsValues = xs.toValues();
-        
         const root = this.newVectorFrom(zpoly(xsValues, this));
         let divisor = this.newVectorFrom([0n, 1n]);
         const numerators = new Array<JsVector>(xs.length);
@@ -672,49 +673,17 @@ export class PrimeField implements FiniteField {
         }
         const invDenValues = this.invVectorElements(this.newVectorFrom(denominators)).values;
 
-        if (ys instanceof JsVector) {
-            if (xs.length !== ys.length) {
-                throw new Error('Number of x coordinates must be the same as number of y coordinates');
-            }
-
-            const yValues = ys.toValues();
-            const rValues = new Array(xs.length).fill(0n);
-            for (let i = 0; i < xs.length; i++) {
-                let ySlice = this.mod(yValues[i] * invDenValues[i]);
-                for (let j = 0; j < xs.length; j++) {
-                    if (numerators[i].values[j] && yValues[i]) {
-                        rValues[j] = this.mod(rValues[j] + numerators[i].values[j] * ySlice);
-                    }
+        const yValues = ys.toValues();
+        const rValues = new Array(xs.length).fill(0n);
+        for (let i = 0; i < xs.length; i++) {
+            let ySlice = this.mod(yValues[i] * invDenValues[i]);
+            for (let j = 0; j < xs.length; j++) {
+                if (numerators[i].values[j] && yValues[i]) {
+                    rValues[j] = this.mod(rValues[j] + numerators[i].values[j] * ySlice);
                 }
             }
-            return this.newVectorFrom(rValues);
         }
-        else if (ys instanceof JsMatrix) {
-            const yValues = ys.toValues();
-            const rValues = new Array<bigint[]>(ys.rowCount);
-
-            for (let i = 0; i < ys.rowCount; i++) {
-                if (xs.length !== yValues[i].length) {
-                    throw new Error('Number of x coordinates must be the same as number of y coordinates');
-                }
-
-                let rowValues = new Array(xs.length).fill(0n);
-                for (let j = 0; j < xs.length; j++) {
-                    let ySlice = this.mod(yValues[i][j] * invDenValues[j]);
-                    for (let k = 0; k < xs.length; k++) {
-                        if (numerators[j].values[k] && yValues[i][j]) {
-                            rowValues[k] = this.mod(rowValues[k] + numerators[j].values[k] * ySlice);
-                        }
-                    }
-                    rValues[i] = rowValues;
-                }
-            }
-            return this.newMatrixFrom(rValues);
-        }
-        else {
-            throw new Error(`y-coordinates object is invalid`);
-        }
-        
+        return this.newVectorFrom(rValues);
     }
 
     interpolateRoots(rootsOfUnity: Vector, ys: Vector): JsVector

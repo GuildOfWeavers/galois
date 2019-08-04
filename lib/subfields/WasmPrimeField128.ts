@@ -555,26 +555,14 @@ export class WasmPrimeField128 implements FiniteField {
 
     // POLYNOMIAL INTERPOLATION
     // --------------------------------------------------------------------------------------------
-    interpolate(xs: Vector, ys: Vector): WasmVector128
-    interpolate(xs: Vector, ys: Matrix): WasmMatrix128
-    interpolate(xs: Vector, ys: Vector | Matrix): WasmVector128 | WasmMatrix128 {
-        if (ys instanceof WasmVector128) {
-            if (xs.length !== ys.length) {
-                throw new Error('');    // TODO
-            }
-            const xw = xs as WasmVector128;
-            const base = this.wasm.interpolate(xw.base, ys.base, xs.length);
-            return new WasmVector128(this.wasm, xs.length + 1, base);
+    interpolate(xs: Vector, ys: Vector): WasmVector128 {
+        if (xs.length !== ys.length) {
+            throw new Error('Number of x and y coordinates must be the same');
         }
-        else if (ys instanceof WasmMatrix128) {
-            if(xs.length !== ys.rowCount) {
-                throw new Error('');    // TODO
-            }
-            throw new Error('Not implemented');
-        }
-        else {
-            throw new Error(`y-coordinates object is invalid`);
-        }
+        const xw = xs as WasmVector128, yw = ys as WasmVector128;
+        const result = this.newVector(xs.length);
+        this.wasm.interpolate(xw.base, yw.base, result.base, xs.length);
+        return result;
     }
 
     interpolateRoots(rootsOfUnity: Vector, ys: Vector): WasmVector128

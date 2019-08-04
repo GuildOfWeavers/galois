@@ -43,7 +43,7 @@ export type WasmPrime128 = loader.ASUtil & {
     evalPolyAtRoots(pRef: number, xRef: number, resRef: number, degreePlus1: number, rootCount: number): void;
     evalQuarticBatch(pRef: number, xRef: number, resRef: number, polyCount: number): void;
 
-    interpolate(xRef: number, yRef: number, elementCount: number): number;  // TODO
+    interpolate(xRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateQuarticBatch(xRef: number, yRef: number, resRef: number, rowCount: number): void;
 }

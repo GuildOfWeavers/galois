@@ -33,6 +33,10 @@ export class WasmMatrix128 implements Matrix {
         this.byteLength = rows * this.rowSize;
     }
 
+    get elementSize(): number {
+        return VALUE_SIZE;
+    }
+
     getValue(row: number, column: number): bigint {
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)

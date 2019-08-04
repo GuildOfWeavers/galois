@@ -39,6 +39,10 @@ export class WasmVector128 implements Vector {
         this.byteLength = length * VALUE_SIZE;
     }
 
+    get elementSize(): number {
+        return VALUE_SIZE;
+    }
+
     getValue(index: number): bigint {
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)

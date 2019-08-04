@@ -312,13 +312,6 @@ declare module '@guildofweavers/galois' {
         interpolate(xs: Vector, ys: Vector): Vector;
 
         /**
-         * Uses Lagrange Interpolation to compute a polynomial from provided points
-         * @param xs x coordinates of points
-         * @param ys A matrix with each row representing y coordinates of points to interpolate
-         */
-        interpolate(xs: Vector, ys: Matrix): Matrix;
-
-        /**
          * Uses Fast Fourier Transform to compute a polynomial from provided points
          * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
          * @param ys y coordinates of points to interpolate
@@ -345,6 +338,7 @@ declare module '@guildofweavers/galois' {
     export interface Vector {
         readonly length     : number;
         readonly byteLength : number;
+        readonly elementSize: number;
 
         getValue(index: number): bigint;
 
@@ -355,6 +349,7 @@ declare module '@guildofweavers/galois' {
         readonly rowCount   : number;
         readonly colCount   : number;
         readonly byteLength : number;
+        readonly elementSize: number;
 
         getValue(row: number, column: number): bigint;
 

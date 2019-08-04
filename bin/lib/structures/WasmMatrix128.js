@@ -18,6 +18,9 @@ class WasmMatrix128 {
         this.rowSize = columns * VALUE_SIZE;
         this.byteLength = rows * this.rowSize;
     }
+    get elementSize() {
+        return VALUE_SIZE;
+    }
     getValue(row, column) {
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)
