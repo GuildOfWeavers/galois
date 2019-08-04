@@ -32,7 +32,9 @@ export type WasmPrime128 = loader.ASUtil & {
     divArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
     expArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
     expArrayElements2(aRef: number, bIdx: number, resRef: number, elementCount: number): void;
+
     invArrayElements(sourceRef: number, resRef: number, elementCount: number): void;
+    negArrayElements(sourceRef: number, resRef: number, elementCount: number): void;
 
     getPowerSeries(seedIdx: number, resRef: number, length: number): void;
 
@@ -41,10 +43,11 @@ export type WasmPrime128 = loader.ASUtil & {
 
     mulMatrixes(aRef: number, bRef: number, resRef: number, n: number, m: number, p: number): void;
 
+    addPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void
     mulPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void;
     divPolys(aRef: number, bRef: number, resRef: number, aDegreePlus1: number, bDegreePlus1: number): void;
 
-    evalPolyAt(pRef: number, xIdx: number, elementCount: number): number;
+    evalPolyAt(pRef: number, xIdx: number, degreePlus1: number): number;
     evalPolyAtRoots(pRef: number, xRef: number, resRef: number, degreePlus1: number, rootCount: number): void;
     evalQuarticBatch(pRef: number, xRef: number, resRef: number, polyCount: number): void;
 

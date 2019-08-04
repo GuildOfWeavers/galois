@@ -109,6 +109,9 @@ class BinaryField {
     invVectorElements(values) {
         throw new Error('Not implemented');
     }
+    negVectorElements(source) {
+        throw new Error('Not implemented');
+    }
     combineVectors(a, b) {
         throw new Error('Not implemented');
     }
@@ -151,6 +154,9 @@ class BinaryField {
         throw new Error('Not implemented');
     }
     invMatrixElements(values) {
+        throw new Error('Not implemented');
+    }
+    negMatrixElements(source) {
         throw new Error('Not implemented');
     }
     mulMatrixes(a, b) {

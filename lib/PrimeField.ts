@@ -200,7 +200,16 @@ export class PrimeField implements FiniteField {
             rValues[i] = this.mod(sValues[i] ? rValues[i] * inv : 0n);
             inv = this.mul(inv, sValues[i] || 1n);
         }
-        return new JsVector(rValues, this.elementSize);
+        return this.newVectorFrom(rValues);
+    }
+
+    negVectorElements(source: Vector): JsVector {
+        const rValues = new Array<bigint>(source.length);
+        const sValues = source.toValues();
+        for (let i = 0; i < sValues.length; i++) {
+            rValues[i] = this.mod(0n - sValues[i]);
+        }
+        return this.newVectorFrom(rValues);
     }
 
     combineVectors(a: Vector, b: Vector): bigint {
@@ -360,6 +369,21 @@ export class PrimeField implements FiniteField {
                 rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
                 inv = this.mul(inv, sRow[j] || 1n);
             }
+        }
+        return this.newMatrixFrom(rValues);
+    }
+
+    negMatrixElements(source: Matrix): JsMatrix {
+        const sValues = source.toValues();
+        const rValues = new Array<bigint[]>(source.rowCount);
+
+        for (let i = 0; i < source.rowCount; i++) {
+            let sRow = sValues[i];
+            let rRow = new Array<bigint>(sRow.length);
+            for (let j = 0; j < sRow.length; j++) {
+                rRow[j] = this.mod(0n - sRow[j]);
+            }
+            rValues[i] = rRow;
         }
         return this.newMatrixFrom(rValues);
     }

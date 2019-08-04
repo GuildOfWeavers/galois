@@ -155,7 +155,15 @@ class PrimeField {
             rValues[i] = this.mod(sValues[i] ? rValues[i] * inv : 0n);
             inv = this.mul(inv, sValues[i] || 1n);
         }
-        return new structures_1.JsVector(rValues, this.elementSize);
+        return this.newVectorFrom(rValues);
+    }
+    negVectorElements(source) {
+        const rValues = new Array(source.length);
+        const sValues = source.toValues();
+        for (let i = 0; i < sValues.length; i++) {
+            rValues[i] = this.mod(0n - sValues[i]);
+        }
+        return this.newVectorFrom(rValues);
     }
     combineVectors(a, b) {
         const aValues = a.toValues(), bValues = b.toValues();
@@ -293,6 +301,19 @@ class PrimeField {
                 rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
                 inv = this.mul(inv, sRow[j] || 1n);
             }
+        }
+        return this.newMatrixFrom(rValues);
+    }
+    negMatrixElements(source) {
+        const sValues = source.toValues();
+        const rValues = new Array(source.rowCount);
+        for (let i = 0; i < source.rowCount; i++) {
+            let sRow = sValues[i];
+            let rRow = new Array(sRow.length);
+            for (let j = 0; j < sRow.length; j++) {
+                rRow[j] = this.mod(0n - sRow[j]);
+            }
+            rValues[i] = rRow;
         }
         return this.newMatrixFrom(rValues);
     }

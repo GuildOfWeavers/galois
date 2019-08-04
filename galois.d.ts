@@ -107,8 +107,11 @@ declare module '@guildofweavers/galois' {
         /** Computes a new vector v such that v[i] = a[i]^b for all i */
         expVectorElements(a: Vector, b: bigint): Vector;
 
-        /** Computes modular inverse for all vector elements using Montgomery batch inversion */
+        /** Computes multiplicative inverse for all vector elements using Montgomery batch inversion */
         invVectorElements(v: Vector): Vector;
+
+        /** Computes additive inverse for all vector elements */
+        negVectorElements(v: Vector): Vector;
 
         /** Computes a linear combination of two vectors */
         combineVectors(a: Vector, b: Vector): bigint;
@@ -174,6 +177,9 @@ declare module '@guildofweavers/galois' {
 
         /** Computes modular inverse for all matrix elements using Montgomery batch inversion */
         invMatrixElements(m: Matrix): Matrix;
+
+        /** Computes additive inverse for all matrix elements */
+        negMatrixElements(v: Matrix): Matrix;
 
         /**
          * Computes a matrix with dimensions [m,n] which is a product of matrixes a and b

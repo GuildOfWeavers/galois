@@ -221,6 +221,13 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    negVectorElements(source: Vector): WasmVector128 {
+        const sw = source as WasmVector128;
+        const result = this.newVector(sw.length);
+        this.wasm.negArrayElements(sw.base, result.base, sw.length);
+        return result;
+    }
+
     combineVectors(a: Vector, b: Vector): bigint {
         if (a.length !== b.length) {
             throw new Error('Cannot combine vectors: vectors have different lengths');
@@ -406,6 +413,13 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    negMatrixElements(source: Matrix): WasmMatrix128 {
+        const sw = source as WasmMatrix128;
+        const result = this.newMatrix(sw.rowCount, sw.colCount);
+        this.wasm.negArrayElements(sw.base, result.base, sw.elementCount);
+        return result;
+    }
+
     mulMatrixes(a: Matrix, b: Matrix): WasmMatrix128 {
         const n = a.rowCount, m = a.colCount, p = b.colCount;
         if (m !== b.rowCount) {
@@ -472,40 +486,27 @@ export class WasmPrimeField128 implements FiniteField {
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------
     addPolys(a: Vector, b: Vector): WasmVector128 {
-        // TODO: improve
-        let result: any;
-        if (a.length > b.length) {
-            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
-            //result = this.addVectorElements(a, newB);
-            //this.wasm.__release(newB.base);
-        }
-        else if (a.length < b.length) {
-            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
-            //result = this.addVectorElements(newA, b);
-            //this.wasm.__release(newA.base);
+        let result: WasmVector128;
+        let aw = a as WasmVector128, bw = b as WasmVector128;
+        if (aw.length >= bw.length) {
+            result = this.newVector(aw.length);
+            this.wasm.addPolys(aw.base, bw.base, result.base, aw.length, bw.length);
         }
         else {
-            result = this.addVectorElements(a, b);
+            result = this.newVector(b.length);
+            this.wasm.addPolys(bw.base, aw.base, result.base, bw.length, aw.length);
         }
         return result;
     }
 
     subPolys(a: Vector, b: Vector): WasmVector128 {
-        // TODO: improve
-        let result: any;
-        if (a.length > b.length) {
-            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
-            //result = this.subVectorElements(a, newB);
-            //this.wasm.__release(newB.base);
-        }
-        else if (a.length < b.length) {
-            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
-            //result = this.subVectorElements(newA, b);
-            //this.wasm.__release(newA.base);
-        }
-        else {
-            result = this.subVectorElements(a, b);
-        }
+        const resultLength = Math.max(a.length, b.length);
+        const result = this.newVector(resultLength);
+        
+        const aw = a as WasmVector128, bw = b as WasmVector128;
+        this.wasm.negArrayElements(bw.base, result.base, bw.length);
+        this.wasm.addPolys(result.base, aw.base, result.base, result.length, aw.length);
+
         return result;
     }
 

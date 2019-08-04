@@ -227,6 +227,22 @@ export function invArrayElements(sRef: usize, resRef: usize, elementCount: u32):
     }
 }
 
+export function negArrayElements(sRef: usize, resRef: usize, elementCount: i32): void {
+    let refEnd = sRef + elementCount * VALUE_SIZE;
+
+    while (sRef < refEnd) {
+        let aLo = load<u64>(sRef);
+        let aHi = load<u64>(sRef, HALF_OFFSET);
+
+        modSub(0, 0, aHi, aLo);
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        sRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
+    }
+}
+
 function arrayElementOp(aRef: usize, bRef: usize, rRef: usize, count: i32, op: ArithmeticOp): void {
 
     let endRef = aRef + count * this.VALUE_SIZE;
@@ -407,6 +423,38 @@ export function getPowerSeries(seedIdx: u32, resRef: usize, length: u32): void {
 
 // POLYNOMIAL FUNCTIONS
 // ================================================================================================
+export function addPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: u32, bDegreePlus1: u32): void {
+    const aRefEnd = aRef + aDegreePlus1 * VALUE_SIZE;
+    const bRefEnd = bRef + bDegreePlus1 * VALUE_SIZE;
+
+    while (bRef < bRefEnd) {
+        let aLo = load<u64>(aRef);
+        let aHi = load<u64>(aRef, HALF_OFFSET);
+
+        let bLo = load<u64>(bRef);
+        let bHi = load<u64>(bRef, HALF_OFFSET);
+
+        modAdd(aHi, aLo, bHi, bLo);
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        aRef += VALUE_SIZE;
+        bRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
+    }
+
+    while (aRef < aRefEnd) {
+        let aLo = load<u64>(aRef);
+        let aHi = load<u64>(aRef, HALF_OFFSET);
+
+        store<u64>(resRef, aLo);
+        store<u64>(resRef, aHi, HALF_OFFSET);
+
+        aRef += VALUE_SIZE;
+        resRef += VALUE_SIZE;
+    }
+}
+
 export function mulPolys(aRef: usize, bRef: usize, resRef: usize, aDegreePlus1: u32, bDegreePlus1: u32): void {
     let aLength = aDegreePlus1 * VALUE_SIZE;
     let bLength = bDegreePlus1 * VALUE_SIZE;

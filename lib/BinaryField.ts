@@ -143,6 +143,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    negVectorElements(source: Vector): Vector{
+        throw new Error('Not implemented');
+    }
+
     combineVectors(a: Vector, b: Vector): bigint {
         throw new Error('Not implemented');
     }
@@ -198,6 +202,10 @@ export class BinaryField implements FiniteField {
     }
 
     invMatrixElements(values: Matrix): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    negMatrixElements(source: Matrix): Matrix {
         throw new Error('Not implemented');
     }
 

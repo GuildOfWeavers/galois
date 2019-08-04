@@ -184,6 +184,12 @@ class WasmPrimeField128 {
         this.wasm.invArrayElements(sw.base, result.base, sw.length);
         return result;
     }
+    negVectorElements(source) {
+        const sw = source;
+        const result = this.newVector(sw.length);
+        this.wasm.negArrayElements(sw.base, result.base, sw.length);
+        return result;
+    }
     combineVectors(a, b) {
         if (a.length !== b.length) {
             throw new Error('Cannot combine vectors: vectors have different lengths');
@@ -351,6 +357,12 @@ class WasmPrimeField128 {
         this.wasm.invArrayElements(sw.base, result.base, sw.elementCount);
         return result;
     }
+    negMatrixElements(source) {
+        const sw = source;
+        const result = this.newMatrix(sw.rowCount, sw.colCount);
+        this.wasm.negArrayElements(sw.base, result.base, sw.elementCount);
+        return result;
+    }
     mulMatrixes(a, b) {
         const n = a.rowCount, m = a.colCount, p = b.colCount;
         if (m !== b.rowCount) {
@@ -408,39 +420,24 @@ class WasmPrimeField128 {
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------
     addPolys(a, b) {
-        // TODO: improve
         let result;
-        if (a.length > b.length) {
-            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
-            //result = this.addVectorElements(a, newB);
-            //this.wasm.__release(newB.base);
-        }
-        else if (a.length < b.length) {
-            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
-            //result = this.addVectorElements(newA, b);
-            //this.wasm.__release(newA.base);
+        let aw = a, bw = b;
+        if (aw.length >= bw.length) {
+            result = this.newVector(aw.length);
+            this.wasm.addPolys(aw.base, bw.base, result.base, aw.length, bw.length);
         }
         else {
-            result = this.addVectorElements(a, b);
+            result = this.newVector(b.length);
+            this.wasm.addPolys(bw.base, aw.base, result.base, bw.length, aw.length);
         }
         return result;
     }
     subPolys(a, b) {
-        // TODO: improve
-        let result;
-        if (a.length > b.length) {
-            //let newB = new WasmVector128(this.wasm, a.length, b as WasmVector128);
-            //result = this.subVectorElements(a, newB);
-            //this.wasm.__release(newB.base);
-        }
-        else if (a.length < b.length) {
-            //let newA = new WasmVector128(this.wasm, b.length, a as WasmVector128);
-            //result = this.subVectorElements(newA, b);
-            //this.wasm.__release(newA.base);
-        }
-        else {
-            result = this.subVectorElements(a, b);
-        }
+        const resultLength = Math.max(a.length, b.length);
+        const result = this.newVector(resultLength);
+        const aw = a, bw = b;
+        this.wasm.negArrayElements(bw.base, result.base, bw.length);
+        this.wasm.addPolys(result.base, aw.base, result.base, result.length, aw.length);
         return result;
     }
     mulPolys(a, b) {
