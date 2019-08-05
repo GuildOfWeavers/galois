@@ -388,7 +388,7 @@ export class WasmPrimeField128 implements FiniteField {
                 throw new Error('Cannot divide matrix elements: matrixes have different dimensions');
             }
             const aw = a as WasmMatrix128, bw = b as WasmMatrix128;
-            const result = this.newMatrix(a.rowCount, b.rowCount);
+            const result = this.newMatrix(a.rowCount, a.colCount);
             this.wasm.divArrayElements1(aw.base, bw.base, result.base, aw.elementCount);
             return result;
         }

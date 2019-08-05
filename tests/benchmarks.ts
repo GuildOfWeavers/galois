@@ -24,7 +24,7 @@ const quarticPolyCount = elements / quartic;
 const polyDegree1 = 1024;
 const polyDegree2 = 2048;
 
-const wasm128 = createPrimeField(modulus128, { initialMemory: 128 * 1024 * 1024 }); // 128 MB
+const wasm128 = createPrimeField(modulus128, { initialMemory: 256 * 1024 * 1024 }); // 128 MB
 
 // 128 BIT FIELD JS
 // ================================================================================================
@@ -52,12 +52,19 @@ for (let i = 0; i < temp.length; i++) {
 }
 const m1 = f1.newMatrixFrom(temp) as JsMatrix;
 
+temp = new Array<bigint[]>(m1Rows);
+for (let i = 0; i < temp.length; i++) {
+    let row = v2.values.slice(i * m1Cols, i * m1Cols + m1Cols);
+    temp[i] = row;
+}
+const m2 = f1.newMatrixFrom(temp) as JsMatrix;
+
 temp = new Array<bigint[]>(m2Rows);
 for (let i = 0; i < temp.length; i++) {
     let row = v2.values.slice(i * m2Cols, i * m2Cols + m2Cols);
     temp[i] = row;
 }
-const m2 = f1.newMatrixFrom(temp) as JsMatrix;
+const m3 = f1.newMatrixFrom(temp) as JsMatrix;
 console.log(`Built matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -129,18 +136,43 @@ start = Date.now();
 let vComb = f1.combineVectors(v1, v2);
 console.log(`Computed linear combination of ${elements} elements in ${Date.now() - start} ms`);
 
-start = Date.now();
-let vCombMany = f1.combineManyVectors([v1, v2, v1, v2], vK);
-console.log(`Combined 4 vectors of ${elements} elements in ${Date.now() - start} ms`);
+const vA = f1.matrixRowsToVectors(vMp1);
+vA.push(v1); vA.push(v2);
 
 start = Date.now();
-let vmMul = f1.mulMatrixes(m1, m2);
+let vCombMany = f1.combineManyVectors(vA, vK);
+console.log(`Combined 4 vectors of ${elements} elements in ${Date.now() - start} ms`);
+
+// --- Matrix operations
+start = Date.now();
+let vmAdd = f1.addMatrixElements(m1, m2);
+console.log(`Computed element-wise addition of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vmSub= f1.subMatrixElements(m1, m2);
+console.log(`Computed element-wise subtraction of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vmMul = f1.mulMatrixElements(m1, m2);
+console.log(`Computed element-wise multiplication of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vmDiv = f1.divMatrixElements(m1, m2);
+console.log(`Computed element-wise division of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vmmMul = f1.mulMatrixes(m1, m3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m2Rows}x${m2Cols} matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vMvMul = f1.mulMatrixByVector(m1, v3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 
+start = Date.now();
+let vMrMul = f1.mulMatrixRows(vMp1, v1);
+console.log(`Computed row-wise multiplication of ${vMp1.rowCount}x${vMp1.colCount} matrix and a vector in ${Date.now() - start} ms`);
+
+// --- Polynomial operations
 start = Date.now();
 const vAddPoly = f1.addPolys(vp2, vp3);
 console.log(`Added ${polyDegree1}-degree polynomial to ${polyDegree2}-degree polynomial in ${Date.now() - start} ms`);
@@ -185,7 +217,11 @@ console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date
 
 start = Date.now();
 let vFftEv = f1.evalPolyAtRoots(vFftPoly, vRoots);
-console.log(`Evaluated degree ${vFftPoly.length} polynomial at ${vRoots.length} points in ${Date.now() - start} ms`);
+console.log(`Evaluated degree ${vFftPoly.length} polynomial at ${vRoots.length} roots in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vFftEv2 = f1.evalPolysAtRoots(vMp1, vRoots);
+console.log(`Evaluated ${vMp1.rowCount} degree ${vMp1.colCount} polynomials at ${vRoots.length} roots in ${Date.now() - start} ms`);
 
 start = Date.now();
 const vQBatchEv = f1.evalQuarticBatch(vQPolys, v4);
@@ -213,6 +249,7 @@ let wMp1 = wasm128.newMatrixFrom(vMp1.toValues());
 start = Date.now();
 const mw1 = wasm128.newMatrixFrom(m1.values);
 const mw2 = wasm128.newMatrixFrom(m2.values);
+const mw3 = wasm128.newMatrixFrom(m3.values);
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -305,21 +342,51 @@ if (vComb !== wComb) {
     console.log(`> Linear combination error!`);
 }
 
+const wA = wasm128.matrixRowsToVectors(wMp1);
+wA.push(w1); wA.push(w2);
+
 start = Date.now();
-let wCombMany = wasm128.combineManyVectors([w1, w2, w1, w2], wK);
+let wCombMany = wasm128.combineManyVectors(wA, wK);
 console.log(`Combined 4 vectors of ${elements} elements in ${Date.now() - start} ms`);
 compareVectorResults(vCombMany, wCombMany, 'linear combination');
 
+// --- Matrix operations
 start = Date.now();
-let wmMul = wasm128.mulMatrixes(mw1, mw2);
+let wmAdd = wasm128.addMatrixElements(mw1, mw2);
+console.log(`Computed element-wise addition of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+compareMatrixResults(vmAdd, wmAdd, 'matrix element addition');
+
+start = Date.now();
+let wmSub= wasm128.subMatrixElements(mw1, mw2);
+console.log(`Computed element-wise subtraction of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+compareMatrixResults(vmSub, wmSub, 'matrix element subtraction');
+
+start = Date.now();
+let wmMul = wasm128.mulMatrixElements(mw1, mw2);
+console.log(`Computed element-wise multiplication of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+compareMatrixResults(vmMul, wmMul, 'matrix element multiplication');
+
+start = Date.now();
+let wmDiv = wasm128.divMatrixElements(mw1, mw2);
+console.log(`Computed element-wise division of two ${m1Rows}x${m1Cols} matrixes in ${Date.now() - start} ms`);
+compareMatrixResults(vmDiv, wmDiv, 'matrix element division');
+
+start = Date.now();
+let wmmMul = wasm128.mulMatrixes(mw1, mw3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m2Rows}x${m2Cols} matrixes in ${Date.now() - start} ms`);
-compareMatrixResults(vmMul, wmMul, 'matrix multiplication');
+compareMatrixResults(vmmMul, wmmMul, 'matrix multiplication');
 
 start = Date.now();
 let wMvMul = wasm128.mulMatrixByVector(mw1, w3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 compareVectorResults(vMvMul, wMvMul, 'matrix-vector multiplication');
 
+start = Date.now();
+let wMrMul = wasm128.mulMatrixRows(wMp1, w1);
+console.log(`Computed row-wise multiplication of ${wMp1.rowCount}x${wMp1.colCount} matrix and a vector in ${Date.now() - start} ms`);
+compareMatrixResults(vMrMul, wMrMul, 'matrix row multiplication');
+
+// --- Polynomial operations
 start = Date.now();
 const wAddPoly = wasm128.addPolys(wp2, wp3);
 console.log(`Added ${polyDegree1}-degree polynomial to ${polyDegree2}-degree polynomial in ${Date.now() - start} ms`);
@@ -376,8 +443,13 @@ if (vEvAt !== wEvAt) {
 
 start = Date.now();
 let wFftEv = wasm128.evalPolyAtRoots(wFftPoly, wRoots);
-console.log(`Evaluated degree ${wFftPoly.length} polynomial at ${wRoots.length} points in ${Date.now() - start} ms`);
-compareVectorResults(vFftEv, wFftEv, 'FFT evaluation');
+console.log(`Evaluated degree ${wFftPoly.length} polynomial at ${wRoots.length} roots in ${Date.now() - start} ms`);
+compareVectorResults(vFftEv, wFftEv, 'FFT polynomial evaluation');
+
+start = Date.now();
+let wFftEv2 = wasm128.evalPolysAtRoots(wMp1, wRoots);
+console.log(`Evaluated ${wMp1.rowCount} degree ${wMp1.colCount} polynomials at ${wRoots.length} roots in ${Date.now() - start} ms`);
+compareMatrixResults(vFftEv2, wFftEv2, 'FFT polynomial evaluation (matrix)');
 
 start = Date.now();
 const wQBatchEv = wasm128.evalQuarticBatch(wQPolys, w4);
