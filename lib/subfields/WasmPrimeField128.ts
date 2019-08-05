@@ -280,6 +280,9 @@ export class WasmPrimeField128 implements FiniteField {
         let currentLength = v.length;
         const resultLength = currentLength << times;
         const result = this.newVector(resultLength);
+        
+        const vw = v as WasmVector128;
+        this.wasm.copyArrayElements(vw.base, result.base, currentLength);
 
         while (currentLength < resultLength) {
             let offset = currentLength * result.elementSize;
@@ -624,7 +627,7 @@ export class WasmPrimeField128 implements FiniteField {
             return result;
         }
         else if (ys instanceof WasmMatrix128) {
-            if(rootsOfUnity.length !== ys.rowCount) {
+            if(rootsOfUnity.length !== ys.colCount) {
                 throw new Error('Number of roots of unity must be the same as the number of y coordinates');
             }
             const result = this.newMatrix(ys.rowCount, ys.colCount);

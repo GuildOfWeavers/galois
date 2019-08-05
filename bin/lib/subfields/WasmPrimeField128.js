@@ -235,6 +235,8 @@ class WasmPrimeField128 {
         let currentLength = v.length;
         const resultLength = currentLength << times;
         const result = this.newVector(resultLength);
+        const vw = v;
+        this.wasm.copyArrayElements(vw.base, result.base, currentLength);
         while (currentLength < resultLength) {
             let offset = currentLength * result.elementSize;
             this.wasm.copyArrayElements(result.base, result.base + offset, currentLength);
@@ -538,7 +540,7 @@ class WasmPrimeField128 {
             return result;
         }
         else if (ys instanceof structures_1.WasmMatrix128) {
-            if (rootsOfUnity.length !== ys.rowCount) {
+            if (rootsOfUnity.length !== ys.colCount) {
                 throw new Error('Number of roots of unity must be the same as the number of y coordinates');
             }
             const result = this.newMatrix(ys.rowCount, ys.colCount);

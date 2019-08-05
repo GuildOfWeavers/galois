@@ -39,6 +39,11 @@ const v3 = f1.prng(44n, m1Cols) as JsVector;
 const v4 = f1.prng(45n, quarticPolyCount) as JsVector;
 console.log(`Generated ${elements}x2 random field elements in ${Date.now() - start} ms`);
 
+const vp1 = f1.truncateVector(v1, polyDegree1);
+const vp2 = f1.truncateVector(v2, polyDegree1);
+const vp3 = f1.truncateVector(v1, polyDegree2);
+const vMp1 = f1.newMatrixFrom([v1.values, v2.values]);
+
 start = Date.now();
 let temp = new Array<bigint[]>(m1Rows);
 for (let i = 0; i < temp.length; i++) {
@@ -59,6 +64,18 @@ start = Date.now();
 let vXs = f1.vectorToMatrix(v1, quartic);
 let vYs = f1.vectorToMatrix(v2, quartic);
 console.log(`Transposed ${elements}x2 elements in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vTrunc = f1.truncateVector(v4, v4.length / 2);
+console.log(`Truncated ${v4.length} element vector to ${v4.length / 2} elements in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vPluck = f1.pluckVector(v1, 8, v1.length / 4);
+console.log(`Plucked ${v1.length} element vector ${v1.length / 4} times in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vDup = f1.duplicateVector(vTrunc, 2);
+console.log(`Duplicated ${vTrunc.length} element vector 2 times in ${Date.now() - start} ms`);
 
 start = Date.now();
 let vAdd = f1.addVectorElements(v1, v2);
@@ -125,11 +142,28 @@ let vMvMul = f1.mulMatrixByVector(m1, v3);
 console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in ${Date.now() - start} ms`);
 
 start = Date.now();
+const vAddPoly = f1.addPolys(vp2, vp3);
+console.log(`Added ${polyDegree1}-degree polynomial to ${polyDegree2}-degree polynomial in ${Date.now() - start} ms`);
+
+start = Date.now();
+const vSubPoly = f1.subPolys(vp2, vp3);
+console.log(`Subtracted ${polyDegree2}-degree polynomial from ${polyDegree1}-degree polynomial in ${Date.now() - start} ms`);
+
+start = Date.now();
+const vMulPoly = f1.mulPolys(vp1, vp2);
+console.log(`Multiplied two ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
+
+start = Date.now();
+const vDivPoly = f1.divPolys(vp3, vp2);
+console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
+
+// --- Polynomial interpolation
+start = Date.now();
 let vRoots = f1.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 
 start = Date.now();
-const vLagPoly = f1.interpolate(v1.slice(0, polyDegree1), v2.slice(0, polyDegree1));
+const vLagPoly = f1.interpolate(vp1, vp2);
 console.log(`Interpolated degree ${polyDegree1} polynomial in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -137,28 +171,25 @@ let vFftPoly = f1.interpolateRoots(vRoots, v1);
 console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vFftEv = f1.evalPolyAtRoots(vFftPoly, vRoots);
-console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
+let vFftPoly2 = f1.interpolateRoots(vRoots, vMp1);
+console.log(`Interpolated ${elements} roots of unity (matrix) in ${Date.now() - start} ms`);
 
 start = Date.now();
 const vQPolys = f1.interpolateQuarticBatch(vXs, vYs);
 console.log(`Interpolated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
-start = Date.now();
-const vQBatchEv = f1.evalQuarticBatch(vQPolys, v4);
-console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
-
-start = Date.now();
-const vMulPoly = f1.mulPolys(v1.slice(0, polyDegree1), v2.slice(0, polyDegree1));
-console.log(`Multiplied two ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
-
-start = Date.now();
-const vDivPoly = f1.divPolys(v1.slice(0, polyDegree2), v2.slice(0, polyDegree1));
-console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
-
+// --- Polynomial evaluation
 start = Date.now();
 const vEvAt = f1.evalPolyAt(vFftPoly, 42n);
 console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
+
+start = Date.now();
+let vFftEv = f1.evalPolyAtRoots(vFftPoly, vRoots);
+console.log(`Evaluated degree ${vFftPoly.length} polynomial at ${vRoots.length} points in ${Date.now() - start} ms`);
+
+start = Date.now();
+const vQBatchEv = f1.evalQuarticBatch(vQPolys, v4);
+console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
 
@@ -174,6 +205,11 @@ const w3 = wasm128.newVectorFrom(v3.values)
 const w4 = wasm128.newVectorFrom(v4.values)
 console.log(`Copied vectors into WASM memory in ${Date.now() - start} ms`);
 
+let wp1 = wasm128.truncateVector(w1, polyDegree1);
+let wp2 = wasm128.truncateVector(w2, polyDegree1);
+let wp3 = wasm128.truncateVector(w1, polyDegree2);
+let wMp1 = wasm128.newMatrixFrom(vMp1.toValues());
+
 start = Date.now();
 const mw1 = wasm128.newMatrixFrom(m1.values);
 const mw2 = wasm128.newMatrixFrom(m2.values);
@@ -185,6 +221,21 @@ const wYs = wasm128.vectorToMatrix(w2, 4);
 console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 compareMatrixResults(vXs, wXs, 'vector transposition');
 compareMatrixResults(vYs, wYs, 'vector transposition');
+
+start = Date.now();
+let wTrunc = wasm128.truncateVector(w4, w4.length / 2);
+console.log(`Truncated ${w4.length} element vector to ${w4.length / 2} elements in ${Date.now() - start} ms`);
+compareVectorResults(vTrunc, wTrunc, 'truncation');
+
+start = Date.now();
+let wPluck = wasm128.pluckVector(w1, 8, w1.length / 4);
+console.log(`Plucked ${w1.length} element vector ${w1.length / 4} times in ${Date.now() - start} ms`);
+compareVectorResults(vPluck, wPluck, 'plucking');
+
+start = Date.now();
+let wDup = wasm128.duplicateVector(wTrunc, 2);
+console.log(`Duplicated ${wTrunc.length} element vector 2 times in ${Date.now() - start} ms`);
+compareVectorResults(vDup, wDup, 'duplication');
 
 start = Date.now();
 let wAdd = wasm128.addVectorElements(w1, w2);
@@ -270,12 +321,30 @@ console.log(`Computed a product of ${m1Rows}x${m1Cols} and ${m1Cols}x1 vector in
 compareVectorResults(vMvMul, wMvMul, 'matrix-vector multiplication');
 
 start = Date.now();
+const wAddPoly = wasm128.addPolys(wp2, wp3);
+console.log(`Added ${polyDegree1}-degree polynomial to ${polyDegree2}-degree polynomial in ${Date.now() - start} ms`);
+compareVectorResults(vAddPoly, wAddPoly, 'polynomial addition');
+
+start = Date.now();
+const wSubPoly = wasm128.subPolys(wp2, wp3);
+console.log(`Subtracted ${polyDegree2}-degree polynomial from ${polyDegree1}-degree polynomial in ${Date.now() - start} ms`);
+compareVectorResults(vSubPoly, wSubPoly, 'polynomial subtraction');
+
+start = Date.now();
+const wMulPoly = wasm128.mulPolys(wp1, wp2);
+console.log(`Multiplied two ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
+compareVectorResults(vMulPoly, wMulPoly, 'polynomial multiplication');
+
+start = Date.now();
+const wDivPoly = wasm128.divPolys(wp3, wp2);
+console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
+compareVectorResults(vDivPoly, wDivPoly, 'polynomial division');
+
+// --- Polynomial interpolation
+start = Date.now();
 let wRoots = wasm128.getPowerSeries(root128, elements);
 console.log(`Computed power series of ${elements} elements in ${Date.now() - start} ms`);
 compareVectorResults(vRoots, wRoots, 'power series');
-
-let wp1 = wasm128.newVectorFrom(v1.slice(0, polyDegree1).values);
-let wp2 = wasm128.newVectorFrom(v2.slice(0, polyDegree1).values);
 
 start = Date.now();
 let wLagPoly = wasm128.interpolate(wp1, wp2);
@@ -288,40 +357,34 @@ console.log(`Interpolated ${elements} roots of unity in ${Date.now() - start} ms
 compareVectorResults(vFftPoly, wFftPoly, 'FFT interpolation');
 
 start = Date.now();
-let wFftEv = wasm128.evalPolyAtRoots(wFftPoly, wRoots);
-console.log(`Evaluated degree ${elements} polynomial in ${Date.now() - start} ms`);
-compareVectorResults(vFftEv, wFftEv, 'FFT evaluation');
+let wFftPoly2 = wasm128.interpolateRoots(wRoots, wMp1);
+console.log(`Interpolated ${elements} roots of unity (matrix) in ${Date.now() - start} ms`);
+compareMatrixResults(vFftPoly2, wFftPoly2, 'FFT interpolation (matrix)');
 
 start = Date.now();
 let wQPolys = wasm128.interpolateQuarticBatch(wXs, wYs);
 console.log(`Interpolated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 compareMatrixResults(vQPolys, wQPolys, 'quartic polynomial interpolation');
 
+// --- Polynomial evaluation
+start = Date.now();
+const wEvAt = wasm128.evalPolyAt(wFftPoly, 42n);
+console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
+if (vEvAt !== wEvAt) {
+    console.log(`> Polynomial evaluation error in WASM!`);
+}
+
+start = Date.now();
+let wFftEv = wasm128.evalPolyAtRoots(wFftPoly, wRoots);
+console.log(`Evaluated degree ${wFftPoly.length} polynomial at ${wRoots.length} points in ${Date.now() - start} ms`);
+compareVectorResults(vFftEv, wFftEv, 'FFT evaluation');
+
 start = Date.now();
 const wQBatchEv = wasm128.evalQuarticBatch(wQPolys, w4);
 console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 compareVectorResults(vQBatchEv, wQBatchEv, 'quartic batch evaluation');
 
-start = Date.now();
-const wMulPoly = wasm128.mulPolys(wp1, wp2);
-console.log(`Multiplied two ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
-compareVectorResults(vMulPoly, wMulPoly, 'polynomial multiplication');
-
-let wp3 = wasm128.newVectorFrom(v1.slice(0, polyDegree2).values);
-
-start = Date.now();
-const wDivPoly = wasm128.divPolys(wp3, wp2);
-console.log(`Divided ${polyDegree2}-degree polynomial by ${polyDegree1}-degree polynomials in ${Date.now() - start} ms`);
-compareVectorResults(vDivPoly, wDivPoly, 'polynomial division');
-
-start = Date.now();
-const wEvAt = wasm128.evalPolyAt(wFftPoly, 42n);
-console.log(`Evaluated ${elements}-degree polynomial at a single point in ${Date.now() - start} ms`);
-
-if (vEvAt !== wEvAt) {
-    console.log(`> Polynomial evaluation error in WASM!`);
-}
-
+console.log(`WASM memory: ${(wasm128 as any).memorySize / 1024 / 1024} MB`);
 console.log('-'.repeat(100));
 
 // 256 BIT FIELD JS

@@ -63,7 +63,7 @@ export class WasmMatrix128 implements Matrix {
             for (let j = 0; j < this.colCount; j++, idx += 2) {
                 let lo = this.wasm.U64[idx];
                 let hi = this.wasm.U64[idx + 1];
-                row[i] = (hi << 64n) | lo;
+                row[j] = (hi << 64n) | lo;
             }
             values[i] = row;
         }

@@ -637,7 +637,7 @@ class PrimeField {
                     throw new Error('Number of roots of unity must be the same as number of y coordinates');
                 }
                 let rowValues = fastFT(yValues[i], reversedRoots, 0, 0, this);
-                for (let j = 0; j < rValues.length; j++) {
+                for (let j = 0; j < rowValues.length; j++) {
                     rowValues[j] = this.mod(rowValues[j] * invlen);
                 }
                 rValues[i] = rowValues;
