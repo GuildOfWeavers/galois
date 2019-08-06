@@ -16,6 +16,9 @@ function createPrimeField(modulus, wasmOptions) {
         return new subfields_1.WasmPrimeField128(modulus, wasmOptions);
     }
     else {
+        if (wasmOptions !== undefined) {
+            throw new Error(`WASM optimization is not available for fields with modulus ${modulus}`);
+        }
         return new PrimeField_1.PrimeField(modulus);
     }
 }

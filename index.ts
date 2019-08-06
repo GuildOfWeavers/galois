@@ -20,6 +20,9 @@ export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | nu
         return new WasmPrimeField128(modulus, wasmOptions);
     }
     else {
+        if (wasmOptions !== undefined) {
+            throw new Error(`WASM optimization is not available for fields with modulus ${modulus}`);
+        }
         return new PrimeField(modulus);
     }
 }
