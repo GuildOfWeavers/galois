@@ -24,7 +24,7 @@ const quarticPolyCount = elements / quartic;
 const polyDegree1 = 1024;
 const polyDegree2 = 2048;
 
-const wasm128 = createPrimeField(modulus128, { initialMemory: 256 * 1024 * 1024 }); // 128 MB
+const wasm128 = createPrimeField(modulus128, { initialMemory: 256 * 1024 * 1024 }); // 256 MB
 
 // 128 BIT FIELD JS
 // ================================================================================================
