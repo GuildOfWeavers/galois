@@ -72,7 +72,10 @@ class BinaryField {
         }
         return result;
     }
-    inv(a) {
+    inv(value) {
+        throw new Error('Not implemented');
+    }
+    neg(value) {
         throw new Error('Not implemented');
     }
     // RANDOMNESS
@@ -86,6 +89,9 @@ class BinaryField {
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
     newVector(length) {
+        throw new Error('Not implemented');
+    }
+    newVectorFrom(values) {
         throw new Error('Not implemented');
     }
     addVectorElements(a, b) {
@@ -106,12 +112,33 @@ class BinaryField {
     invVectorElements(values) {
         throw new Error('Not implemented');
     }
+    negVectorElements(source) {
+        throw new Error('Not implemented');
+    }
     combineVectors(a, b) {
+        throw new Error('Not implemented');
+    }
+    combineManyVectors(v, k) {
+        throw new Error('Not implemented');
+    }
+    vectorToMatrix(v, columns) {
+        throw new Error('Not implemented');
+    }
+    pluckVector(v, skip, times) {
+        throw new Error('Not implemented');
+    }
+    truncateVector(v, newLength) {
+        throw new Error('Not implemented');
+    }
+    duplicateVector(v, times = 1) {
         throw new Error('Not implemented');
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows, columns) {
+        throw new Error('Not implemented');
+    }
+    newMatrixFrom(values) {
         throw new Error('Not implemented');
     }
     addMatrixElements(a, b) {
@@ -132,23 +159,27 @@ class BinaryField {
     invMatrixElements(values) {
         throw new Error('Not implemented');
     }
+    negMatrixElements(source) {
+        throw new Error('Not implemented');
+    }
     mulMatrixes(a, b) {
         throw new Error('Not implemented');
     }
     mulMatrixByVector(m, v) {
         throw new Error('Not implemented');
     }
-    // BATCH OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed, length) {
+    mulMatrixRows(m, v) {
         throw new Error('Not implemented');
     }
-    // ROOTS OF UNITY
+    matrixRowsToVectors(m) {
+        throw new Error('Not implemented');
+    }
+    // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {
         throw new Error('Not implemented');
     }
-    getPowerCycle(rootOfUnity) {
+    getPowerSeries(seed, length) {
         throw new Error('Not implemented');
     }
     // POLYNOMIALS
@@ -172,6 +203,12 @@ class BinaryField {
         throw new Error('Not implemented');
     }
     evalPolyAtRoots(p, rootsOfUnity) {
+        throw new Error('Not implemented');
+    }
+    evalPolysAtRoots(p, rootsOfUnity) {
+        throw new Error('Not implemented');
+    }
+    evalQuarticBatch(polys, xs) {
         throw new Error('Not implemented');
     }
     interpolate(xs, ys) {

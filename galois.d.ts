@@ -1,10 +1,11 @@
 declare module '@guildofweavers/galois' {
 
     /** Polynomial represented in reverse-coefficient form */
-    export type Polynom = bigint[];
-    
-    export type Vector = bigint[];
-    export type Matrix = bigint[][];
+    export type Polynom = Vector;
+
+    export interface WasmOptions {
+        readonly initialMemory  : number;
+    }
 
     export interface FiniteField {
 
@@ -62,16 +63,25 @@ declare module '@guildofweavers/galois' {
         exp(b: bigint, p: bigint): bigint;
 
         /**
-         * Computes modular inverse using Extended Euclidean algorithm
+         * Computes modular multiplicative inverse using Extended Euclidean algorithm
          * @param value Field element to invert
          */
         inv(value: bigint): bigint;
+
+        /**
+         * Computes modular additive inverse
+         * @param value Filed element to negate
+         */
+        neg(value: bigint): bigint;
 
         // VECTOR OPERATIONS
         // ----------------------------------------------------------------------------------------
 
         /** Creates a new vector of the specified length */
         newVector(length: number): Vector;
+
+        /** Creates a new vector from the specified array of values */
+        newVectorFrom(values: readonly bigint[]): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
         addVectorElements(a: Vector, b: Vector): Vector;
@@ -101,19 +111,45 @@ declare module '@guildofweavers/galois' {
         expVectorElements(a: Vector, b: Vector): Vector;
 
         /** Computes a new vector v such that v[i] = a[i]^b for all i */
-        expVectorElements(a: Vector, b: Vector): Vector;
+        expVectorElements(a: Vector, b: bigint): Vector;
 
-        /** Computes modular inverse for all vector elements using Montgomery batch inversion */
+        /** Computes multiplicative inverse for all vector elements using Montgomery batch inversion */
         invVectorElements(v: Vector): Vector;
+
+        /** Computes additive inverse for all vector elements */
+        negVectorElements(v: Vector): Vector;
 
         /** Computes a linear combination of two vectors */
         combineVectors(a: Vector, b: Vector): bigint;
 
+        /** Computes a linear combination as sum(v[i][j]*k[i]) for each row i */
+        combineManyVectors(v: Vector[], k: Vector): Vector;
+
+        /**
+         * Creates a new vector by selecting values from the source vector by skipping over the specified number of elements
+         * @param v Source vector
+         * @param skip Number of elements to skip before selecting the next value
+         * @param times Number of times to pluck the source vector
+         */
+        pluckVector(v: Vector, skip: number, times: number): Vector;
+
+        /** Creates a new vector with the length truncated to the specified value */
+        truncateVector(v: Vector, newLength: number): Vector;
+
+        /** Creates a copy of a vector that represents the source vector duplicated the specified number of times */
+        duplicateVector(v: Vector, times?: number): Vector;
+
+        /** Transposes the provided vector into a matrix with the specified number of columns */
+        vectorToMatrix(v: Vector, columns: number): Matrix
+
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
 
-        // creates a new matrix with the specified number of rows and columns
+        /** Creates a new matrix with the specified number of rows and columns */
         newMatrix(rows: number, columns: number): Matrix;
+
+        /** creates a new matrix from the specified 2-dimensional array of values */
+        newMatrixFrom(values: readonly bigint[][]): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
         addMatrixElements(a: Matrix, b: Matrix): Matrix;
@@ -145,8 +181,11 @@ declare module '@guildofweavers/galois' {
         /** Computes a new matrix m such that m[i,j] = a[i,j]^b for all i and j */
         expMatrixElements(a: Matrix, b: bigint): Matrix;
 
-        /** Computes modular inverse for all matrix elements using Montgomery batch inversion */
+        /** Computes multiplicative inverse for all matrix elements using Montgomery batch inversion */
         invMatrixElements(m: Matrix): Matrix;
+
+        /** Computes additive inverse for all matrix elements */
+        negMatrixElements(v: Matrix): Matrix;
 
         /**
          * Computes a matrix with dimensions [m,n] which is a product of matrixes a and b
@@ -157,10 +196,16 @@ declare module '@guildofweavers/galois' {
 
         /**
          * Computes a vector of length m which is a product of matrix a and vector b
-         * @param a Matrix with dimensions [m,n]
-         * @param b Vector of length n
+         * @param m Matrix with dimensions [m,n]
+         * @param v Vector of length n
          */
         mulMatrixByVector(m: Matrix, v: Vector): Vector;
+
+        /** Computes a new matrix n such that n[i,j] = m[i,j] * v[i] for all i and j */
+        mulMatrixRows(m: Matrix, v: Vector): Matrix;
+
+        /** Creates an array of vectors corresponding to matrixes' rows */
+        matrixRowsToVectors(m: Matrix): Vector[];
         
         // RANDOMNESS
         // ----------------------------------------------------------------------------------------
@@ -191,12 +236,6 @@ declare module '@guildofweavers/galois' {
          * @param order Order of the root of unity
          */
         getRootOfUnity(order: number): bigint;
-
-        /**
-         * Computes an array containing a full cycle of roots of unity generated by the primitive root
-         * @param rootOfUnity Primitive root of unity
-         */
-        getPowerCycle(rootOfUnity: bigint): Vector;
 
         /**
          * Computes a series of powers for the provided base element
@@ -251,14 +290,28 @@ declare module '@guildofweavers/galois' {
          * @param p Polynomial to evaluate
          * @param x X coordinates at which to evaluate the polynomial
          */
-        evalPolyAt(p: Polynom, x: bigint): bigint;
+        evalPolyAt(p: Vector, x: bigint): bigint;
+
+        /**
+         * Uses Fast Fourier Transform to evaluate a  set of polynomials at all provided roots of unity
+         * @param p Polynomials to evaluate
+         * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
+         */
+        evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): Vector;
 
         /**
          * Uses Fast Fourier Transform to evaluate a polynomial at all provided roots of unity
-         * @param p Polynomial to evaluate
+         * @param p A matrix where each row contains a polynomial to evaluate
          * @param rootsOfUnity Roots of unity representing x coordinates to evaluate
          */
-        evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector;
+        evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): Matrix;
+
+        /**
+         * Evaluates a set of degree 3 polynomials at provided x coordinates
+         * @param polys A matrix where each row is a degree 3 polynomial
+         * @param xs A vector of x coordinates to evaluate
+         */
+        evalQuarticBatch(polys: Matrix, xs: Vector): Vector;
 
         // POLYNOMIAL INTERPOLATION
         // ----------------------------------------------------------------------------------------
@@ -268,30 +321,55 @@ declare module '@guildofweavers/galois' {
          * @param xs x coordinates of points
          * @param ys y coordinates of points
          */
-        interpolate(xs: Vector, ys: Vector): Polynom;
+        interpolate(xs: Vector, ys: Vector): Vector;
 
         /**
          * Uses Fast Fourier Transform to compute a polynomial from provided points
          * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
          * @param ys y coordinates of points to interpolate
          */
-        interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom;
+        interpolateRoots(rootsOfUnity: Vector, ys: Vector): Vector;
+
+        /**
+         * Uses Fast Fourier Transform to compute polynomials from provided points
+         * @param rootsOfUnity Roots of unity representing x coordinates of points to interpolate
+         * @param ys A matrix with each row representing y coordinates of points to interpolate
+         */
+        interpolateRoots(rootsOfUnity: Vector, ySets: Matrix): Matrix;
 
         /**
          * Uses an optimized version of Lagrange Interpolation for degree 3 polynomials
          * @param xSets A matrix of X coordinates (4 values per row)
          * @param ySets A matrix of Y coordinates (4 values per row)
          */
-        interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[];
+        interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix;
     }
 
-    // FINITE FIELD IMPLEMENTATIONS
+    // DATA TYPES
     // ----------------------------------------------------------------------------------------
-    export class PrimeField {
-        constructor(modulus: bigint);
+    export interface Vector {
+        readonly length     : number;
+        readonly byteLength : number;
+        readonly elementSize: number;
+
+        getValue(index: number): bigint;
+
+        toValues(): ReadonlyArray<bigint>;
     }
-    export interface PrimeField extends FiniteField {
-        mod(value: bigint): bigint;
+
+    export interface Matrix {
+        readonly rowCount   : number;
+        readonly colCount   : number;
+        readonly byteLength : number;
+        readonly elementSize: number;
+
+        getValue(row: number, column: number): bigint;
+
+        toValues(): bigint[][];
     }
+
+    // GLOBAL FUNCTIONS
+    // ----------------------------------------------------------------------------------------
+    export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | null): FiniteField;
 
 }

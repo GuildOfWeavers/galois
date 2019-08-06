@@ -12,5 +12,10 @@
       "**/*.js": true,
       "**/bin": true,
       "package-lock.json": true
-  }
+  },
+  "cSpell.words": [
+    "changetype",
+    "guildofweavers",
+    "usize"
+  ]
 }

@@ -93,7 +93,11 @@ export class BinaryField implements FiniteField {
         return result;
     }
 
-    inv(a: bigint): bigint {
+    inv(value: bigint): bigint {
+        throw new Error('Not implemented');
+    }
+
+    neg(value: bigint): bigint {
         throw new Error('Not implemented');
     }
 
@@ -112,6 +116,10 @@ export class BinaryField implements FiniteField {
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
     newVector(length: number): Vector {
+        throw new Error('Not implemented');
+    }
+
+    newVectorFrom(values: bigint[]): Vector {
         throw new Error('Not implemented');
     }
 
@@ -139,13 +147,41 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    negVectorElements(source: Vector): Vector{
+        throw new Error('Not implemented');
+    }
+
     combineVectors(a: Vector, b: Vector): bigint {
+        throw new Error('Not implemented');
+    }
+
+    combineManyVectors(v: Vector[], k: Vector): Vector {
+        throw new Error('Not implemented');
+    }
+
+    vectorToMatrix(v: Vector, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    pluckVector(v: Vector, skip: number, times: number): Vector {
+        throw new Error('Not implemented');
+    }
+
+    truncateVector(v: Vector, newLength: number): Vector {
+        throw new Error('Not implemented');
+    }
+
+    duplicateVector(v: Vector, times = 1): Vector {
         throw new Error('Not implemented');
     }
 
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    newMatrixFrom(values: bigint[][]): Matrix {
         throw new Error('Not implemented');
     }
 
@@ -173,6 +209,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    negMatrixElements(source: Matrix): Matrix {
+        throw new Error('Not implemented');
+    }
+
     mulMatrixes(a: Matrix, b: Matrix): Matrix {
         throw new Error('Not implemented');
     }
@@ -181,19 +221,21 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    // BATCH OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    getPowerSeries(seed: bigint, length: number): Vector {
+    mulMatrixRows(m: Matrix, v: Vector): Matrix {
         throw new Error('Not implemented');
     }
 
-    // ROOTS OF UNITY
+    matrixRowsToVectors(m: Matrix): Vector[] {
+        throw new Error('Not implemented');
+    }
+
+    // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {
         throw new Error('Not implemented');
     }
 
-    getPowerCycle(rootOfUnity: bigint): Vector {
+    getPowerSeries(seed: bigint, length: number): Vector {
         throw new Error('Not implemented');
     }
 
@@ -219,23 +261,35 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    evalPolyAt(p: Polynom, x: bigint): bigint {
+    evalPolyAt(p: Vector, x: bigint): bigint {
         throw new Error('Not implemented');
     }
 
-    evalPolyAtRoots(p: Polynom, rootsOfUnity: Vector): Vector {
+    evalPolyAtRoots(p: Vector, rootsOfUnity: Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    interpolate(xs: Vector, ys: Vector): Polynom {
+    evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): Matrix {
         throw new Error('Not implemented');
     }
 
-    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Polynom {
+    evalQuarticBatch(polys: Matrix, xs: Vector): Vector {
         throw new Error('Not implemented');
     }
 
-    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Polynom[] {
+    interpolate(xs: Vector, ys: Vector): Vector
+    interpolate(xs: Vector, ys: Matrix): Matrix
+    interpolate(xs: Vector, ys: Vector | Matrix): Vector | Matrix {
+        throw new Error('Not implemented');
+    }
+
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector): Vector
+    interpolateRoots(rootsOfUnity: Vector, ys: Matrix): Matrix
+    interpolateRoots(rootsOfUnity: Vector, ys: Vector | Matrix): Vector | Matrix {
+        throw new Error('Not implemented');
+    }
+
+    interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix {
         throw new Error('Not implemented');
     }
 }

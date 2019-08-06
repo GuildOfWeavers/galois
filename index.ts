@@ -1,3 +1,28 @@
-// RE-EXPORTS
+// IMPORTS
 // ================================================================================================
-export { PrimeField } from './lib/PrimeField';
+import { WasmOptions, FiniteField } from '@guildofweavers/galois';
+import { PrimeField } from './lib/PrimeField';
+import { WasmPrimeField128 } from './lib/subfields';
+
+// CONSTANTS
+// ================================================================================================
+const P128 = 2n**128n;
+const P64 = 2n**64n;
+
+// PUBLIC FUNCTIONS
+// ================================================================================================
+export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | null): FiniteField {
+    if (wasmOptions === null) {
+        return new PrimeField(modulus);
+    }
+
+    if (modulus < P128 && modulus > (P128 - P64)) {
+        return new WasmPrimeField128(modulus, wasmOptions);
+    }
+    else {
+        if (wasmOptions !== undefined) {
+            throw new Error(`WASM optimization is not available for fields with modulus ${modulus}`);
+        }
+        return new PrimeField(modulus);
+    }
+}

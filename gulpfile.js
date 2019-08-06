@@ -20,6 +20,16 @@ function compile(cb) {
   });
 }
 
+function asbuild(cb) {
+  const source = 'lib/assembly/prime128.as';
+  const target =  '/bin/lib/assembly/prime128.wasm';
+  exec(`npx asc ${source} -b ${target} --sourceMap --validate --importMemory`, function (err, stdout, stderr) {
+    if (stdout.length > 0) console.log(stdout);
+    if (stderr.length > 0) console.error(stderr);
+    cb(err);
+  });
+}
+
 function copyFiles(cb) {
   gulp.src('./package.json').pipe(gulp.dest('./bin'));
   gulp.src('./package-lock.json').pipe(gulp.dest('./bin'));
@@ -50,7 +60,7 @@ function runTests(cb) {
     cb();
 }
 
-const build = gulp.series(clean, compile, copyFiles);
+const build = gulp.series(clean, asbuild, compile, copyFiles);
 
 // EXPORTS
 // ================================================================================================

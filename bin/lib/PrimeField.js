@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto = require("crypto");
+const structures_1 = require("./structures");
 const utils_1 = require("./utils");
 // CLASS DEFINITION
 // ================================================================================================
@@ -51,8 +52,11 @@ class PrimeField {
     }
     exp(base, exponent) {
         base = this.mod(base);
-        if (base === 0n && exponent === 0n) {
-            throw new TypeError('Base and exponent cannot be both 0');
+        if (base === 0n) {
+            if (exponent === 0n) {
+                throw new TypeError('Base and exponent cannot be both 0');
+            }
+            return 0n;
         }
         // handle raising to negative power
         if (exponent < 0n) {
@@ -61,8 +65,6 @@ class PrimeField {
         }
         let result = 1n;
         while (exponent > 0n) {
-            if (base === 0n)
-                return 0n;
             if (exponent % 2n) {
                 result = this.mul(result, base);
             }
@@ -88,6 +90,9 @@ class PrimeField {
         }
         return this.mod(lm);
     }
+    neg(value) {
+        return this.mod(0n - value);
+    }
     // RANDOMNESS
     // --------------------------------------------------------------------------------------------
     rand() {
@@ -105,12 +110,15 @@ class PrimeField {
             result[i] = this.mod(state);
             state = utils_1.sha256(state);
         }
-        return result;
+        return this.newVectorFrom(result);
     }
     // VECTOR OPERATIONS
     // --------------------------------------------------------------------------------------------
     newVector(length) {
-        return new Array(length);
+        return new structures_1.JsVector(new Array(length), this.elementSize);
+    }
+    newVectorFrom(values) {
+        return new structures_1.JsVector(values, this.elementSize);
     }
     addVectorElements(a, b) {
         return (typeof b === 'bigint')
@@ -130,7 +138,7 @@ class PrimeField {
     divVectorElements(a, b) {
         return (typeof b === 'bigint')
             ? this.vectorScalarOp(this.mul, a, this.inv(b))
-            : this.vectorElementsOp(this.div, a, b);
+            : this.vectorElementsOp(this.mul, a, this.invVectorElements(b));
     }
     expVectorElements(a, b) {
         return (typeof b === 'bigint')
@@ -138,48 +146,117 @@ class PrimeField {
             : this.vectorElementsOp(this.exp, a, b);
     }
     invVectorElements(source) {
-        const result = new Array(source.length);
+        const rValues = new Array(source.length);
+        const sValues = source.toValues();
         let last = 1n;
         for (let i = 0; i < source.length; i++) {
-            result[i] = last;
-            last = this.mod(last * (source[i] || 1n));
+            rValues[i] = last;
+            last = this.mod(last * (sValues[i] || 1n));
         }
         let inv = this.inv(last);
         for (let i = source.length - 1; i >= 0; i--) {
-            result[i] = this.mod(source[i] ? result[i] * inv : 0n);
-            inv = this.mul(inv, source[i] || 1n);
+            rValues[i] = this.mod(sValues[i] ? rValues[i] * inv : 0n);
+            inv = this.mul(inv, sValues[i] || 1n);
         }
-        return result;
+        return this.newVectorFrom(rValues);
+    }
+    negVectorElements(source) {
+        const rValues = new Array(source.length);
+        const sValues = source.toValues();
+        for (let i = 0; i < sValues.length; i++) {
+            rValues[i] = this.mod(0n - sValues[i]);
+        }
+        return this.newVectorFrom(rValues);
     }
     combineVectors(a, b) {
+        const aValues = a.toValues(), bValues = b.toValues();
         let result = 0n;
         for (let i = 0; i < a.length; i++) {
-            result = this.mod(result + a[i] * b[i]);
+            result = this.mod(result + aValues[i] * bValues[i]);
         }
         return result;
+    }
+    combineManyVectors(v, k) {
+        if (v.length !== k.length) {
+            throw new Error('Number of vectors must be the same as number of coefficients');
+        }
+        const resultLength = v[0].length;
+        const vValues = new Array(v.length);
+        for (let i = 0; i < v.length; i++) {
+            vValues[i] = v[i].toValues();
+        }
+        const kValues = k.toValues();
+        const rValues = new Array(resultLength);
+        for (let i = 0; i < resultLength; i++) {
+            let sum = 0n;
+            for (let j = 0; j < k.length; j++) {
+                sum = this.mod(sum + kValues[j] * vValues[j][i]);
+            }
+            rValues[i] = sum;
+        }
+        return this.newVectorFrom(rValues);
+    }
+    pluckVector(v, skip, times) {
+        const vValues = v.toValues();
+        const rValues = new Array(times);
+        for (let i = 0; i < times; i++) {
+            rValues[i] = vValues[(i * skip) % vValues.length];
+        }
+        return this.newVectorFrom(rValues);
+    }
+    truncateVector(v, newLength) {
+        return this.newVectorFrom(v.toValues().slice(0, newLength));
+    }
+    duplicateVector(v, times = 1) {
+        let rValues = v.toValues();
+        for (let i = 0; i < times; i++) {
+            rValues = rValues.concat(rValues);
+        }
+        return this.newVectorFrom(rValues);
+    }
+    vectorToMatrix(v, columns) {
+        const rowCount = v.length / columns;
+        if (!Number.isInteger(rowCount)) {
+            throw new Error('Number of columns does not evenly divide vector length');
+        }
+        const vValues = v.toValues();
+        const rValues = new Array();
+        for (let i = 0; i < rowCount; i++) {
+            let row = new Array(columns);
+            for (let j = 0; j < columns; j++) {
+                row[j] = vValues[i + j * rowCount];
+            }
+            rValues[i] = row;
+        }
+        return this.newMatrixFrom(rValues);
     }
     vectorElementsOp(op, a, b) {
-        const result = new Array(a.length);
-        for (let i = 0; i < result.length; i++) {
-            result[i] = op.call(this, a[i], b[i]);
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(a.length);
+        for (let i = 0; i < rValues.length; i++) {
+            rValues[i] = op.call(this, aValues[i], bValues[i]);
         }
-        return result;
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     vectorScalarOp(op, a, b) {
-        const result = new Array(a.length);
-        for (let i = 0; i < result.length; i++) {
-            result[i] = op.call(this, a[i], b);
+        const aValues = a.toValues();
+        const rValues = new Array(a.length);
+        for (let i = 0; i < rValues.length; i++) {
+            rValues[i] = op.call(this, aValues[i], b);
         }
-        return result;
+        return new structures_1.JsVector(rValues, this.elementSize);
     }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows, columns) {
-        const result = new Array(rows);
+        const values = new Array(rows);
         for (let i = 0; i < rows; i++) {
-            result[i] = new Array(columns);
+            values[i] = new Array(columns);
         }
-        return result;
+        return new structures_1.JsMatrix(values, this.elementSize);
+    }
+    newMatrixFrom(values) {
+        return new structures_1.JsMatrix(values, this.elementSize);
     }
     addMatrixElements(a, b) {
         return (typeof b === 'bigint')
@@ -207,77 +284,120 @@ class PrimeField {
             : this.matrixElementsOp(this.exp, a, b);
     }
     invMatrixElements(source) {
-        const result = new Array(source.length);
+        const sValues = source.toValues();
+        const rValues = new Array(source.rowCount);
         let last = 1n;
-        for (let i = 0; i < source.length; i++) {
-            let sRow = source[i];
+        for (let i = 0; i < source.rowCount; i++) {
+            let sRow = sValues[i];
             let rRow = new Array(sRow.length);
             for (let j = 0; j < sRow.length; j++) {
                 rRow[j] = last;
                 last = this.mod(last * (sRow[j] || 1n));
             }
-            result[i] = rRow;
+            rValues[i] = rRow;
         }
         let inv = this.inv(last);
-        for (let i = source.length - 1; i >= 0; i--) {
-            let sRow = source[i];
-            let rRow = result[i];
+        for (let i = source.rowCount - 1; i >= 0; i--) {
+            let sRow = sValues[i];
+            let rRow = rValues[i];
             for (let j = sRow.length - 1; j >= 0; j--) {
                 rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
                 inv = this.mul(inv, sRow[j] || 1n);
             }
         }
-        return result;
+        return this.newMatrixFrom(rValues);
+    }
+    negMatrixElements(source) {
+        const sValues = source.toValues();
+        const rValues = new Array(source.rowCount);
+        for (let i = 0; i < source.rowCount; i++) {
+            let sRow = sValues[i];
+            let rRow = new Array(sRow.length);
+            for (let j = 0; j < sRow.length; j++) {
+                rRow[j] = this.mod(0n - sRow[j]);
+            }
+            rValues[i] = rRow;
+        }
+        return this.newMatrixFrom(rValues);
     }
     mulMatrixes(a, b) {
-        const n = a.length;
-        const m = a[0].length;
-        const p = b[0].length;
-        const result = new Array(n);
+        const n = a.rowCount;
+        const m = a.colCount;
+        const p = b.colCount;
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(n);
         for (let i = 0; i < n; i++) {
-            let row = result[i] = new Array(p);
+            let row = rValues[i] = new Array(p);
             for (let j = 0; j < p; j++) {
                 let s = 0n;
                 for (let k = 0; k < m; k++) {
-                    s = this.add(s, this.mul(a[i][k], b[k][j]));
+                    s = this.add(s, this.mul(aValues[i][k], bValues[k][j]));
                 }
                 row[j] = s;
             }
         }
-        return result;
+        return this.newMatrixFrom(rValues);
     }
     mulMatrixByVector(m, v) {
-        const result = new Array(m.length);
-        for (let i = 0; i < result.length; i++) {
+        const mValues = m.toValues();
+        const vValues = v.toValues();
+        const rValues = new Array(m.rowCount);
+        for (let i = 0; i < rValues.length; i++) {
             let s = 0n;
-            let row = m[i];
+            let row = mValues[i];
             for (let j = 0; j < v.length; j++) {
-                s = this.add(s, this.mul(row[j], v[j]));
+                s = this.add(s, this.mul(row[j], vValues[j]));
             }
-            result[i] = s;
+            rValues[i] = s;
+        }
+        return new structures_1.JsVector(rValues, this.elementSize);
+    }
+    mulMatrixRows(m, v) {
+        if (m.colCount !== v.length) {
+            throw new Error('Vector length must match the number of matrix columns');
+        }
+        let mValues = m.toValues();
+        let vValues = v.toValues();
+        let rValues = new Array(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            let row = new Array(v.length);
+            for (let j = 0; j < v.length; j++) {
+                row[j] = this.mod(mValues[i][j] * vValues[j]);
+            }
+            rValues[i] = row;
+        }
+        return this.newMatrixFrom(rValues);
+    }
+    matrixRowsToVectors(m) {
+        const mValues = m.toValues();
+        const result = new Array(m.rowCount);
+        for (let i = 0; i < m.rowCount; i++) {
+            result[i] = this.newVectorFrom(mValues[i]);
         }
         return result;
     }
     matrixElementsOp(op, a, b) {
-        const result = new Array(a.length);
-        for (let i = 0; i < result.length; i++) {
-            let r1 = a[i], r2 = b[i];
-            let row = result[i] = new Array(r1.length);
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(a.rowCount);
+        for (let i = 0; i < rValues.length; i++) {
+            let r1 = aValues[i], r2 = bValues[i];
+            let row = rValues[i] = new Array(r1.length);
             for (let j = 0; j < row.length; j++) {
                 row[j] = op.call(this, r1[j], r2[j]);
             }
         }
-        return result;
+        return this.newMatrixFrom(rValues);
     }
     matrixScalarOp(op, a, b) {
-        const result = new Array(a.length);
-        for (let i = 0; i < result.length; i++) {
-            let row = result[i] = new Array(a[i].length);
+        const aValues = a.toValues();
+        const rValues = new Array(a.rowCount);
+        for (let i = 0; i < rValues.length; i++) {
+            let row = rValues[i] = new Array(aValues[i].length);
             for (let j = 0; j < row.length; j++) {
-                row[j] = op.call(this, a[i][j], b);
+                row[j] = op.call(this, aValues[i][j], b);
             }
         }
-        return result;
+        return this.newMatrixFrom(rValues);
     }
     // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
@@ -295,99 +415,97 @@ class PrimeField {
         }
         throw new Error(`Root of Unity for order ${order} was not found`);
     }
-    getPowerCycle(rootOfUnity) {
-        const result = [1n];
-        let value = rootOfUnity;
-        while (value !== 1n) {
-            result.push(value);
-            value = this.mul(value, rootOfUnity);
-        }
-        return result;
-    }
     getPowerSeries(seed, length) {
         const powers = new Array(length);
         powers[0] = 1n;
         for (let i = 1; i < length; i++) {
             powers[i] = this.mul(powers[i - 1], seed);
         }
-        return powers;
+        return this.newVectorFrom(powers);
     }
     // POLYNOMIALS
     // --------------------------------------------------------------------------------------------
     addPolys(a, b) {
-        const result = new Array(Math.max(a.length, b.length));
-        for (let i = 0; i < result.length; i++) {
-            let coefficientA = (i < a.length ? a[i] : 0n);
-            let coefficientB = (i < b.length ? b[i] : 0n);
-            result[i] = this.mod(coefficientA + coefficientB);
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(Math.max(a.length, b.length));
+        for (let i = 0; i < rValues.length; i++) {
+            let coefficientA = (i < a.length ? aValues[i] : 0n);
+            let coefficientB = (i < b.length ? bValues[i] : 0n);
+            rValues[i] = this.mod(coefficientA + coefficientB);
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
     subPolys(a, b) {
-        const result = new Array(Math.max(a.length, b.length));
-        for (let i = 0; i < result.length; i++) {
-            let coefficientA = (i < a.length ? a[i] : 0n);
-            let coefficientB = (i < b.length ? b[i] : 0n);
-            result[i] = this.mod(coefficientA - coefficientB);
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(Math.max(a.length, b.length));
+        for (let i = 0; i < rValues.length; i++) {
+            let coefficientA = (i < a.length ? aValues[i] : 0n);
+            let coefficientB = (i < b.length ? bValues[i] : 0n);
+            rValues[i] = this.mod(coefficientA - coefficientB);
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
     mulPolys(a, b) {
-        const result = new Array(a.length + b.length - 1);
+        const aValues = a.toValues(), bValues = b.toValues();
+        const rValues = new Array(a.length + b.length - 1);
         for (let i = 0; i < a.length; i++) {
             for (let j = 0; j < b.length; j++) {
                 let k = i + j;
-                result[k] = this.mod((result[k] ? result[k] : 0n) + a[i] * b[j]);
+                rValues[k] = this.mod((rValues[k] || 0n) + aValues[i] * bValues[j]);
             }
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
     divPolys(a, b) {
-        if (a.length < b.length) {
+        const aValues = a.toValues().slice(), bValues = b.toValues();
+        let apos = lastNonZeroIndex(aValues);
+        let bpos = lastNonZeroIndex(bValues);
+        if (apos < bpos) {
             throw new Error('Cannot divide by polynomial of higher order');
         }
-        let apos = lastNonZeroIndex(a);
-        let bpos = lastNonZeroIndex(b);
         let diff = apos - bpos;
-        a = a.slice();
-        let result = new Array(diff + 1);
-        for (let p = result.length - 1; diff >= 0; diff--, apos--, p--) {
-            let quot = this.div(a[apos], b[bpos]);
-            result[p] = quot;
+        let rValues = new Array(diff + 1);
+        for (let p = rValues.length - 1; diff >= 0; diff--, apos--, p--) {
+            let quot = this.div(aValues[apos], bValues[bpos]);
+            rValues[p] = quot;
             for (let i = bpos; i >= 0; i--) {
-                a[diff + i] = this.mod(a[diff + i] - b[i] * quot);
+                aValues[diff + i] = this.mod(aValues[diff + i] - bValues[i] * quot);
             }
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
     mulPolyByConstant(a, c) {
-        const result = new Array(a.length);
-        for (let i = 0; i < result.length; i++) {
-            result[i] = this.mod(a[i] * c);
+        const aValues = a.toValues();
+        const rValues = new Array(a.length);
+        for (let i = 0; i < rValues.length; i++) {
+            rValues[i] = this.mod(aValues[i] * c);
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
+    // POLYNOMIAL EVALUATION
+    // --------------------------------------------------------------------------------------------
     evalPolyAt(p, x) {
+        const pValues = p.toValues();
         switch (p.length) {
             case 0: return 0n;
-            case 1: return p[0];
-            case 2: return this.mod(p[0] + p[1] * x);
-            case 3: return this.mod(p[0] + p[1] * x + p[2] * x * x);
+            case 1: return pValues[0];
+            case 2: return this.mod(pValues[0] + pValues[1] * x);
+            case 3: return this.mod(pValues[0] + pValues[1] * x + pValues[2] * x * x);
             case 4: {
                 const x2 = x * x;
                 const x3 = x2 * x;
-                return this.mod(p[0] + p[1] * x + p[2] * x2 + p[3] * x3);
+                return this.mod(pValues[0] + pValues[1] * x + pValues[2] * x2 + pValues[3] * x3);
             }
             case 5: {
                 const x2 = x * x;
                 const x3 = x2 * x;
-                return this.mod(p[0] + p[1] * x + p[2] * x2 + p[3] * x3 + p[4] * x3 * x);
+                return this.mod(pValues[0] + pValues[1] * x + pValues[2] * x2 + pValues[3] * x3 + pValues[4] * x3 * x);
             }
             default: {
                 let y = 0n;
                 let powerOfx = 1n;
                 for (let i = 0; i < p.length; i++) {
-                    y = this.mod(y + p[i] * powerOfx);
+                    y = this.mod(y + pValues[i] * powerOfx);
                     powerOfx = this.mul(powerOfx, x);
                 }
                 return y;
@@ -395,76 +513,148 @@ class PrimeField {
         }
     }
     evalPolyAtRoots(p, rootsOfUnity) {
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
+        }
         if (p.length > rootsOfUnity.length) {
-            throw new Error('Number of roots of unity cannot be smaller than number of values');
+            throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
         }
-        else if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
-            throw new Error('Number of roots of unity must be 2^n');
-        }
-        let values = p;
+        let pValues = p.toValues();
         // make sure values and roots of unity are of the same length
         if (rootsOfUnity.length > p.length) {
-            values = new Array(rootsOfUnity.length);
+            let tValues = new Array(rootsOfUnity.length);
             for (let i = 0; i < p.length; i++) {
-                values[i] = p[i];
+                tValues[i] = pValues[i];
             }
-            for (let i = p.length; i < values.length; i++) {
-                values[i] = 0n;
+            tValues.fill(0n, p.length);
+            pValues = tValues;
+        }
+        const rValues = fastFT(pValues, rootsOfUnity.toValues(), 0, 0, this);
+        return this.newVectorFrom(rValues);
+    }
+    evalPolysAtRoots(p, rootsOfUnity) {
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+            throw new Error('Number of roots of unity must be a power of 2');
+        }
+        const pValues = p.toValues();
+        const polys = new Array(p.rowCount);
+        for (let i = 0; i < p.rowCount; i++) {
+            if (pValues[i].length === rootsOfUnity.length) {
+                polys[i] = pValues[i];
+            }
+            else if (pValues[i].length > rootsOfUnity.length) {
+                // make sure values and roots of unity are of the same length
+                let tValues = new Array(rootsOfUnity.length);
+                for (let j = 0; j < pValues[i].length; j++) {
+                    tValues[j] = pValues[i][j];
+                }
+                tValues.fill(0n, pValues[i].length);
+                polys[i] = tValues;
+            }
+            else {
+                throw new Error('Polynomial degree must be smaller than or equal to the number of roots of unity');
             }
         }
-        const result = fastFF(values, rootsOfUnity, 0, 0, this);
-        return result;
+        const xValues = rootsOfUnity.toValues();
+        const rValues = new Array(p.rowCount);
+        for (let i = 0; i < p.rowCount; i++) {
+            rValues[i] = fastFT(polys[i], xValues, 0, 0, this);
+        }
+        return this.newMatrixFrom(rValues);
     }
+    evalQuarticBatch(polys, xs) {
+        if (polys.rowCount !== xs.length) {
+            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+        }
+        const pValues = polys.toValues();
+        const xValues = xs.toValues();
+        const rValues = new Array(xs.length);
+        for (let i = 0; i < xs.length; i++) {
+            rValues[i] = this.evalPolyAt(this.newVectorFrom(pValues[i]), xValues[i]);
+        }
+        return this.newVectorFrom(rValues);
+    }
+    // POLYNOMIAL INTERPOLATION
+    // --------------------------------------------------------------------------------------------
     interpolate(xs, ys) {
         if (xs.length !== ys.length) {
             throw new Error('Number of x coordinates must be the same as number of y coordinates');
         }
-        const root = zpoly(xs, this);
+        const xsValues = xs.toValues();
+        const root = this.newVectorFrom(zpoly(xsValues, this));
+        let divisor = this.newVectorFrom([0n, 1n]);
         const numerators = new Array(xs.length);
         for (let i = 0; i < xs.length; i++) {
-            numerators[i] = this.divPolys(root, [-xs[i], 1n]);
+            divisor.values[0] = -xsValues[i];
+            numerators[i] = this.divPolys(root, divisor);
         }
         const denominators = new Array(xs.length);
         for (let i = 0; i < xs.length; i++) {
-            denominators[i] = this.evalPolyAt(numerators[i], xs[i]);
+            denominators[i] = this.evalPolyAt(numerators[i], xsValues[i]);
         }
-        const invertedDenominators = this.invVectorElements(denominators);
-        const result = new Array(ys.length).fill(0n);
+        const invDenValues = this.invVectorElements(this.newVectorFrom(denominators)).values;
+        const yValues = ys.toValues();
+        const rValues = new Array(xs.length).fill(0n);
         for (let i = 0; i < xs.length; i++) {
-            let ySlice = this.mod(ys[i] * invertedDenominators[i]);
-            for (let j = 0; j < ys.length; j++) {
-                if (numerators[i][j] && ys[i]) {
-                    result[j] = this.mod(result[j] + numerators[i][j] * ySlice);
+            let ySlice = this.mod(yValues[i] * invDenValues[i]);
+            for (let j = 0; j < xs.length; j++) {
+                if (numerators[i].values[j] && yValues[i]) {
+                    rValues[j] = this.mod(rValues[j] + numerators[i].values[j] * ySlice);
                 }
             }
         }
-        return result;
+        return this.newVectorFrom(rValues);
     }
     interpolateRoots(rootsOfUnity, ys) {
-        if (rootsOfUnity.length !== ys.length) {
-            throw new Error('Number of roots of unity must be the same as number of y coordinates');
-        }
-        else if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
+        if (!utils_1.isPowerOf2(rootsOfUnity.length)) {
             throw new Error('Number of roots of unity must be 2^n');
         }
-        const invlen = this.exp(BigInt(ys.length), this.modulus - 2n);
+        // reverse roots of unity
+        const rouValues = rootsOfUnity.toValues();
+        const invlen = this.exp(BigInt(rootsOfUnity.length), this.modulus - 2n);
         let reversedRoots = new Array(rootsOfUnity.length);
         reversedRoots[0] = 1n;
         for (let i = rootsOfUnity.length - 1, j = 1; i > 0; i--, j++) {
-            reversedRoots[j] = rootsOfUnity[i];
+            reversedRoots[j] = rouValues[i];
         }
-        const result = fastFF(ys, reversedRoots, 0, 0, this);
-        for (let i = 0; i < result.length; i++) {
-            result[i] = this.mod(result[i] * invlen);
+        // run FFT to compute the interpolation
+        if (ys instanceof structures_1.JsVector) {
+            if (rootsOfUnity.length !== ys.length) {
+                throw new Error('Number of roots of unity must be the same as number of y coordinates');
+            }
+            const yValues = ys.toValues();
+            const rValues = fastFT(yValues, reversedRoots, 0, 0, this);
+            for (let i = 0; i < rValues.length; i++) {
+                rValues[i] = this.mod(rValues[i] * invlen);
+            }
+            return this.newVectorFrom(rValues);
         }
-        return result;
+        else if (ys instanceof structures_1.JsMatrix) {
+            const yValues = ys.toValues();
+            const rValues = new Array(ys.rowCount);
+            for (let i = 0; i < ys.rowCount; i++) {
+                if (rootsOfUnity.length !== yValues[i].length) {
+                    throw new Error('Number of roots of unity must be the same as number of y coordinates');
+                }
+                let rowValues = fastFT(yValues[i], reversedRoots, 0, 0, this);
+                for (let j = 0; j < rowValues.length; j++) {
+                    rowValues[j] = this.mod(rowValues[j] * invlen);
+                }
+                rValues[i] = rowValues;
+            }
+            return this.newMatrixFrom(rValues);
+        }
+        else {
+            throw new Error(`y-coordinates object is invalid`);
+        }
     }
     interpolateQuarticBatch(xSets, ySets) {
-        const data = new Array(xSets.length);
-        const inverseTargets = new Array(xSets.length * 4);
-        for (let i = 0; i < xSets.length; i++) {
-            let xs = xSets[i];
-            let ys = ySets[i];
+        const data = new Array(xSets.rowCount);
+        const inverseTargets = new Array(xSets.rowCount * 4);
+        const xsValues = xSets.toValues(), ysValues = ySets.toValues();
+        for (let i = 0; i < xSets.rowCount; i++) {
+            let xs = xsValues[i];
+            let ys = ysValues[i];
             let x01 = xs[0] * xs[1];
             let x02 = xs[0] * xs[2];
             let x03 = xs[0] * xs[3];
@@ -475,38 +665,38 @@ class PrimeField {
             let eq1 = [-x02 * xs[3], x02 + x03 + x23, -xs[0] - xs[2] - xs[3], 1n];
             let eq2 = [-x01 * xs[3], x01 + x03 + x13, -xs[0] - xs[1] - xs[3], 1n];
             let eq3 = [-x01 * xs[2], x01 + x02 + x12, -xs[0] - xs[1] - xs[2], 1n];
-            let e0 = this.evalPolyAt(eq0, xs[0]);
-            let e1 = this.evalPolyAt(eq1, xs[1]);
-            let e2 = this.evalPolyAt(eq2, xs[2]);
-            let e3 = this.evalPolyAt(eq3, xs[3]);
+            let e0 = this.evalPolyAt(this.newVectorFrom(eq0), xs[0]);
+            let e1 = this.evalPolyAt(this.newVectorFrom(eq1), xs[1]);
+            let e2 = this.evalPolyAt(this.newVectorFrom(eq2), xs[2]);
+            let e3 = this.evalPolyAt(this.newVectorFrom(eq3), xs[3]);
             inverseTargets[i * 4 + 0] = e0;
             inverseTargets[i * 4 + 1] = e1;
             inverseTargets[i * 4 + 2] = e2;
             inverseTargets[i * 4 + 3] = e3;
             data[i] = [ys, eq0, eq1, eq2, eq3];
         }
-        const inverseValues = this.invVectorElements(inverseTargets);
-        const result = new Array(data.length);
+        const inverseValues = this.invVectorElements(this.newVectorFrom(inverseTargets)).values;
+        const rValues = new Array(data.length);
         for (let i = 0; i < data.length; i++) {
             let [ys, eq0, eq1, eq2, eq3] = data[i];
             let invY0 = ys[0] * inverseValues[i * 4 + 0];
             let invY1 = ys[1] * inverseValues[i * 4 + 1];
             let invY2 = ys[2] * inverseValues[i * 4 + 2];
             let invY3 = ys[3] * inverseValues[i * 4 + 3];
-            result[i] = [
+            rValues[i] = [
                 this.mod(eq0[0] * invY0 + eq1[0] * invY1 + eq2[0] * invY2 + eq3[0] * invY3),
                 this.mod(eq0[1] * invY0 + eq1[1] * invY1 + eq2[1] * invY2 + eq3[1] * invY3),
                 this.mod(eq0[2] * invY0 + eq1[2] * invY1 + eq2[2] * invY2 + eq3[2] * invY3),
                 this.mod(eq0[3] * invY0 + eq1[3] * invY1 + eq2[3] * invY2 + eq3[3] * invY3)
             ];
         }
-        return result;
+        return this.newMatrixFrom(rValues);
     }
 }
 exports.PrimeField = PrimeField;
 // HELPER FUNCTIONS
 // ================================================================================================
-function fastFF(values, roots, depth, offset, F) {
+function fastFT(values, roots, depth, offset, F) {
     const step = 1 << depth;
     const resultLength = roots.length / step;
     // if only 4 values left, use simple FT
@@ -521,8 +711,8 @@ function fastFF(values, roots, depth, offset, F) {
         }
         return result;
     }
-    const even = fastFF(values, roots, depth + 1, offset, F);
-    const odd = fastFF(values, roots, depth + 1, offset + step, F);
+    const even = fastFT(values, roots, depth + 1, offset, F);
+    const odd = fastFT(values, roots, depth + 1, offset + step, F);
     const halfLength = resultLength / 2;
     const result = new Array(resultLength);
     for (let i = 0; i < halfLength; i++) {
@@ -534,14 +724,14 @@ function fastFF(values, roots, depth, offset, F) {
     }
     return result;
 }
-function zpoly(xs, F) {
+function zpoly(xs, field) {
     const result = new Array(xs.length + 1);
     result[result.length - 1] = 1n;
     let p = result.length - 2;
     for (let i = 0; i < xs.length; i++, p--) {
         result[p] = 0n;
         for (let j = p; j < result.length - 1; j++) {
-            result[j] = F.mod(result[j] - result[j + 1] * xs[i]);
+            result[j] = field.mod(result[j] - result[j + 1] * xs[i]);
         }
     }
     return result;
