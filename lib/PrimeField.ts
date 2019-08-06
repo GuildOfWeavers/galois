@@ -643,7 +643,7 @@ export class PrimeField implements FiniteField {
             if (pValues[i].length === rootsOfUnity.length) {
                 polys[i] = pValues[i];
             }
-            else if (pValues[i].length > rootsOfUnity.length) {
+            else if (pValues[i].length < rootsOfUnity.length) {
                 // make sure values and roots of unity are of the same length
                 let tValues = new Array<bigint>(rootsOfUnity.length);
                 for (let j = 0; j < pValues[i].length; j++) {
