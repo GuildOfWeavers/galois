@@ -19,6 +19,9 @@ class PrimeField {
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
+    get jsField() {
+        return this;
+    }
     get characteristic() {
         return this.modulus;
     }

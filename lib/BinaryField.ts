@@ -24,6 +24,10 @@ export class BinaryField implements FiniteField {
 
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
+    get jsField(): FiniteField {
+        return this;
+    }
+    
     get characteristic(): bigint {
         return 2n;
     }

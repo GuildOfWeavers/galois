@@ -16,6 +16,9 @@ class BinaryField {
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
+    get jsField() {
+        return this;
+    }
     get characteristic() {
         return 2n;
     }

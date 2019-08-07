@@ -33,6 +33,10 @@ export class PrimeField implements FiniteField {
 
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
+    get jsField(): FiniteField {
+        return this;
+    }
+
     get characteristic(): bigint {
         return this.modulus;
     }

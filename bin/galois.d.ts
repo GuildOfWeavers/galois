@@ -9,6 +9,9 @@ declare module '@guildofweavers/galois' {
 
     export interface FiniteField {
 
+        /** Non-optimized version of the field object */
+        readonly jsField: FiniteField;
+
         /** Characteristic of the field: p in GF(p**n) */
         readonly characteristic: bigint;
         
