@@ -224,7 +224,7 @@ let vFftEv2 = f1.evalPolysAtRoots(vMp1, vRoots);
 console.log(`Evaluated ${vMp1.rowCount} degree ${vMp1.colCount} polynomials at ${vRoots.length} roots in ${Date.now() - start} ms`);
 
 start = Date.now();
-const vQBatchEv = f1.evalQuarticBatch(vQPolys, v4);
+const vQBatchEv = f1.evalQuarticBatch(vQPolys, k);
 console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 
 console.log('-'.repeat(100));
@@ -452,7 +452,7 @@ console.log(`Evaluated ${wMp1.rowCount} degree ${wMp1.colCount} polynomials at $
 compareMatrixResults(vFftEv2, wFftEv2, 'FFT polynomial evaluation (matrix)');
 
 start = Date.now();
-const wQBatchEv = wasm128.evalQuarticBatch(wQPolys, w4);
+const wQBatchEv = wasm128.evalQuarticBatch(wQPolys, k);
 console.log(`Evaluated ${quarticPolyCount} quartic polynomials in ${Date.now() - start} ms`);
 compareVectorResults(vQBatchEv, wQBatchEv, 'quartic batch evaluation');
 

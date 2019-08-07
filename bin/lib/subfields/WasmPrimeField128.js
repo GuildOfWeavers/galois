@@ -244,14 +244,14 @@ class WasmPrimeField128 {
         }
         return result;
     }
-    vectorToMatrix(v, columns) {
-        const rowCount = v.length / columns;
+    vectorToMatrix(v, columns, step = 1) {
+        const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
         }
         const vw = v;
         const result = this.newMatrix(rowCount, columns);
-        this.wasm.transposeArray(vw.base, result.base, rowCount, columns);
+        this.wasm.transposeArray(vw.base, result.base, rowCount, columns, step);
         return result;
     }
     // MATRIX OPERATIONS
@@ -503,16 +503,24 @@ class WasmPrimeField128 {
         }
         return result;
     }
-    evalQuarticBatch(polys, xs) {
+    evalQuarticBatch(polys, x) {
         if (polys.colCount !== 4) {
             throw new Error('Quartic polynomials must have exactly 4 terms');
         }
-        else if (polys.rowCount !== xs.length) {
-            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
-        }
-        const pw = polys, xw = xs;
+        const pw = polys;
         const result = this.newVector(polys.rowCount);
-        this.wasm.evalQuarticBatch(pw.base, xw.base, result.base, polys.rowCount);
+        if (typeof x === 'bigint') {
+            this.loadInput(x, 0);
+            this.wasm.evalQuarticBatch2(pw.base, 0, result.base, polys.rowCount);
+        }
+        else {
+            if (polys.rowCount !== x.length) {
+                throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+            }
+            const xw = x;
+            const result = this.newVector(polys.rowCount);
+            this.wasm.evalQuarticBatch1(pw.base, xw.base, result.base, polys.rowCount);
+        }
         return result;
     }
     // POLYNOMIAL INTERPOLATION

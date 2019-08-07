@@ -277,7 +277,7 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    evalQuarticBatch(polys: Matrix, xs: Vector): Vector {
+    evalQuarticBatch(polys: Matrix, x: bigint | Vector): Vector {
         throw new Error('Not implemented');
     }
 

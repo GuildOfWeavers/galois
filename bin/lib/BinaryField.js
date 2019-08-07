@@ -211,7 +211,7 @@ class BinaryField {
     evalPolysAtRoots(p, rootsOfUnity) {
         throw new Error('Not implemented');
     }
-    evalQuarticBatch(polys, xs) {
+    evalQuarticBatch(polys, x) {
         throw new Error('Not implemented');
     }
     interpolate(xs, ys) {

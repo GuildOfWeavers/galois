@@ -293,14 +293,14 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
-    vectorToMatrix(v: Vector, columns: number): WasmMatrix128 {
-        const rowCount = v.length / columns;
+    vectorToMatrix(v: Vector, columns: number, step = 1): WasmMatrix128 {
+        const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
         }
         const vw = v as WasmVector128;
         const result = this.newMatrix(rowCount, columns);
-        this.wasm.transposeArray(vw.base, result.base, rowCount, columns);
+        this.wasm.transposeArray(vw.base, result.base, rowCount, columns, step);
         return result;
     }
 
@@ -584,17 +584,26 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
-    evalQuarticBatch(polys: Matrix, xs: Vector): WasmVector128 {
+    evalQuarticBatch(polys: Matrix, x: bigint | Vector): WasmVector128 {
         if (polys.colCount !== 4) {
             throw new Error('Quartic polynomials must have exactly 4 terms');
         }
-        else if (polys.rowCount !== xs.length) {
-            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
-        }
 
-        const pw = polys as WasmMatrix128, xw = xs as WasmVector128;
+        const pw = polys as WasmMatrix128;
         const result = this.newVector(polys.rowCount);
-        this.wasm.evalQuarticBatch(pw.base, xw.base, result.base, polys.rowCount);
+
+        if (typeof x === 'bigint') {
+            this.loadInput(x, 0);
+            this.wasm.evalQuarticBatch2(pw.base, 0, result.base, polys.rowCount);
+        }
+        else {
+            if (polys.rowCount !== x.length) {
+                throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+            }
+            const xw = x as WasmVector128;
+            const result = this.newVector(polys.rowCount);
+            this.wasm.evalQuarticBatch1(pw.base, xw.base, result.base, polys.rowCount);
+        }
         return result;
     }
 

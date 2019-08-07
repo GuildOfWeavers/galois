@@ -143,7 +143,7 @@ declare module '@guildofweavers/galois' {
         duplicateVector(v: Vector, times?: number): Vector;
 
         /** Transposes the provided vector into a matrix with the specified number of columns */
-        vectorToMatrix(v: Vector, columns: number): Matrix
+        vectorToMatrix(v: Vector, columns: number, step?: number): Matrix
 
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ declare module '@guildofweavers/galois' {
         /**
          * Evaluates a polynomial at a provided x coordinates
          * @param p Polynomial to evaluate
-         * @param x X coordinates at which to evaluate the polynomial
+         * @param x X coordinate at which to evaluate the polynomial
          */
         evalPolyAt(p: Vector, x: bigint): bigint;
 
@@ -310,8 +310,15 @@ declare module '@guildofweavers/galois' {
         evalPolysAtRoots(p: Matrix, rootsOfUnity: Vector): Matrix;
 
         /**
+         * Evaluates a set of degree 3 polynomials at the provided x coordinate
+         * @param polys A matrix where each row is a degree 3 polynomial (4 values per row)
+         * @param x X coordinate at which to evaluate the polynomials
+         */
+        evalQuarticBatch(polys: Matrix, x: bigint): Vector;
+
+        /**
          * Evaluates a set of degree 3 polynomials at provided x coordinates
-         * @param polys A matrix where each row is a degree 3 polynomial
+         * @param polys A matrix where each row is a degree 3 polynomial (4 values per row)
          * @param xs A vector of x coordinates to evaluate
          */
         evalQuarticBatch(polys: Matrix, xs: Vector): Vector;

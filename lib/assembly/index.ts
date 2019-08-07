@@ -19,7 +19,7 @@ export type WasmPrime128 = loader.ASUtil & {
     newRefArray(refCount: number): number;
 
     copyArrayElements(vRef: number, resRef: number, vElementCount: number): void;
-    transposeArray(vRef: number, resRef: number, rowCount: number, colCount: number): void;
+    transposeArray(vRef: number, resRef: number, rowCount: number, colCount: number, step: number): void;
     pluckArray(vRef: number, resRef: number, skip: number, vElementCount: number, rElementCount: number): void;
 
     addArrayElements1(aRef: number, bRef: number, resRef: number, elementCount: number): void;
@@ -49,7 +49,8 @@ export type WasmPrime128 = loader.ASUtil & {
 
     evalPolyAt(pRef: number, xIdx: number, degreePlus1: number): number;
     evalPolyAtRoots(pRef: number, xRef: number, resRef: number, degreePlus1: number, rootCount: number): void;
-    evalQuarticBatch(pRef: number, xRef: number, resRef: number, polyCount: number): void;
+    evalQuarticBatch1(pRef: number, xRef: number, resRef: number, polyCount: number): void;
+    evalQuarticBatch2(pRef: number, xIdx: number, resRef: number, polyCount: number): void;
 
     interpolate(xRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): void;

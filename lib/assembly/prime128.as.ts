@@ -62,12 +62,13 @@ export function copyArrayElements(vRef: usize, resRef: usize, vElementCount: i32
     }
 }
 
-export function transposeArray(vRef: usize, resRef: usize, rowCount: u32, colCount: u32): void {
+export function transposeArray(vRef: usize, resRef: usize, rowCount: i32, colCount: i32, step: i32): void {
     
     let resultLength = rowCount * colCount * VALUE_SIZE;
     let rEndRef = resRef + resultLength;
-    let vEndRef = vRef + resultLength;
-    let colLength = rowCount * VALUE_SIZE;
+    let vEndRef = vRef + resultLength * step;
+    let colLength = rowCount * VALUE_SIZE * step;
+    let rowStep = VALUE_SIZE * step;
 
     while (resRef < rEndRef) {
         let viRef = vRef;
@@ -81,17 +82,17 @@ export function transposeArray(vRef: usize, resRef: usize, rowCount: u32, colCou
             resRef += VALUE_SIZE;
             viRef += colLength;
         }
-        vRef += VALUE_SIZE;
+        vRef += rowStep;
     }
 }
 
 export function pluckArray(vRef: usize, resRef: usize, skip: i32, vElementCount: i32, rElementCount: i32): void {
 
-    let arrayLength = vElementCount * VALUE_SIZE;
-    let step = skip * VALUE_SIZE;
+    let arrayLength: i64 = vElementCount * VALUE_SIZE;
+    let step: i64 = skip * VALUE_SIZE;
 
     for (let i = 0; i < rElementCount; i++) {
-        let viRef = vRef + (i * step) % arrayLength;
+        let viRef = vRef + <i32>((i * step) % arrayLength);
         let vLo = load<u64>(viRef);
         let vHi = load<u64>(viRef, HALF_OFFSET);
 
@@ -205,7 +206,7 @@ export function invArrayElements(sRef: usize, resRef: usize, elementCount: u32):
         // result[i] = source[i] ? mul(result[i], inv) : 0n;
         if (sHi == 0 && sLo == 0) {
             rHi = 0; rLo = 0;
-            sHi = 1; sLo = 1;
+            sHi = 0; sLo = 1;
         }
         else {
             rLo = load<u64>(rRef + i);
@@ -585,7 +586,7 @@ export function evalPolyAtRoots(pRef: usize, xRef: usize, resRef: usize, degreeP
     }
 }
 
-export function evalQuarticBatch(pRef: usize, xRef: usize, resRef: usize, polyCount: u32): void {
+export function evalQuarticBatch1(pRef: usize, xRef: usize, resRef: usize, polyCount: u32): void {
     let resultLength = polyCount * VALUE_SIZE;
     let refEnd = resRef + resultLength;
     let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
@@ -632,6 +633,61 @@ export function evalQuarticBatch(pRef: usize, xRef: usize, resRef: usize, polyCo
 
         resRef += VALUE_SIZE;
         xRef += VALUE_SIZE;
+        pRef += rowSize;
+    }
+}
+
+export function evalQuarticBatch2(pRef: usize, xIdx: i32, resRef: usize, polyCount: u32): void {
+    let resultLength = polyCount * VALUE_SIZE;
+    let refEnd = resRef + resultLength;
+    let rowSize = VALUE_SIZE << 2; // 4 * VALUE_SIZE
+
+    // load x value
+    let xRef = changetype<usize>(_inputs) + xIdx * VALUE_SIZE;
+    let xLo1 = load<u64>(xRef), xHi1 = load<u64>(xRef, HALF_OFFSET);
+
+    // compute x^2
+    modMul(xHi1, xLo1, xHi1, xLo1);
+    let xLo2 = _rLo, xHi2 = _rHi;
+
+    // compute x^3
+    modMul(xHi1, xLo1, xHi2, xLo2);
+    let xLo3 = _rLo, xHi3 = _rHi;
+
+    let kLo: u64, kHi: u64, rLo: u64, rHi: u64;
+
+    while (resRef < refEnd) {
+        // term 0
+        rLo = load<u64>(pRef);
+        rHi = load<u64>(pRef, HALF_OFFSET);
+
+        // term 1
+        kLo = load<u64>(pRef, VALUE_SIZE);
+        kHi = load<u64>(pRef, VALUE_SIZE + HALF_OFFSET);
+
+        modMul(kHi, kLo, xHi1, xLo1);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 2
+        kLo = load<u64>(pRef, VALUE_SIZE * 2);
+        kHi = load<u64>(pRef, VALUE_SIZE * 2 + HALF_OFFSET);
+
+        modMul(kHi, kLo, xHi2, xLo2);
+        modAdd(rHi, rLo, _rHi, _rLo);
+        rLo = _rLo; rHi = _rHi;
+
+        // term 3
+        kLo = load<u64>(pRef, VALUE_SIZE * 3);
+        kHi = load<u64>(pRef, VALUE_SIZE * 3 + HALF_OFFSET);
+
+        modMul(kHi, kLo, xHi3, xLo3);
+        modAdd(rHi, rLo, _rHi, _rLo);
+
+        store<u64>(resRef, _rLo);
+        store<u64>(resRef, _rHi, HALF_OFFSET);
+
+        resRef += VALUE_SIZE;
         pRef += rowSize;
     }
 }
@@ -948,7 +1004,7 @@ export function interpolateQuarticBatch(xRef: usize, yRef: usize, resRef: usize,
     let elementCount = rowCount << 2;
     eqRef = changetype<usize>(equations);
     
-    evalQuarticBatch(eqRef, xRefOrig, resRef, elementCount);
+    evalQuarticBatch1(eqRef, xRefOrig, resRef, elementCount);
 
     let invEvaluations = new ArrayBuffer(elementCount * VALUE_SIZE);
     let iyRef = changetype<usize>(invEvaluations);

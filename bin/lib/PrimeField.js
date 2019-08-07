@@ -217,8 +217,8 @@ class PrimeField {
         }
         return this.newVectorFrom(rValues);
     }
-    vectorToMatrix(v, columns) {
-        const rowCount = v.length / columns;
+    vectorToMatrix(v, columns, step = 1) {
+        const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
         }
@@ -227,7 +227,7 @@ class PrimeField {
         for (let i = 0; i < rowCount; i++) {
             let row = new Array(columns);
             for (let j = 0; j < columns; j++) {
-                row[j] = vValues[i + j * rowCount];
+                row[j] = vValues[(i + j * rowCount) * step];
             }
             rValues[i] = row;
         }
@@ -565,15 +565,25 @@ class PrimeField {
         }
         return this.newMatrixFrom(rValues);
     }
-    evalQuarticBatch(polys, xs) {
-        if (polys.rowCount !== xs.length) {
-            throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+    evalQuarticBatch(polys, x) {
+        if (polys.colCount !== 4) {
+            throw new Error('Quartic polynomials must have exactly 4 terms');
         }
         const pValues = polys.toValues();
-        const xValues = xs.toValues();
-        const rValues = new Array(xs.length);
-        for (let i = 0; i < xs.length; i++) {
-            rValues[i] = this.evalPolyAt(this.newVectorFrom(pValues[i]), xValues[i]);
+        const rValues = new Array(polys.rowCount);
+        if (typeof x === 'bigint') {
+            for (let i = 0; i < polys.rowCount; i++) {
+                rValues[i] = this.evalPolyAt(this.newVectorFrom(pValues[i]), x);
+            }
+        }
+        else {
+            if (polys.rowCount !== x.length) {
+                throw new Error('Number of quartic polynomials must be the same as the number of x coordinates');
+            }
+            const xValues = x.toValues();
+            for (let i = 0; i < polys.rowCount; i++) {
+                rValues[i] = this.evalPolyAt(this.newVectorFrom(pValues[i]), xValues[i]);
+            }
         }
         return this.newVectorFrom(rValues);
     }

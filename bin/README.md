@@ -169,14 +169,17 @@ These methods can be used to perform basic polynomial arithmetic:
 
 ### Polynomial evaluation and interpolation
 
-* **evaluatePolyAt**(p: `Vector`, x: `bigint`): `bigint`<br />
+* **evalPolyAt**(p: `Vector`, x: `bigint`): `bigint`<br />
   Evaluates a polynomial at the provided x-coordinate.
 
-* **evaluatePolyAtRoots**(p: `Vector` | `Matrix`, rootsOfUnity: `Vector`): `Vector` | `Matrix`<br />
-  Uses Fast Fourier Transform to evaluate polynomials at all provided roots of unity. If the first parameter is a matrix, each row of the matrix is assumed to be a polynomial, and the result will be a matrix of values.
+* **evalPolyAtRoots**(p: `Vector`, rootsOfUnity: `Vector`): `Vector`<br />
+  Uses Fast Fourier Transform to evaluate polynomials at all provided roots of unity.
 
-* **evalQuarticBatch**(polys: `Matrix`, xs: `Vector`): `Vector`<br />
-  Evaluates a batch of degree 3 polynomials at the provided x coordinates. Each row on the `poly` matrix is assumed to be a polynomial represented by 4 values.
+* **evalPolysAtRoots**(p: `Matrix`, rootsOfUnity: `Vector`): `Matrix`<br />
+  Uses Fast Fourier Transform to evaluate polynomials at all provided roots of unity. Each row of the matrix is assumed to be a polynomial, and the result will be a matrix of values.
+
+* **evalQuarticBatch**(polys: `Matrix`, x: `bigint` | `Vector`): `Vector`<br />
+  Evaluates a batch of degree 3 polynomials at the provided x coordinate(s). Each row on the `poly` matrix is assumed to be a polynomial represented by 4 values.
 
 * **interpolate**(xs: `Vector`, ys: `Vector`): `Vector`<br />
   Uses Lagrange Interpolation to compute a polynomial from the provided points (x and y coordinates).
