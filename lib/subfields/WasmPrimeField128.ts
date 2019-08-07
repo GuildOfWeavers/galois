@@ -590,11 +590,11 @@ export class WasmPrimeField128 implements FiniteField {
         }
 
         const pw = polys as WasmMatrix128;
-        const result = this.newVector(polys.rowCount);
-
         if (typeof x === 'bigint') {
             this.loadInput(x, 0);
+            const result = this.newVector(polys.rowCount);
             this.wasm.evalQuarticBatch2(pw.base, 0, result.base, polys.rowCount);
+            return result;
         }
         else {
             if (polys.rowCount !== x.length) {
@@ -603,8 +603,8 @@ export class WasmPrimeField128 implements FiniteField {
             const xw = x as WasmVector128;
             const result = this.newVector(polys.rowCount);
             this.wasm.evalQuarticBatch1(pw.base, xw.base, result.base, polys.rowCount);
+            return result;
         }
-        return result;
     }
 
     // POLYNOMIAL INTERPOLATION

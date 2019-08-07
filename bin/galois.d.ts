@@ -364,7 +364,7 @@ declare module '@guildofweavers/galois' {
 
         getValue(index: number): bigint;
 
-        toValues(): ReadonlyArray<bigint>;
+        toValues(): bigint[];
     }
 
     export interface Matrix {

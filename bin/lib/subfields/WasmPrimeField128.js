@@ -508,10 +508,11 @@ class WasmPrimeField128 {
             throw new Error('Quartic polynomials must have exactly 4 terms');
         }
         const pw = polys;
-        const result = this.newVector(polys.rowCount);
         if (typeof x === 'bigint') {
             this.loadInput(x, 0);
+            const result = this.newVector(polys.rowCount);
             this.wasm.evalQuarticBatch2(pw.base, 0, result.base, polys.rowCount);
+            return result;
         }
         else {
             if (polys.rowCount !== x.length) {
@@ -520,8 +521,8 @@ class WasmPrimeField128 {
             const xw = x;
             const result = this.newVector(polys.rowCount);
             this.wasm.evalQuarticBatch1(pw.base, xw.base, result.base, polys.rowCount);
+            return result;
         }
-        return result;
     }
     // POLYNOMIAL INTERPOLATION
     // --------------------------------------------------------------------------------------------

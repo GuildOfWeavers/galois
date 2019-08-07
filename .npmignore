@@ -1,3 +1,4 @@
 tests/
 *.js.map
+*.wasm.map
 .npmignore
