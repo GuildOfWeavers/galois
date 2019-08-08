@@ -47,7 +47,7 @@ class WasmVector128 {
     copyValue(index, destination, offset) {
         const idx = (this.base + index * VALUE_SIZE);
         destination.set(this.wasm.U8.slice(idx, idx + VALUE_SIZE), offset);
-        return offset + VALUE_SIZE;
+        return VALUE_SIZE;
     }
     load(values) {
         if (values.length !== this.length) {

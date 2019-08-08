@@ -52,7 +52,7 @@ export class JsVector implements Vector {
             value = value >> 64n;
             offset += 8;
         }
-        return offset;
+        return this.elementSize;
     }
 
     // ARRAY-LIKE METHODS

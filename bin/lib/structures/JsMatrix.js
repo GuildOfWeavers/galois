@@ -38,7 +38,7 @@ class JsMatrix {
             value = value >> 64n;
             offset += 8;
         }
-        return offset;
+        return this.elementSize;
     }
 }
 exports.JsMatrix = JsMatrix;

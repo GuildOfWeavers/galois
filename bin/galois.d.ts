@@ -362,9 +362,19 @@ declare module '@guildofweavers/galois' {
         readonly byteLength : number;
         readonly elementSize: number;
 
+        /** Returns the element located at the specified index */
         getValue(index: number): bigint;
+
+        /**
+         * Copies a vector element (in little-endian form) into the destination buffer
+         * @param index Index at which the element is located
+         * @param destination Buffer into which the element should be copied
+         * @param offset Byte offset in the destination buffer at which to copy the element
+         * @returns Number of bytes written to the destination buffer
+         */
         copyValue(index: number, destination: Buffer, offset: number): number;
 
+        /** Returns contents of the vector as a BigInt array */
         toValues(): bigint[];
     }
 
@@ -374,9 +384,20 @@ declare module '@guildofweavers/galois' {
         readonly byteLength : number;
         readonly elementSize: number;
 
+        /** Returns the element located at the specified row and column */
         getValue(row: number, column: number): bigint;
+
+        /**
+         * Copies a matrix element (in little-endian form) into the destination buffer
+         * @param row Row index at which the element is located
+         * @param column Column index at which the element is located
+         * @param destination Buffer into which the element should be copied
+         * @param offset Byte offset in the destination buffer at which to copy the element
+         * @returns Number of bytes written to the destination buffer
+         */
         copyValue(row: number, column: number, destination: Buffer, offset: number): number;
 
+        /** Returns contents of the matrix as a 2-dimensional BigInt array */
         toValues(): bigint[][];
     }
 

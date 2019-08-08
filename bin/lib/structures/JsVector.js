@@ -39,7 +39,7 @@ class JsVector {
             value = value >> 64n;
             offset += 8;
         }
-        return offset;
+        return this.elementSize;
     }
     // ARRAY-LIKE METHODS
     // --------------------------------------------------------------------------------------------
