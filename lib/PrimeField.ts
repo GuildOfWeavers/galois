@@ -483,6 +483,26 @@ export class PrimeField implements FiniteField {
         return this.newMatrixFrom(rValues);
     }
 
+    subMatrixElementsFromVectors(v: Vector[], m: Matrix): JsMatrix {
+        if (v.length !== m.rowCount) {
+            throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of rows');
+        }
+        const mValues = m.toValues();
+        const rValues = new Array<bigint[]>(m.rowCount);
+        for (let i = 0; i < rValues.length; i++) {
+            let r1 = v[i].toValues(), r2 = mValues[i];
+            if (r1.length != m.colCount) {
+                throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of columns');
+            }
+
+            let row = rValues[i] = new Array<bigint>(r1.length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = this.sub(r1[j], r2[j]);
+            }
+        }
+        return this.newMatrixFrom(rValues);
+    }
+
     matrixRowsToVectors(m: Matrix): JsVector[] {
         const mValues = m.toValues();
         const result = new Array<JsVector>(m.rowCount);

@@ -400,6 +400,24 @@ class PrimeField {
         }
         return this.newMatrixFrom(rValues);
     }
+    subMatrixElementsFromVectors(v, m) {
+        if (v.length !== m.rowCount) {
+            throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of rows');
+        }
+        const mValues = m.toValues();
+        const rValues = new Array(m.rowCount);
+        for (let i = 0; i < rValues.length; i++) {
+            let r1 = v[i].toValues(), r2 = mValues[i];
+            if (r1.length != m.colCount) {
+                throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of columns');
+            }
+            let row = rValues[i] = new Array(r1.length);
+            for (let j = 0; j < row.length; j++) {
+                row[j] = this.sub(r1[j], r2[j]);
+            }
+        }
+        return this.newMatrixFrom(rValues);
+    }
     matrixRowsToVectors(m) {
         const mValues = m.toValues();
         const result = new Array(m.rowCount);

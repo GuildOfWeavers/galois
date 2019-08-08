@@ -233,6 +233,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    subMatrixElementsFromVectors(v: Vector[], m: Matrix): Matrix {
+        throw new Error('Not implemented');
+    }
+
     matrixRowsToVectors(m: Matrix): Vector[] {
         throw new Error('Not implemented');
     }

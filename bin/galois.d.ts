@@ -210,6 +210,9 @@ declare module '@guildofweavers/galois' {
         /** Computes a new matrix n such that n[i,j] = m[i,j] * v[i] for all i and j */
         mulMatrixRows(m: Matrix, v: Vector): Matrix;
 
+        /** Computes a new matrix n such that n[i,j] = v[i][j] - m[i,j]  */
+        subMatrixElementsFromVectors(v: Vector[], m: Matrix): Matrix;
+
         /** Creates an array of vectors corresponding to matrixes' rows */
         matrixRowsToVectors(m: Matrix): Vector[];
         

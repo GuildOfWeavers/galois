@@ -419,6 +419,24 @@ class WasmPrimeField128 {
         }
         return result;
     }
+    subMatrixElementsFromVectors(v, m) {
+        if (v.length !== m.rowCount) {
+            throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of rows');
+        }
+        const mw = m;
+        const result = this.newMatrix(m.rowCount, m.colCount);
+        let bRef = mw.base, resRef = result.base;
+        for (let i = 0; i < mw.rowCount; i++) {
+            let vw = v[i];
+            if (vw.length !== result.colCount) {
+                throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of columns');
+            }
+            this.wasm.subArrayElements1(vw.base, bRef, resRef, result.colCount);
+            bRef += result.rowSize;
+            resRef += result.rowSize;
+        }
+        return result;
+    }
     matrixRowsToVectors(m) {
         const result = new Array(m.rowCount);
         const mw = m;

@@ -487,6 +487,25 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    subMatrixElementsFromVectors(v: Vector[], m: Matrix): WasmMatrix128 {
+        if (v.length !== m.rowCount) {
+            throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of rows');
+        }
+        const mw = m as WasmMatrix128;
+        const result = this.newMatrix(m.rowCount, m.colCount);
+        let bRef = mw.base, resRef = result.base;
+        for (let i = 0; i < mw.rowCount; i++) {
+            let vw = v[i] as WasmVector128;
+            if (vw.length !== result.colCount) {
+                throw new Error('Cannot subtract matrix elements from vectors: parameters have different number of columns');
+            }
+            this.wasm.subArrayElements1(vw.base, bRef, resRef, result.colCount);
+            bRef += result.rowSize;
+            resRef += result.rowSize;
+        }
+        return result;
+    }
+
     matrixRowsToVectors(m: Matrix): WasmVector128[] {
         const result = new Array<WasmVector128>(m.rowCount);
         const mw = m as WasmMatrix128;
