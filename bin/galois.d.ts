@@ -363,6 +363,7 @@ declare module '@guildofweavers/galois' {
         readonly elementSize: number;
 
         getValue(index: number): bigint;
+        copyValue(index: number, destination: Buffer, offset: number): number;
 
         toValues(): bigint[];
     }
@@ -374,6 +375,7 @@ declare module '@guildofweavers/galois' {
         readonly elementSize: number;
 
         getValue(row: number, column: number): bigint;
+        copyValue(row: number, column: number, destination: Buffer, offset: number): number;
 
         toValues(): bigint[][];
     }

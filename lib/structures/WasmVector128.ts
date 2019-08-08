@@ -60,6 +60,12 @@ export class WasmVector128 implements Vector {
         return values;
     }
 
+    copyValue(index: number, destination: Buffer, offset: number): number {
+        const idx = (this.base + index * VALUE_SIZE);
+        destination.set(this.wasm.U8.slice(idx, idx + VALUE_SIZE), offset);
+        return offset + VALUE_SIZE;
+    }
+
     load(values: bigint[]): void {
         if (values.length !== this.length) {
             throw new Error(`Cannot load values: vector length must match the number of values`);

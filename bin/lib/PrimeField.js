@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const crypto = require("crypto");
 const structures_1 = require("./structures");
 const utils_1 = require("./utils");
+// CONSTANTS
+// ================================================================================================
+const MIN_ELEMENT_SIZE = 8; // 64-bits
 // CLASS DEFINITION
 // ================================================================================================
 class PrimeField {
@@ -15,7 +18,7 @@ class PrimeField {
             modulus = modulus >> 1n;
             bitWidth++;
         }
-        this.elementSize = Math.ceil(bitWidth / 8);
+        this.elementSize = Math.max(Math.ceil(bitWidth / 8), MIN_ELEMENT_SIZE);
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------

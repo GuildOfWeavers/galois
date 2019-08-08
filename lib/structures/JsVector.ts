@@ -2,7 +2,11 @@
 // ================================================================================================
 import { Vector } from '@guildofweavers/galois';
 
-// VECTOR CLASS
+// CONSTANTS
+// ================================================================================================
+const MASK_64B = 0xFFFFFFFFFFFFFFFFn;
+
+// CLASS DEFINITION
 // ================================================================================================
 export class JsVector implements Vector {
 
@@ -38,6 +42,17 @@ export class JsVector implements Vector {
 
     toValues(): bigint[] {
         return this.values;
+    }
+
+    copyValue(index: number, destination: Buffer, offset: number): number {
+        const blocks = this.elementSize >> 3;
+        let value = this.values[index];
+        for (let i = 0; i < blocks; i++) {
+            destination.writeBigUInt64LE(value & MASK_64B, offset);
+            value = value >> 64n;
+            offset += 8;
+        }
+        return offset;
     }
 
     // ARRAY-LIKE METHODS

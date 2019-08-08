@@ -51,6 +51,11 @@ class WasmMatrix128 {
         }
         return values;
     }
+    copyValue(row, column, destination, offset) {
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
+        destination.set(this.wasm.U8.slice(idx, VALUE_SIZE), offset);
+        return offset + VALUE_SIZE;
+    }
     load(values) {
         let idx = this.base >>> 3;
         for (let i = 0; i < this.rowCount; i++) {

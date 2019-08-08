@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// VECTOR CLASS
+// CONSTANTS
+// ================================================================================================
+const MASK_64B = 0xffffffffffffffffn;
+// CLASS DEFINITION
 // ================================================================================================
 class JsVector {
     // CONSTRUCTOR
@@ -27,6 +30,16 @@ class JsVector {
     }
     toValues() {
         return this.values;
+    }
+    copyValue(index, destination, offset) {
+        const blocks = this.elementSize >> 3;
+        let value = this.values[index];
+        for (let i = 0; i < blocks; i++) {
+            destination.writeBigUInt64LE(value & MASK_64B, offset);
+            value = value >> 64n;
+            offset += 8;
+        }
+        return offset;
     }
     // ARRAY-LIKE METHODS
     // --------------------------------------------------------------------------------------------

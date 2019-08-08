@@ -51,7 +51,7 @@ export class WasmMatrix128 implements Matrix {
         }
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value & MASK_64B
+        this.wasm.U64[idx] = value & MASK_64B;
         this.wasm.U64[idx + 1] = value >> 64n;
     }
 
@@ -68,6 +68,12 @@ export class WasmMatrix128 implements Matrix {
             values[i] = row;
         }
         return values;
+    }
+
+    copyValue(row: number, column: number, destination: Buffer, offset: number): number {
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
+        destination.set(this.wasm.U8.slice(idx, VALUE_SIZE), offset);
+        return offset + VALUE_SIZE;
     }
 
     load(values: bigint[][]): void {

@@ -11,6 +11,10 @@ interface ArithmeticOperation {
     (this: PrimeField, a: bigint, b: bigint): bigint;
 }
 
+// CONSTANTS
+// ================================================================================================
+const MIN_ELEMENT_SIZE = 8; // 64-bits
+
 // CLASS DEFINITION
 // ================================================================================================
 export class PrimeField implements FiniteField {
@@ -28,7 +32,7 @@ export class PrimeField implements FiniteField {
             modulus = modulus >> 1n;
             bitWidth++;
         }
-        this.elementSize = Math.ceil(bitWidth / 8);
+        this.elementSize = Math.max(Math.ceil(bitWidth / 8), MIN_ELEMENT_SIZE);
     }
 
     // PUBLIC ACCESSORS
