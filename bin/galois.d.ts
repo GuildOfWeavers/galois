@@ -145,6 +145,9 @@ declare module '@guildofweavers/galois' {
         /** Transposes the provided vector into a matrix with the specified number of columns */
         vectorToMatrix(v: Vector, columns: number, step?: number): Matrix
 
+        /** Creates a new matrix using provided vectors as matrix rows */
+        vectorsToMatrix(v: Vector[]): Matrix;
+
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
 

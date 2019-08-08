@@ -236,6 +236,32 @@ class PrimeField {
         }
         return this.newMatrixFrom(rValues);
     }
+    vectorsToMatrix(v) {
+        const rowCount = v.length;
+        let colCount = 0;
+        for (let row of v) {
+            if (colCount < row.length) {
+                colCount = row.length;
+            }
+        }
+        const rValues = new Array(rowCount);
+        for (let i = 0; i < rowCount; i++) {
+            let row = v[i].toValues();
+            if (row.length < colCount) {
+                rValues[i] = new Array(colCount);
+                for (let j = row.length - 1; j >= 0; j--) {
+                    rValues[i][j] = row[j];
+                }
+                for (let j = row.length; j < colCount; j++) {
+                    rValues[i][j] = 0n;
+                }
+            }
+            else {
+                rValues[i] = row;
+            }
+        }
+        return this.newMatrixFrom(rValues);
+    }
     vectorElementsOp(op, a, b) {
         const aValues = a.toValues(), bValues = b.toValues();
         const rValues = new Array(a.length);

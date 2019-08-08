@@ -127,6 +127,9 @@ class BinaryField {
     vectorToMatrix(v, columns) {
         throw new Error('Not implemented');
     }
+    vectorsToMatrix(v) {
+        throw new Error('Not implemented');
+    }
     pluckVector(v, skip, times) {
         throw new Error('Not implemented');
     }

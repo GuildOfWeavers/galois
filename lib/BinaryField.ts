@@ -167,6 +167,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    vectorsToMatrix(v: Vector[]): Matrix {
+        throw new Error('Not implemented');
+    }
+
     pluckVector(v: Vector, skip: number, times: number): Vector {
         throw new Error('Not implemented');
     }

@@ -304,6 +304,26 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    vectorsToMatrix(v: Vector[]): WasmMatrix128 {
+        const rowCount = v.length;
+        let colCount = 0;
+        for (let row of v) {
+            if (colCount < row.length) {
+                colCount = row.length;
+            }
+        }
+
+        const result = this.newMatrix(rowCount, colCount);
+        let resRef = result.base;
+        for (let i = 0; i < v.length; i++) {
+            let vw = v[i] as WasmVector128;
+            this.wasm.copyArrayElements(vw.base, resRef, vw.length);
+            resRef += result.rowSize;
+        }
+
+        return result;
+    }
+
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): WasmMatrix128 {
