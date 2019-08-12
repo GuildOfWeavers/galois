@@ -134,7 +134,7 @@ export function divArrayElements1(aRef: usize, bRef: usize, resRef: usize, eleme
     let rRef = resRef;
     if (aRef == resRef) {
         // @ts-ignore
-        rRef = __retain(__alloc(elementCount * VALUE_SIZE,0));
+        rRef = __alloc(elementCount * VALUE_SIZE,0);
     }
 
     invArrayElements(bRef, rRef, elementCount);
@@ -142,7 +142,7 @@ export function divArrayElements1(aRef: usize, bRef: usize, resRef: usize, eleme
 
     if (aRef == resRef) {
         // @ts-ignore
-        __release(rRef);
+        __free(rRef);
     }
 }
 
@@ -177,7 +177,7 @@ export function invArrayElements(sRef: usize, resRef: usize, elementCount: u32):
     // handle the case if source and result arrays are the same
     if (sRef == resRef) {
         // @ts-ignore
-        rRef = __retain(__alloc(resultLength, 0));
+        rRef = __alloc(resultLength, 0);
     }
 
     let lastLo: u64 = 1, lastHi: u64 = 0;
@@ -224,7 +224,7 @@ export function invArrayElements(sRef: usize, resRef: usize, elementCount: u32):
 
     if (sRef == resRef) {
         // @ts-ignore
-        __release(rRef);
+        __free(rRef);
     }
 }
 
