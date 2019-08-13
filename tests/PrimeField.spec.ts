@@ -97,13 +97,6 @@ describe('PrimeField;', () => {
         describe('mul();', () => {
             [
                 {
-                    modulus: 2n,
-                    tests: [
-                        [1n, 1n, 1n], [2n, 2n, 0n], [5n, 5n, 1n],
-                        [5n, 6n, 0n], [3n, 0n, 0n], [9n, 9n, 1n]
-                    ]
-                },
-                {
                     modulus: 11n,
                     tests: [
                         [1n,  1n,  1n], [2n, 2n, 4n], [5n,  4n, 9n],
@@ -136,15 +129,6 @@ describe('PrimeField;', () => {
 
         describe('div();', () => {
             [
-                {
-                    modulus: 2n,
-                    tests: [
-                        [1n, 1n, 1n], [2n, 1n, 0n], // * 1n
-                        [1n, 2n, 1n], [2n, 2n, 0n], // * 1n
-                        [1n, 3n, 1n], [2n, 3n, 0n], // * 1n
-                        [1n, 5n, 1n], [2n, 5n, 0n]  // * 1n
-                    ]
-                },
                 {
                     modulus: 11n,
                     tests: [
@@ -465,7 +449,7 @@ describe('PrimeField;', () => {
                     v1: [1n, 0n, 5n],
                     n : 3n,
                     vr: {
-                        3  : [1n, 0n, 5n],   // * 1n
+                        3  : [0n, 0n, 0n],   // * 0n
                         11 : [4n, 0n, 20n],  // * 4n
                         101: [34n, 0n, 170n] // * 34n
                     },
@@ -507,7 +491,7 @@ describe('PrimeField;', () => {
                     });
 
                     nTests.forEach(({v1, n, vr}) => {
-                        it(`should correctly divide vector ${strVector(v1)} on number ${n}`, () => {
+                        it(`should correctly divide vector ${strVector(v1)} by number ${n}`, () => {
                             let fv1 = F.newVectorFrom(v1);
                             expect(F.divVectorElements(fv1, n).values).to.deep.equal((vr as any)[resultKey].map((n: any) => F.mod(n)));
                         });
@@ -788,7 +772,7 @@ describe('PrimeField;', () => {
                     m1: [[0n, 4n, 3n], [0n, 5n, 2n], [1n, 2n, 4n]],
                     m2: [[1n, 5n, 2n], [4n, 7n, 3n], [1n, 0n, 3n]],
                     mr: {
-                        3  : [[0n, 8n, 6n],     [0n, 5n, 2n],    [1n, 0n, 4n]],  // * [[1n, 2n, 2n], [1n, 1n, 1n], [1n, 0n, 1n]]
+                        3  : [[0n, 2n, 0n],     [0n, 2n, 0n],    [1n, 0n, 0n]],  // * [[0n, 2n, 0n], [0n, 2n, 0n], [1n, 0n, 0n]]
                         11 : [[0n, 36n, 18n],   [0n, 40n, 8n],   [1n, 0n, 16n]], // * [[1n, 9n, 6n], [3n, 8n, 4n], [1n, 0n, 4n]]
                         101: [[0n, 324n, 153n], [0n, 145n, 68n], [1n, 0n, 136n]] // * [[1n, 81n, 51n], [76n, 29n, 34n], [1n, 0n, 34n]]
                     }
@@ -808,7 +792,7 @@ describe('PrimeField;', () => {
                     m1: [[1n, 0n], [5n, 2n]],
                     n : 3n,
                     mr: {
-                        3  : [[1n, 0n],  [5n, 2n]],   // * 1n
+                        3  : [[0n, 0n],  [0n, 0n]],   // * 0n
                         11 : [[4n, 0n],  [20n, 8n]],  // * 4n
                         101: [[34n, 0n], [170n, 68n]] // * 34n
                     }
@@ -842,7 +826,7 @@ describe('PrimeField;', () => {
                     });
 
                     nTests.forEach(({m1, n, mr}) => {
-                        it(`should correctly divide matrix ${strMatrix(m1)} on number ${n}`, () => {
+                        it(`should correctly divide matrix ${strMatrix(m1)} by number ${n}`, () => {
                             let fm1 = F.newMatrixFrom(m1);
                             expect(F.divMatrixElements(fm1, n).values).to.deep.equal(normF((mr as any)[resultKey]));
                         });

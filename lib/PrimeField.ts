@@ -110,9 +110,9 @@ export class PrimeField implements FiniteField {
     }
 
     inv(a: bigint): bigint {
-        if (a === 0n) return a;
-        let lm = 1n, hm = 0n;
         let low = this.mod(a);
+        if (low === 0n) return 0n;
+        let lm = 1n, hm = 0n;
         let high = this.modulus;
 
         while (low > 1n) {
@@ -390,13 +390,14 @@ export class PrimeField implements FiniteField {
         const sValues = source.toValues();
         const rValues = new Array<bigint[]>(source.rowCount);
 
-        let last = 1n;
+        let last = 1n, sValue: bigint;
         for (let i = 0; i < source.rowCount; i++) {
             let sRow = sValues[i];
             let rRow = new Array<bigint>(sRow.length);
             for (let j = 0; j < sRow.length; j++) {
                 rRow[j] = last;
-                last = this.mod(last * (sRow[j] || 1n));
+                sValue = this.mod(sRow[j]) || 1n;
+                last = this.mod(last * sValue);
             }
             rValues[i] = rRow;
         }
@@ -407,8 +408,9 @@ export class PrimeField implements FiniteField {
             let sRow = sValues[i];
             let rRow = rValues[i];
             for (let j = sRow.length - 1; j >= 0; j--) {
-                rRow[j] = this.mod(sRow[j] ? sRow[j] * inv : 0n);
-                inv = this.mul(inv, sRow[j] || 1n);
+                sValue = this.mod(sRow[j]);
+                rRow[j] = this.mod(sValue ? rRow[j] * inv : 0n);
+                inv = this.mul(inv, sValue || 1n);
             }
         }
         return this.newMatrixFrom(rValues);

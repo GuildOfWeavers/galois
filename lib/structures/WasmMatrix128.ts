@@ -72,7 +72,7 @@ export class WasmMatrix128 implements Matrix {
 
     copyValue(row: number, column: number, destination: Buffer, offset: number): number {
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
-        destination.set(this.wasm.U8.slice(idx, idx + VALUE_SIZE), offset);
+        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
         return VALUE_SIZE;
     }
 
