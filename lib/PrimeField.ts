@@ -377,7 +377,7 @@ export class PrimeField implements FiniteField {
     divMatrixElements(a: Matrix, b: bigint | Matrix): JsMatrix {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.mul, a, this.inv(b))
-            : this.matrixElementsOp(this.div, a, b);
+            : this.matrixElementsOp(this.mul, a, this.invMatrixElements(b));
     }
 
     expMatrixElements(a: Matrix, b: bigint | Matrix): JsMatrix {

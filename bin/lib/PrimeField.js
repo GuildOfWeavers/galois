@@ -308,7 +308,7 @@ class PrimeField {
     divMatrixElements(a, b) {
         return (typeof b === 'bigint')
             ? this.matrixScalarOp(this.mul, a, this.inv(b))
-            : this.matrixElementsOp(this.div, a, b);
+            : this.matrixElementsOp(this.mul, a, this.invMatrixElements(b));
     }
     expMatrixElements(a, b) {
         return (typeof b === 'bigint')
