@@ -229,6 +229,11 @@ class BinaryField {
     interpolateQuarticBatch(xSets, ySets) {
         throw new Error('Not implemented');
     }
+    // MIMC
+    // --------------------------------------------------------------------------------------------
+    mimc(seed, steps, reverse = false) {
+        throw new Error('Not implemented');
+    }
 }
 exports.BinaryField = BinaryField;
 //# sourceMappingURL=BinaryField.js.map

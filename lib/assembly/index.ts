@@ -11,8 +11,8 @@ const PRIME128_WASM = `${__dirname}/prime128.wasm`;
 // INTERFACES
 // ================================================================================================
 export type WasmPrime128 = loader.ASUtil & {
-    getInputsPtr(): number;
-    getOutputsPtr(): number;
+    getInputsRef(): number;
+    getOutputsRef(): number;
     setModulus(mHi1: number, mHi2: number, mLo1: number, mLo2: number): void;
 
     newArray(elementCount: number): number;
@@ -55,6 +55,9 @@ export type WasmPrime128 = loader.ASUtil & {
     interpolate(xRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateQuarticBatch(xRef: number, yRef: number, resRef: number, rowCount: number): void;
+
+    getMimcConstantsRef(): number;
+    mimc(seedIdx: number, expIdx: number, steps: number, reverse: boolean): number;
 }
 
 // PUBLIC MODULE

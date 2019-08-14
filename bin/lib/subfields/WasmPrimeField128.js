@@ -15,8 +15,8 @@ class WasmPrimeField128 {
     // --------------------------------------------------------------------------------------------
     constructor(modulus, options) {
         this.wasm = assembly_1.instantiatePrime128(options);
-        this.inputsIdx = this.wasm.getInputsPtr() >>> 3;
-        this.outputsIdx = this.wasm.getOutputsPtr() >>> 3;
+        this.inputsIdx = this.wasm.getInputsRef() >>> 3;
+        this.outputsIdx = this.wasm.getOutputsRef() >>> 3;
         this.jsField = new PrimeField_1.PrimeField(modulus);
         this.elementSize = this.jsField.elementSize;
         // set modulus in WASM module
@@ -25,6 +25,15 @@ class WasmPrimeField128 {
         const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B));
         const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B));
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
+        // set MiMC parameters
+        this.mimcExp = 3n;
+        this.mimcReverseExp = (this.jsField.modulus * 2n - 1n) / 3n;
+        const mimcIdx = this.wasm.getMimcConstantsRef() >>> 3;
+        for (let i = 0; i < 64; i++) {
+            let value = (BigInt(i) ** 7n) ^ 42n;
+            this.wasm.U64[mimcIdx + i * 2] = value & MASK_64B;
+            this.wasm.U64[mimcIdx + i * 2 + 1] = value >> 64n;
+        }
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
@@ -612,15 +621,24 @@ class WasmPrimeField128 {
         this.wasm.interpolateQuarticBatch(xw.base, yw.base, result.base, xw.rowCount);
         return result;
     }
+    // MIMC
+    // --------------------------------------------------------------------------------------------
+    mimc(seed, steps, reverse = false) {
+        const mimcExp = reverse ? this.mimcReverseExp : this.mimcExp;
+        this.loadInput(seed, 0);
+        this.loadInput(mimcExp, 1);
+        const outputIdx = this.wasm.mimc(0, 1, steps, reverse);
+        return this.readOutput(outputIdx);
+    }
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
     loadInput(value, index) {
-        this.wasm.U64[this.inputsIdx + index] = value & MASK_64B;
-        this.wasm.U64[this.inputsIdx + index + 1] = value >> 64n;
+        this.wasm.U64[this.inputsIdx + index * 2] = value & MASK_64B;
+        this.wasm.U64[this.inputsIdx + index * 2 + 1] = value >> 64n;
     }
     readOutput(index) {
-        const lo = this.wasm.U64[this.outputsIdx + index];
-        const hi = this.wasm.U64[this.outputsIdx + index + 1];
+        const lo = this.wasm.U64[this.outputsIdx + index * 2];
+        const hi = this.wasm.U64[this.outputsIdx + index * 2 + 1];
         return (hi << 64n) | lo;
     }
 }

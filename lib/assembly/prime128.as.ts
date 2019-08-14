@@ -28,11 +28,11 @@ export function setModulus(mHi1: u32, mHi2: u32, mLo1: u32, mLo2: u32): void {
 let _inputs = new ArrayBuffer(8 * VALUE_SIZE);
 let _outputs = new ArrayBuffer(8 * VALUE_SIZE);
 
-export function getInputsPtr(): usize {
+export function getInputsRef(): usize {
     return changetype<usize>(_inputs);
 }
 
-export function getOutputsPtr(): usize {
+export function getOutputsRef(): usize {
     return changetype<usize>(_outputs);
 }
 
@@ -1207,6 +1207,53 @@ function baseFT(vRef: usize, rRef: usize, vRefEnd: u32, step: u32, offset: u32):
     store<u64>(resRef, lastHi, HALF_OFFSET);
 
     return result;
+}
+
+// MIMC
+// ================================================================================================
+const mimcConstants = new ArrayBuffer(64 * VALUE_SIZE);
+
+export function getMimcConstantsRef(): usize {
+    return changetype<usize>(mimcConstants);
+}
+
+export function mimc(seedIdx: i32, expIdx: i32, steps: i32, reverse: boolean): i32 {
+
+    let sRef = changetype<usize>(_inputs) + seedIdx * VALUE_SIZE;
+    let sLo = load<u64>(sRef), sHi = load<u64>(sRef, HALF_OFFSET);
+
+    let eRef = changetype<usize>(_inputs) + expIdx * VALUE_SIZE;
+    let eLo = load<u64>(eRef), eHi = load<u64>(eRef, HALF_OFFSET);
+
+    let cRef = changetype<usize>(mimcConstants);
+    let cLo: u64, cHi: u64, ciRef: usize;
+
+    if (reverse) {
+        for (let i = steps - 1; i > 0; i--) {
+            ciRef = cRef + (i % 64) * VALUE_SIZE;
+            cLo = load<u64>(ciRef); cHi = load<u64>(ciRef, HALF_OFFSET);
+
+            modSub(sHi, sLo, cHi, cLo);
+            modExp(_rHi, _rLo, eHi, eLo);
+            sLo = _rLo; sHi = _rHi;
+        }
+    }
+    else {
+        for (let i = 1; i < steps; i++) {
+            ciRef = cRef + (i % 64) * VALUE_SIZE;
+            cLo = load<u64>(ciRef); cHi = load<u64>(ciRef, HALF_OFFSET);
+
+            modExp(sHi, sLo, eHi, eLo);
+            modAdd(cHi, cLo, _rHi, _rLo);
+            sLo = _rLo; sHi = _rHi;
+        }
+    }
+
+    let oRef = changetype<usize>(_outputs);
+    store<u64>(oRef, sLo);
+    store<u64>(oRef, sHi, HALF_OFFSET);
+
+    return 0;
 }
 
 // MODULAR ARITHMETIC FUNCTIONS

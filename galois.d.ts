@@ -359,6 +359,10 @@ declare module '@guildofweavers/galois' {
          * @param ySets A matrix of Y coordinates (4 values per row)
          */
         interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix;
+
+        // MIMC
+        // ----------------------------------------------------------------------------------------
+        mimc(seed: bigint, steps: number, reverse?: boolean): bigint;
     }
 
     // DATA TYPES

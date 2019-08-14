@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/chai": "4.1.x",
     "@types/mocha": "5.2.x",
-    "@types/node": "^12.7.1",
+    "@types/node": "12.7.x",
     "chai": "4.2.x",
     "del": "5.0.x",
     "gulp": "4.0.x",

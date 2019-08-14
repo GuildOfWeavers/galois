@@ -304,4 +304,10 @@ export class BinaryField implements FiniteField {
     interpolateQuarticBatch(xSets: Matrix, ySets: Matrix): Matrix {
         throw new Error('Not implemented');
     }
+
+    // MIMC
+    // --------------------------------------------------------------------------------------------
+    mimc(seed: bigint, steps: number, reverse = false): bigint {
+        throw new Error('Not implemented');
+    }
 }

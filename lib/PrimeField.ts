@@ -22,6 +22,10 @@ export class PrimeField implements FiniteField {
     readonly modulus    : bigint;
     readonly elementSize: number;
 
+    readonly mimcExp        : bigint;
+    readonly mimcReverseExp : bigint;
+    readonly mimcConstants  : bigint[];
+
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
     constructor(modulus: bigint) {
@@ -33,6 +37,14 @@ export class PrimeField implements FiniteField {
             bitWidth++;
         }
         this.elementSize = Math.max(Math.ceil(bitWidth / 8), MIN_ELEMENT_SIZE);
+
+        // set MiMC parameters
+        this.mimcExp = 3n;
+        this.mimcReverseExp = (this.modulus * 2n - 1n) / 3n;
+        this.mimcConstants = new Array<bigint>(64);
+        for (let i = 0; i < 64; i++) {
+            this.mimcConstants[i] = (BigInt(i)**7n) ^ 42n;
+        }
     }
 
     // PUBLIC ACCESSORS
@@ -885,6 +897,23 @@ export class PrimeField implements FiniteField {
         }
 
         return this.newMatrixFrom(rValues);
+    }
+
+    // MIMC
+    // --------------------------------------------------------------------------------------------
+    mimc(seed: bigint, steps: number, reverse = false): bigint {
+        let result = seed;
+        if (reverse) {
+            for (let i = steps - 1; i > 0; i--) {
+                result = this.exp(this.sub(result, this.mimcConstants[i % 64]), this.mimcReverseExp);
+            }
+        }
+        else {
+            for (let i = 1; i < steps; i++) {
+                result = this.add(this.exp(result, this.mimcExp), this.mimcConstants[i % 64]);
+            }
+        }
+        return result;
     }
 }
 
