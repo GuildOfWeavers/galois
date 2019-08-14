@@ -615,12 +615,14 @@ class WasmPrimeField128 {
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
     loadInput(value, index) {
-        this.wasm.U64[this.inputsIdx + index] = value & MASK_64B;
-        this.wasm.U64[this.inputsIdx + index + 1] = value >> 64n;
+        let idx = this.inputsIdx + (index << 1);
+        this.wasm.U64[idx] = value & MASK_64B;
+        this.wasm.U64[idx + 1] = value >> 64n;
     }
     readOutput(index) {
-        const lo = this.wasm.U64[this.outputsIdx + index];
-        const hi = this.wasm.U64[this.outputsIdx + index + 1];
+        let idx = this.outputsIdx + (index << 1);
+        const lo = this.wasm.U64[idx];
+        const hi = this.wasm.U64[idx + 1];
         return (hi << 64n) | lo;
     }
 }
