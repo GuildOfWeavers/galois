@@ -49,17 +49,7 @@ export function newArray(elementCount: i32): ArrayBuffer {
 }
 
 export function copyArrayElements(vRef: usize, resRef: usize, vElementCount: i32): void {
-    // TODO: replace with bulk memory copy
-    let endRef = vRef + vElementCount * VALUE_SIZE;
-    while (vRef < endRef) {
-        let vLo = load<u64>(vRef);
-        let vHi = load<u64>(vRef, HALF_OFFSET);
-        store<u64>(resRef, vLo);
-        store<u64>(resRef, vHi, HALF_OFFSET);
-
-        vRef += VALUE_SIZE;
-        resRef += VALUE_SIZE;
-    }
+    memory.copy(resRef, vRef, vElementCount * VALUE_SIZE);
 }
 
 export function transposeArray(vRef: usize, resRef: usize, rowCount: i32, colCount: i32, step: i32): void {
