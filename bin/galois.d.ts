@@ -4,7 +4,7 @@ declare module '@guildofweavers/galois' {
     export type Polynom = Vector;
 
     export interface WasmOptions {
-        readonly initialMemory  : number;
+        readonly memory: WebAssembly.Memory;
     }
 
     export interface FiniteField {
@@ -382,6 +382,9 @@ declare module '@guildofweavers/galois' {
 
         /** Returns contents of the vector as a BigInt array */
         toValues(): bigint[];
+
+        /** Serializes vector elements into a single buffer */
+        toBuffer(startIdx?: number, elementCount?: number): Buffer;
     }
 
     export interface Matrix {

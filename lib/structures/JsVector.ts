@@ -40,10 +40,6 @@ export class JsVector implements Vector {
         this.values[index] = value;
     }
 
-    toValues(): bigint[] {
-        return this.values;
-    }
-
     copyValue(index: number, destination: Buffer, offset: number): number {
         const blocks = this.elementSize >> 3;
         let value = this.values[index];
@@ -53,6 +49,40 @@ export class JsVector implements Vector {
             offset += 8;
         }
         return this.elementSize;
+    }
+
+    toValues(): bigint[] {
+        return this.values;
+    }
+
+    toBuffer(startIdx = 0, elementCount?: number): Buffer {
+        if (elementCount === undefined) {
+            elementCount = this.values.length - startIdx;
+        }
+
+        let offset = 0;
+        const result = Buffer.alloc(elementCount * this.elementSize);
+        const limbCount = this.elementSize >> 3;
+
+        if (elementCount === 1) {
+            let value = this.values[startIdx];
+            for (let i = 0; i < limbCount; i++) {
+                result.writeBigUInt64LE(value & MASK_64B, offset);
+                value = value >> 64n;
+                offset += 8;
+            }
+        }
+        
+        const endIdx = startIdx + elementCount;
+        for (let index = startIdx; index < endIdx; index++) {
+            let value = this.values[index];
+            for (let limb = 0; limb < limbCount; limb++, offset += 8) {
+                result.writeBigUInt64LE(value & MASK_64B, offset);
+                value = value >> 64n;
+            }
+        }
+
+        return result;
     }
 
     // ARRAY-LIKE METHODS

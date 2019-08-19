@@ -28,9 +28,6 @@ class JsVector {
     setValue(index, value) {
         this.values[index] = value;
     }
-    toValues() {
-        return this.values;
-    }
     copyValue(index, destination, offset) {
         const blocks = this.elementSize >> 3;
         let value = this.values[index];
@@ -40,6 +37,34 @@ class JsVector {
             offset += 8;
         }
         return this.elementSize;
+    }
+    toValues() {
+        return this.values;
+    }
+    toBuffer(startIdx = 0, elementCount) {
+        if (elementCount === undefined) {
+            elementCount = this.values.length - startIdx;
+        }
+        let offset = 0;
+        const result = Buffer.alloc(elementCount * this.elementSize);
+        const limbCount = this.elementSize >> 3;
+        if (elementCount === 1) {
+            let value = this.values[startIdx];
+            for (let i = 0; i < limbCount; i++) {
+                result.writeBigUInt64LE(value & MASK_64B, offset);
+                value = value >> 64n;
+                offset += 8;
+            }
+        }
+        const endIdx = startIdx + elementCount;
+        for (let index = startIdx; index < endIdx; index++) {
+            let value = this.values[index];
+            for (let limb = 0; limb < limbCount; limb++, offset += 8) {
+                result.writeBigUInt64LE(value & MASK_64B, offset);
+                value = value >> 64n;
+            }
+        }
+        return result;
     }
     // ARRAY-LIKE METHODS
     // --------------------------------------------------------------------------------------------

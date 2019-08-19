@@ -49,6 +49,12 @@ export class WasmVector128 implements Vector {
         this.wasm.U64[idx + 1] = value >> 64n;
     }
 
+    copyValue(index: number, destination: Buffer, offset: number): number {
+        const idx = (this.base + index * VALUE_SIZE);
+        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        return VALUE_SIZE;
+    }
+
     toValues(): bigint[] {
         const values = new Array<bigint>(this.length);
         let idx = this.base >>> 3;
@@ -60,10 +66,12 @@ export class WasmVector128 implements Vector {
         return values;
     }
 
-    copyValue(index: number, destination: Buffer, offset: number): number {
-        const idx = (this.base + index * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
-        return VALUE_SIZE;
+    toBuffer(startIdx = 0, elementCount?: number): Buffer {
+        const offset = this.base + startIdx * this.elementSize;
+        const length = elementCount === undefined 
+            ? this.byteLength - startIdx * this.elementSize
+            : elementCount * this.elementSize;
+        return Buffer.from(this.wasm.U8.buffer, offset, length);
     }
 
     load(values: bigint[]): void {

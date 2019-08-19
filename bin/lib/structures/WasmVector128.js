@@ -34,6 +34,11 @@ class WasmVector128 {
         this.wasm.U64[idx] = value & MASK_64B;
         this.wasm.U64[idx + 1] = value >> 64n;
     }
+    copyValue(index, destination, offset) {
+        const idx = (this.base + index * VALUE_SIZE);
+        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        return VALUE_SIZE;
+    }
     toValues() {
         const values = new Array(this.length);
         let idx = this.base >>> 3;
@@ -44,10 +49,12 @@ class WasmVector128 {
         }
         return values;
     }
-    copyValue(index, destination, offset) {
-        const idx = (this.base + index * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
-        return VALUE_SIZE;
+    toBuffer(startIdx = 0, elementCount) {
+        const offset = this.base + startIdx * this.elementSize;
+        const length = elementCount === undefined
+            ? this.byteLength - startIdx * this.elementSize
+            : elementCount * this.elementSize;
+        return Buffer.from(this.wasm.U8.buffer, offset, length);
     }
     load(values) {
         if (values.length !== this.length) {

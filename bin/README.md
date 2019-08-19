@@ -28,9 +28,9 @@ To perform operations in a finite field, you'll first need to create a `FiniteFi
 
 where, `modulus` must be a prime number, and `wasmOptions` is an optional parameter for WASM-optimized fields. When provided, `wasmOptions` object must have the following form:
 
-| Property      | Description |
-| ------------- | ----------- |
-| initialMemory | Amount of memory (in bytes) with which the WASM module will be instantiated. |
+| Property | Description |
+| ---------| ----------- |
+| memory   | A WebAssembly Memory object with which the WASM module will be instantiated. |
 
 Once you've created a `FiniteField` object, you can use the methods described in the following sections to do math.
 

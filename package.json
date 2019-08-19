@@ -1,6 +1,6 @@
 {
   "name": "@guildofweavers/galois",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "description": "Arithmetic and polynomial operations in finite fields",
   "main": "index.js",
   "typings": "galois.d.ts",

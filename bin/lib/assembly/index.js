@@ -10,14 +10,9 @@ const PRIME128_WASM = `${__dirname}/prime128.wasm`;
 // PUBLIC MODULE
 // ================================================================================================
 function instantiatePrime128(options) {
-    let initialMemPages = 10;
-    if (options) {
-        initialMemPages = Math.ceil(options.initialMemory / 1024 / 64);
-    }
+    const memory = options ? options.memory : new WebAssembly.Memory({ initial: 10 });
     const wasm = loader.instantiateBuffer(fs.readFileSync(PRIME128_WASM), {
-        env: {
-            memory: new WebAssembly.Memory({ initial: initialMemPages })
-        }
+        env: { memory }
     });
     return wasm;
 }
