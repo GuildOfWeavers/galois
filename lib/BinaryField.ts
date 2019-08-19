@@ -23,17 +23,21 @@ export class BinaryField implements FiniteField {
     }
 
     // PUBLIC ACCESSORS
-    // --------------------------------------------------------------------------------------------
-    get jsField(): FiniteField {
-        return this;
-    }
-    
+    // --------------------------------------------------------------------------------------------    
     get characteristic(): bigint {
         return 2n;
     }
 
     get elementSize(): number {
         return Math.ceil(this.extensionDegree / 8);
+    }
+
+    get jsField(): FiniteField {
+        return this;
+    }
+
+    get isOptimized(): boolean {
+        return false;
     }
 
     get zero(): bigint {

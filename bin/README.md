@@ -24,9 +24,13 @@ You can find complete API definitions in [galois.d.ts](/galois.d.ts). Here is a 
 ### Creating Finite Fields
 To perform operations in a finite field, you'll first need to create a `FiniteField` object. Currently, only prime fields are supported. To create a prime field you can use the `createPrimeField` function. The function has the following signature:
 
-* `createPrimeField`(modulus: `bigint`, wasmOptions?: `WasmOptions`)
+* **createPrimeField**(modulus: `bigint`, useWasm?: `boolean`): `FiniteField` <br />
+  Creates a prime field for the specified `modulus`. If `useWasm` is set to true, will try to instantiate a WebAssembly-optimized version of the field. If WASM optimization is not available for the specified modulus, will create a regular JavaScript-based field.
 
-where, `modulus` must be a prime number, and `wasmOptions` is an optional parameter for WASM-optimized fields. When provided, `wasmOptions` object must have the following form:
+* **createPrimeField**(modulus: `bigint`, wasmOptions: `WasmOptions`): `FiniteField`
+  Tries to create a WebAssembly-optimized prime field for the specified `modulus` and pass the provided options to it. If WASM optimization is not available for the specified modulus, will create a regular JavaScript-based field.
+
+When provided, `wasmOptions` object must have the following form:
 
 | Property | Description |
 | ---------| ----------- |
@@ -38,8 +42,6 @@ Once you've created a `FiniteField` object, you can use the methods described in
 Vector, matrix, and polynomial operations for certain types of fields have been optimized to make use of WebAssembly. This can speed up such operations by a factor of 6x - 10x (depending on the operation, see [performance](#Performance) for more details). The optimization is currently available for the following fields:
 
 * Prime fields with modulus of the form 2<sup>128</sup>-k, where k < 2<sup>64</sup>
-
-When available, the optimization is enabled automatically. To turn the optimization off, pass `null` as the second parameter when creating `FiniteField` objects.
 
 **Note:** there is currently no way to free memory consumed by WASM modules, so, you might have to periodically re-create `FiniteField` objects to avoid memory leaks. This will be addressed in the future versions of this library by relying on [finalizers](https://v8.dev/features/weak-references), which should be available in major JS engines soon.
 

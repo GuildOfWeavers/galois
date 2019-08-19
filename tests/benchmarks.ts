@@ -8,8 +8,8 @@ import { JsVector, JsMatrix } from '../lib/structures';
 // ================================================================================================
 const modulus128 = 2n**128n - 9n * 2n**32n + 1n; // 2n**128n - 159n
 const elements = 2**18;
-const f1 = createPrimeField(modulus128, null);
-const f2 = createPrimeField(2n**256n - 189n);
+const f1 = createPrimeField(modulus128, false);
+const f2 = createPrimeField(2n**256n - 189n, false);
 
 const root128 = f1.getRootOfUnity(elements);
 

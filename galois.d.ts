@@ -9,14 +9,17 @@ declare module '@guildofweavers/galois' {
 
     export interface FiniteField {
 
-        /** Non-optimized version of the field object */
-        readonly jsField: FiniteField;
-
         /** Characteristic of the field: p in GF(p**n) */
         readonly characteristic: bigint;
         
         /** Extension of the field: n in GF(p**n) */
         readonly extensionDegree: number;
+
+        /** Non-optimized version of the field object */
+        readonly jsField: FiniteField;
+
+        /** A flag indicating whether the field uses WebAssembly optimization */
+        readonly isOptimized: boolean;
 
         /** Size of a field element in bytes */
         readonly elementSize: number;
@@ -412,6 +415,19 @@ declare module '@guildofweavers/galois' {
 
     // GLOBAL FUNCTIONS
     // ----------------------------------------------------------------------------------------
-    export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | null): FiniteField;
+
+    /**
+     * Creates a prime field for the specified modulus. If useWasm is set to true, will try to
+     * instantiate a WebAssembly-optimized version of the field. If WASM optimization is not
+     * available for the specified modulus, will create a regular JavaScript-based field.
+     */
+    export function createPrimeField(modulus: bigint, useWasm?: boolean): FiniteField
+
+    /**
+     * Tries to create a WebAssembly-optimized prime field for the specified modulus and pass the
+     * provided options to it. If WASM optimization is not available for the specified modulus,
+     * will create a regular JavaScript-based field.
+     */
+    export function createPrimeField(modulus: bigint, options?: Partial<WasmOptions>): FiniteField
 
 }

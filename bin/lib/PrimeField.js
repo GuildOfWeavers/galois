@@ -22,14 +22,17 @@ class PrimeField {
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
-    get jsField() {
-        return this;
-    }
     get characteristic() {
         return this.modulus;
     }
     get extensionDegree() {
         return 1;
+    }
+    get jsField() {
+        return this;
+    }
+    get isOptimized() {
+        return false;
     }
     get zero() {
         return 0n;

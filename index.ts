@@ -11,18 +11,35 @@ const P64 = 2n**64n;
 
 // PUBLIC FUNCTIONS
 // ================================================================================================
-export function createPrimeField(modulus: bigint, wasmOptions?: WasmOptions | null): FiniteField {
-    if (wasmOptions === null) {
+export function createPrimeField(modulus: bigint, useWasm?: boolean): FiniteField
+export function createPrimeField(modulus: bigint, options?: Partial<WasmOptions>): FiniteField
+export function createPrimeField(modulus: bigint, useWasmOrOptions?: boolean | Partial<WasmOptions>): FiniteField {
+    if (!useWasmOrOptions) {
         return new PrimeField(modulus);
     }
 
-    if (modulus < P128 && modulus > (P128 - P64)) {
-        return new WasmPrimeField128(modulus, wasmOptions);
-    }
-    else {
-        if (wasmOptions !== undefined) {
-            throw new Error(`WASM optimization is not available for fields with modulus ${modulus}`);
-        }
+    const Subfield = getPrimeSubfieldConstructor(modulus);
+    if (!Subfield) {
         return new PrimeField(modulus);
     }
+
+    const wasmOptions = normalizeWasmOptions(useWasmOrOptions);
+    return new Subfield(modulus, wasmOptions);
+}
+
+// HELPER FUNCTIONS
+// ================================================================================================
+function getPrimeSubfieldConstructor(modulus: bigint) {
+    if (modulus < P128 && modulus > (P128 - P64)) {
+        return WasmPrimeField128;
+    }
+}
+
+function normalizeWasmOptions(useWasmOrOptions: boolean | Partial<WasmOptions>): WasmOptions {
+    if (typeof useWasmOrOptions === 'boolean') {
+        return { memory: new WebAssembly.Memory({ initial: 10 }) };
+    }
+
+    const memory = useWasmOrOptions.memory || new WebAssembly.Memory({ initial: 10 });
+    return { memory };
 }

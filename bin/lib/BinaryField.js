@@ -15,15 +15,18 @@ class BinaryField {
         this.extensionDegree = degree;
     }
     // PUBLIC ACCESSORS
-    // --------------------------------------------------------------------------------------------
-    get jsField() {
-        return this;
-    }
+    // --------------------------------------------------------------------------------------------    
     get characteristic() {
         return 2n;
     }
     get elementSize() {
         return Math.ceil(this.extensionDegree / 8);
+    }
+    get jsField() {
+        return this;
+    }
+    get isOptimized() {
+        return false;
     }
     get zero() {
         throw new Error('Not implemented');

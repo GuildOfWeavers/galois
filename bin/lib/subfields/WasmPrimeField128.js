@@ -34,6 +34,9 @@ class WasmPrimeField128 {
     get extensionDegree() {
         return 1;
     }
+    get isOptimized() {
+        return true;
+    }
     get zero() {
         return 0n;
     }

@@ -24,7 +24,7 @@ export class WasmPrimeField128 implements FiniteField {
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(modulus: bigint, options?: WasmOptions) {
+    constructor(modulus: bigint, options: WasmOptions) {
         this.wasm = instantiatePrime128(options);
         this.inputsIdx = this.wasm.getInputsPtr() >>> 3;
         this.outputsIdx = this.wasm.getOutputsPtr() >>> 3;
@@ -47,6 +47,10 @@ export class WasmPrimeField128 implements FiniteField {
 
     get extensionDegree(): number {
         return 1;
+    }
+
+    get isOptimized(): boolean {
+        return true;
     }
 
     get zero(): bigint {

@@ -59,10 +59,9 @@ export type WasmPrime128 = loader.ASUtil & {
 
 // PUBLIC MODULE
 // ================================================================================================
-export function instantiatePrime128(options?: WasmOptions): WasmPrime128 {
-    const memory = options ? options.memory : new WebAssembly.Memory({ initial: 10 });
+export function instantiatePrime128(options: WasmOptions): WasmPrime128 {
     const wasm = loader.instantiateBuffer<any>(fs.readFileSync(PRIME128_WASM), {
-        env: { memory }
+        env: { memory: options.memory }
     });
 
     return wasm;
