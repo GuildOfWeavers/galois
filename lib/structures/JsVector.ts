@@ -71,6 +71,7 @@ export class JsVector implements Vector {
                 value = value >> 64n;
                 offset += 8;
             }
+            return result;
         }
         
         const endIdx = startIdx + elementCount;

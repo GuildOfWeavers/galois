@@ -342,7 +342,7 @@ export function combineManyVectors(vRef: usize, kRef: usize, resRef: usize, vCou
     vRef += VALUE_SIZE >> 1;
     kRef += VALUE_SIZE;
 
-    while (kRef <refEnd) {
+    while (kRef < refEnd) {
         rRef = <usize>load<u64>(vRef);
         mulAddArrayElements(rRef, kRef, resRef, vCount);
 

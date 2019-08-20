@@ -55,6 +55,7 @@ class JsVector {
                 value = value >> 64n;
                 offset += 8;
             }
+            return result;
         }
         const endIdx = startIdx + elementCount;
         for (let index = startIdx; index < endIdx; index++) {
