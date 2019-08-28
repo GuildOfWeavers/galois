@@ -443,6 +443,26 @@ class PrimeField {
         }
         return result;
     }
+    joinMatrixRows(m) {
+        const mValues = m.toValues();
+        let rValues = mValues[0];
+        for (let i = 1; i < mValues.length; i++) {
+            rValues = rValues.concat(mValues[i]);
+        }
+        return this.newVectorFrom(rValues);
+    }
+    transposeMatrix(m) {
+        const mValues = m.toValues();
+        const result = new Array(m.colCount);
+        for (let i = 0; i < m.colCount; i++) {
+            let row = new Array(m.rowCount);
+            for (let j = 0; j < m.rowCount; j++) {
+                row[j] = mValues[j][i];
+            }
+            result[i] = row;
+        }
+        return this.newMatrixFrom(result);
+    }
     matrixElementsOp(op, a, b) {
         const aValues = a.toValues(), bValues = b.toValues();
         const rValues = new Array(a.rowCount);

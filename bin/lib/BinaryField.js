@@ -189,6 +189,12 @@ class BinaryField {
     matrixRowsToVectors(m) {
         throw new Error('Not implemented');
     }
+    joinMatrixRows(m) {
+        throw new Error('Not implemented');
+    }
+    transposeMatrix(m) {
+        throw new Error('Not implemented');
+    }
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {

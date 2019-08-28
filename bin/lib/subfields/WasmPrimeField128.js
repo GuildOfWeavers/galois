@@ -457,6 +457,16 @@ class WasmPrimeField128 {
         }
         return result;
     }
+    joinMatrixRows(m) {
+        const mw = m;
+        return new structures_1.WasmVector128(this.wasm, mw.elementCount, mw.base);
+    }
+    transposeMatrix(m) {
+        const mw = m;
+        const result = this.newMatrix(mw.colCount, mw.rowCount);
+        this.wasm.transposeArray(mw.base, result.base, mw.colCount, mw.rowCount, 1);
+        return result;
+    }
     // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order) {

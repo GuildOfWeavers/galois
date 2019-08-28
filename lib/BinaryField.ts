@@ -249,6 +249,14 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    joinMatrixRows(m: Matrix): Vector {
+        throw new Error('Not implemented');
+    }
+
+    transposeMatrix(m: Matrix): Matrix {
+        throw new Error('Not implemented');
+    }
+
     // BATCH OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {

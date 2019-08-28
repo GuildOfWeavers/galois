@@ -530,6 +530,18 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    joinMatrixRows(m: Matrix): WasmVector128 {
+        const mw = m as WasmMatrix128;
+        return new WasmVector128(this.wasm, mw.elementCount, mw.base);
+    }
+
+    transposeMatrix(m: Matrix): WasmMatrix128 {
+        const mw = m as WasmMatrix128;
+        const result = this.newMatrix(mw.colCount, mw.rowCount);
+        this.wasm.transposeArray(mw.base, result.base, mw.colCount, mw.rowCount, 1);
+        return result;
+    }
+
     // OTHER OPERATIONS
     // --------------------------------------------------------------------------------------------
     getRootOfUnity(order: number): bigint {

@@ -219,9 +219,15 @@ declare module '@guildofweavers/galois' {
         /** Computes a new matrix n such that n[i,j] = v[i][j] - m[i,j]  */
         subMatrixElementsFromVectors(v: Vector[], m: Matrix): Matrix;
 
-        /** Creates an array of vectors corresponding to matrixes' rows */
+        /** Returns an array of vectors corresponding to the matrixes' rows */
         matrixRowsToVectors(m: Matrix): Vector[];
-        
+
+        /** Returns a vector which represents a concatenation of the matrix's rows  */
+        joinMatrixRows(m: Matrix): Vector;
+
+        /** Returns a new matrix which is a transpose of the provided matrix */
+        transposeMatrix(m: Matrix): Matrix;
+
         // RANDOMNESS
         // ----------------------------------------------------------------------------------------
 
