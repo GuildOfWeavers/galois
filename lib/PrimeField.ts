@@ -281,7 +281,7 @@ export class PrimeField implements FiniteField {
         return this.newVectorFrom(rValues);
     }
 
-    vectorToMatrix(v: Vector, columns: number, step = 1): JsMatrix {
+    transposeVector(v: Vector, columns: number, step = 1): JsMatrix {
         const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
@@ -299,32 +299,17 @@ export class PrimeField implements FiniteField {
         return this.newMatrixFrom(rValues);
     }
 
-    vectorsToMatrix(v: Vector[]): JsMatrix {
-        const rowCount = v.length;
-        let colCount = 0;
-        for (let row of v) {
-            if (colCount < row.length) {
-                colCount = row.length;
-            }
+    splitVector(v: Vector, rows: number): JsMatrix {
+        const colCount = v.length / rows;
+        if (!Number.isInteger(colCount)) {
+            throw new Error('Number of rows does not evenly divide vector length');
         }
 
-        const rValues = new Array<bigint[]>(rowCount);
-        for (let i = 0; i < rowCount; i++) {
-            let row = v[i].toValues();
-            if (row.length < colCount) {
-                rValues[i] = new Array<bigint>(colCount);
-                for (let j = row.length - 1; j >= 0; j--) {
-                    rValues[i][j] = row[j];
-                }
-                for (let j = row.length; j < colCount; j++) {
-                    rValues[i][j] = 0n;
-                }
-            }
-            else {
-                rValues[i] = row;
-            }
+        const vValues = v.toValues();
+        const rValues = new Array<bigint[]>();
+        for (let i = 0, offset = 0; i < rows; i++, offset += colCount) {
+            rValues[i] = vValues.slice(offset, offset + colCount);
         }
-
         return this.newMatrixFrom(rValues);
     }
 
@@ -358,6 +343,35 @@ export class PrimeField implements FiniteField {
 
     newMatrixFrom(values: bigint[][]): JsMatrix {
         return new JsMatrix(values, this.elementSize);
+    }
+
+    newMatrixFromVectors(v: Vector[]): JsMatrix {
+        const rowCount = v.length;
+        let colCount = 0;
+        for (let row of v) {
+            if (colCount < row.length) {
+                colCount = row.length;
+            }
+        }
+
+        const rValues = new Array<bigint[]>(rowCount);
+        for (let i = 0; i < rowCount; i++) {
+            let row = v[i].toValues();
+            if (row.length < colCount) {
+                rValues[i] = new Array<bigint>(colCount);
+                for (let j = row.length - 1; j >= 0; j--) {
+                    rValues[i][j] = row[j];
+                }
+                for (let j = row.length; j < colCount; j++) {
+                    rValues[i][j] = 0n;
+                }
+            }
+            else {
+                rValues[i] = row;
+            }
+        }
+
+        return this.newMatrixFrom(rValues);
     }
 
     addMatrixElements(a: Matrix, b: bigint | Matrix): JsMatrix {

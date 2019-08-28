@@ -69,8 +69,8 @@ const m3 = f1.newMatrixFrom(temp) as JsMatrix;
 console.log(`Built matrixes in ${Date.now() - start} ms`);
 
 start = Date.now();
-let vXs = f1.vectorToMatrix(v1, quartic);
-let vYs = f1.vectorToMatrix(v2, quartic);
+let vXs = f1.transposeVector(v1, quartic);
+let vYs = f1.transposeVector(v2, quartic);
 console.log(`Transposed ${elements}x2 elements in ${Date.now() - start} ms`);
 
 start = Date.now();
@@ -254,8 +254,8 @@ const mw3 = wasm128.newMatrixFrom(m3.values);
 console.log(`Copied matrixes into WASM memory in ${Date.now() - start} ms`);
 
 start = Date.now();
-const wXs = wasm128.vectorToMatrix(w1, 4);
-const wYs = wasm128.vectorToMatrix(w2, 4);
+const wXs = wasm128.transposeVector(w1, 4);
+const wYs = wasm128.transposeVector(w2, 4);
 console.log(`Transposed ${elements} elements in ${Date.now() - start} ms`);
 compareMatrixResults(vXs, wXs, 'vector transposition');
 compareMatrixResults(vYs, wYs, 'vector transposition');

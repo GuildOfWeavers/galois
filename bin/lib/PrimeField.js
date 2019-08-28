@@ -223,7 +223,7 @@ class PrimeField {
         }
         return this.newVectorFrom(rValues);
     }
-    vectorToMatrix(v, columns, step = 1) {
+    transposeVector(v, columns, step = 1) {
         const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
@@ -239,29 +239,15 @@ class PrimeField {
         }
         return this.newMatrixFrom(rValues);
     }
-    vectorsToMatrix(v) {
-        const rowCount = v.length;
-        let colCount = 0;
-        for (let row of v) {
-            if (colCount < row.length) {
-                colCount = row.length;
-            }
+    splitVector(v, rows) {
+        const colCount = v.length / rows;
+        if (!Number.isInteger(colCount)) {
+            throw new Error('Number of rows does not evenly divide vector length');
         }
-        const rValues = new Array(rowCount);
-        for (let i = 0; i < rowCount; i++) {
-            let row = v[i].toValues();
-            if (row.length < colCount) {
-                rValues[i] = new Array(colCount);
-                for (let j = row.length - 1; j >= 0; j--) {
-                    rValues[i][j] = row[j];
-                }
-                for (let j = row.length; j < colCount; j++) {
-                    rValues[i][j] = 0n;
-                }
-            }
-            else {
-                rValues[i] = row;
-            }
+        const vValues = v.toValues();
+        const rValues = new Array();
+        for (let i = 0, offset = 0; i < rows; i++, offset += colCount) {
+            rValues[i] = vValues.slice(offset, offset + colCount);
         }
         return this.newMatrixFrom(rValues);
     }
@@ -292,6 +278,32 @@ class PrimeField {
     }
     newMatrixFrom(values) {
         return new structures_1.JsMatrix(values, this.elementSize);
+    }
+    newMatrixFromVectors(v) {
+        const rowCount = v.length;
+        let colCount = 0;
+        for (let row of v) {
+            if (colCount < row.length) {
+                colCount = row.length;
+            }
+        }
+        const rValues = new Array(rowCount);
+        for (let i = 0; i < rowCount; i++) {
+            let row = v[i].toValues();
+            if (row.length < colCount) {
+                rValues[i] = new Array(colCount);
+                for (let j = row.length - 1; j >= 0; j--) {
+                    rValues[i][j] = row[j];
+                }
+                for (let j = row.length; j < colCount; j++) {
+                    rValues[i][j] = 0n;
+                }
+            }
+            else {
+                rValues[i] = row;
+            }
+        }
+        return this.newMatrixFrom(rValues);
     }
     addMatrixElements(a, b) {
         return (typeof b === 'bigint')

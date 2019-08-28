@@ -247,7 +247,7 @@ class WasmPrimeField128 {
         }
         return result;
     }
-    vectorToMatrix(v, columns, step = 1) {
+    transposeVector(v, columns, step = 1) {
         const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
@@ -257,7 +257,27 @@ class WasmPrimeField128 {
         this.wasm.transposeArray(vw.base, result.base, rowCount, columns, step);
         return result;
     }
-    vectorsToMatrix(v) {
+    splitVector(v, rows) {
+        const colCount = v.length / rows;
+        if (!Number.isInteger(colCount)) {
+            throw new Error('Number of rows does not evenly divide vector length');
+        }
+        const vw = v;
+        return new structures_1.WasmMatrix128(this.wasm, rows, colCount, vw.base);
+    }
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    newMatrix(rows, columns) {
+        return new structures_1.WasmMatrix128(this.wasm, rows, columns);
+    }
+    newMatrixFrom(values) {
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new structures_1.WasmMatrix128(this.wasm, rows, columns);
+        result.load(values);
+        return result;
+    }
+    newMatrixFromVectors(v) {
         const rowCount = v.length;
         let colCount = 0;
         for (let row of v) {
@@ -272,18 +292,6 @@ class WasmPrimeField128 {
             this.wasm.copyArrayElements(vw.base, resRef, vw.length);
             resRef += result.rowSize;
         }
-        return result;
-    }
-    // MATRIX OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    newMatrix(rows, columns) {
-        return new structures_1.WasmMatrix128(this.wasm, rows, columns);
-    }
-    newMatrixFrom(values) {
-        const rows = values.length;
-        const columns = values[0].length;
-        const result = new structures_1.WasmMatrix128(this.wasm, rows, columns);
-        result.load(values);
         return result;
     }
     addMatrixElements(a, b) {

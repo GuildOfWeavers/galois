@@ -167,11 +167,11 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
-    vectorToMatrix(v: Vector, columns: number): Matrix {
+    transposeVector(v: Vector, columns: number): Matrix {
         throw new Error('Not implemented');
     }
 
-    vectorsToMatrix(v: Vector[]): Matrix {
+    splitVector(v: Vector, rows: number): Matrix {
         throw new Error('Not implemented');
     }
 
@@ -194,6 +194,10 @@ export class BinaryField implements FiniteField {
     }
 
     newMatrixFrom(values: bigint[][]): Matrix {
+        throw new Error('Not implemented');
+    }
+
+    newMatrixFromVectors(v: Vector[]): Matrix {
         throw new Error('Not implemented');
     }
 

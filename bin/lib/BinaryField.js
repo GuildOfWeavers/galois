@@ -127,10 +127,10 @@ class BinaryField {
     combineManyVectors(v, k) {
         throw new Error('Not implemented');
     }
-    vectorToMatrix(v, columns) {
+    transposeVector(v, columns) {
         throw new Error('Not implemented');
     }
-    vectorsToMatrix(v) {
+    splitVector(v, rows) {
         throw new Error('Not implemented');
     }
     pluckVector(v, skip, times) {
@@ -148,6 +148,9 @@ class BinaryField {
         throw new Error('Not implemented');
     }
     newMatrixFrom(values) {
+        throw new Error('Not implemented');
+    }
+    newMatrixFromVectors(v) {
         throw new Error('Not implemented');
     }
     addMatrixElements(a, b) {

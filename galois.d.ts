@@ -87,7 +87,7 @@ declare module '@guildofweavers/galois' {
         newVector(length: number): Vector;
 
         /** Creates a new vector from the specified array of values */
-        newVectorFrom(values: readonly bigint[]): Vector;
+        newVectorFrom(values: bigint[]): Vector;
 
         /** Computes a new vector v such that v[i] = a[i] + b[i] for all i */
         addVectorElements(a: Vector, b: Vector): Vector;
@@ -146,10 +146,10 @@ declare module '@guildofweavers/galois' {
         duplicateVector(v: Vector, times?: number): Vector;
 
         /** Transposes the provided vector into a matrix with the specified number of columns */
-        vectorToMatrix(v: Vector, columns: number, step?: number): Matrix
+        transposeVector(v: Vector, columns: number, step?: number): Matrix;
 
-        /** Creates a new matrix using provided vectors as matrix rows */
-        vectorsToMatrix(v: Vector[]): Matrix;
+        /** Splits the provided vector into the a matrix with the specified number of rows */
+        splitVector(v: Vector, rows: number): Matrix;
 
         // MATRIX OPERATIONS
         // ----------------------------------------------------------------------------------------
@@ -158,7 +158,10 @@ declare module '@guildofweavers/galois' {
         newMatrix(rows: number, columns: number): Matrix;
 
         /** creates a new matrix from the specified 2-dimensional array of values */
-        newMatrixFrom(values: readonly bigint[][]): Matrix;
+        newMatrixFrom(values: bigint[][]): Matrix;
+
+        /** Creates a new matrix using provided vectors as matrix rows */
+        newMatrixFromVectors(v: Vector[]): Matrix;
 
         /** Computes a new matrix m such that m[i,j] = a[i,j] + b[i,j] for all i and j */
         addMatrixElements(a: Matrix, b: Matrix): Matrix;

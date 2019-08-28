@@ -297,7 +297,7 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
-    vectorToMatrix(v: Vector, columns: number, step = 1): WasmMatrix128 {
+    transposeVector(v: Vector, columns: number, step = 1): WasmMatrix128 {
         const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {
             throw new Error('Number of columns does not evenly divide vector length');
@@ -308,7 +308,31 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
-    vectorsToMatrix(v: Vector[]): WasmMatrix128 {
+    splitVector(v: Vector, rows: number): WasmMatrix128 {
+        const colCount = v.length / rows;
+        if (!Number.isInteger(colCount)) {
+            throw new Error('Number of rows does not evenly divide vector length');
+        }
+
+        const vw = v as WasmVector128;
+        return new WasmMatrix128(this.wasm, rows, colCount, vw.base);
+    }
+
+    // MATRIX OPERATIONS
+    // --------------------------------------------------------------------------------------------
+    newMatrix(rows: number, columns: number): WasmMatrix128 {
+        return new WasmMatrix128(this.wasm, rows, columns);
+    }
+
+    newMatrixFrom(values: bigint[][]): WasmMatrix128 {
+        const rows = values.length;
+        const columns = values[0].length;
+        const result = new WasmMatrix128(this.wasm, rows, columns);
+        result.load(values);
+        return result;
+    }
+
+    newMatrixFromVectors(v: Vector[]): WasmMatrix128 {
         const rowCount = v.length;
         let colCount = 0;
         for (let row of v) {
@@ -325,20 +349,6 @@ export class WasmPrimeField128 implements FiniteField {
             resRef += result.rowSize;
         }
 
-        return result;
-    }
-
-    // MATRIX OPERATIONS
-    // --------------------------------------------------------------------------------------------
-    newMatrix(rows: number, columns: number): WasmMatrix128 {
-        return new WasmMatrix128(this.wasm, rows, columns);
-    }
-
-    newMatrixFrom(values: bigint[][]): WasmMatrix128 {
-        const rows = values.length;
-        const columns = values[0].length;
-        const result = new WasmMatrix128(this.wasm, rows, columns);
-        result.load(values);
         return result;
     }
 
