@@ -40,10 +40,6 @@ export class JsMatrix implements Matrix {
         this.values[row][column] = value;
     }
 
-    toValues(): bigint[][] {
-        return this.values;
-    }
-
     copyValue(row: number, column: number, destination: Buffer, offset: number): number {
         const blocks = this.elementSize >> 3;
         let value = this.values[row][column];
@@ -53,5 +49,27 @@ export class JsMatrix implements Matrix {
             offset += 8;
         }
         return this.elementSize;
+    }
+
+    toValues(): bigint[][] {
+        return this.values;
+    }
+
+    toBuffer(): Buffer {
+        let offset = 0;
+        const result = Buffer.alloc(this.byteLength);
+        const limbCount = this.elementSize >> 3;
+
+        for (let i = 0; i < this.rowCount; i++) {
+            for (let j = 0; j < this.colCount; j++) {
+                let value = this.values[i][j];
+                for (let limb = 0; limb < limbCount; limb++, offset += 8) {
+                    result.writeBigUInt64LE(value & MASK_64B, offset);
+                    value = value >> 64n;
+                }
+            }
+        }
+        
+        return result;
     }
 }

@@ -37,6 +37,11 @@ class WasmMatrix128 {
         this.wasm.U64[idx] = value & MASK_64B;
         this.wasm.U64[idx + 1] = value >> 64n;
     }
+    copyValue(row, column, destination, offset) {
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
+        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        return VALUE_SIZE;
+    }
     toValues() {
         const values = new Array(this.rowCount);
         let idx = this.base >>> 3;
@@ -51,10 +56,8 @@ class WasmMatrix128 {
         }
         return values;
     }
-    copyValue(row, column, destination, offset) {
-        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
-        return VALUE_SIZE;
+    toBuffer() {
+        return Buffer.from(this.wasm.U8.buffer, this.base, this.byteLength);
     }
     load(values) {
         let idx = this.base >>> 3;

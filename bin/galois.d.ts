@@ -411,6 +411,9 @@ declare module '@guildofweavers/galois' {
 
         /** Returns contents of the matrix as a 2-dimensional BigInt array */
         toValues(): bigint[][];
+
+        /** Serializes matrix elements into a single buffer (in row-major form) */
+        toBuffer(): Buffer;
     }
 
     // GLOBAL FUNCTIONS

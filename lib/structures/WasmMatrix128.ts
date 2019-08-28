@@ -54,6 +54,12 @@ export class WasmMatrix128 implements Matrix {
         this.wasm.U64[idx] = value & MASK_64B;
         this.wasm.U64[idx + 1] = value >> 64n;
     }
+    
+    copyValue(row: number, column: number, destination: Buffer, offset: number): number {
+        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
+        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        return VALUE_SIZE;
+    }
 
     toValues(): bigint[][] {
         const values = new Array<bigint[]>(this.rowCount);
@@ -70,10 +76,8 @@ export class WasmMatrix128 implements Matrix {
         return values;
     }
 
-    copyValue(row: number, column: number, destination: Buffer, offset: number): number {
-        const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
-        return VALUE_SIZE;
+    toBuffer(): Buffer {
+        return Buffer.from(this.wasm.U8.buffer, this.base, this.byteLength);
     }
 
     load(values: bigint[][]): void {
