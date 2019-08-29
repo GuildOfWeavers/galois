@@ -55,6 +55,38 @@ class JsMatrix {
         }
         return result;
     }
+    rowsToBuffers(indexes) {
+        const result = new Array();
+        const limbCount = this.elementSize >> 3;
+        const rowSize = this.colCount * this.elementSize;
+        if (!indexes) {
+            for (let i = 0; i < this.rowCount; i++) {
+                let buffer = Buffer.allocUnsafe(rowSize), offset = 0;
+                for (let j = 0; j < this.colCount; j++) {
+                    let value = this.values[i][j];
+                    for (let limb = 0; limb < limbCount; limb++, offset += 8) {
+                        buffer.writeBigUInt64LE(value & MASK_64B, offset);
+                        value = value >> 64n;
+                    }
+                }
+                result.push(buffer);
+            }
+        }
+        else {
+            for (let i of indexes) {
+                let buffer = Buffer.allocUnsafe(rowSize), offset = 0;
+                for (let j = 0; j < this.colCount; j++) {
+                    let value = this.values[i][j];
+                    for (let limb = 0; limb < limbCount; limb++, offset += 8) {
+                        buffer.writeBigUInt64LE(value & MASK_64B, offset);
+                        value = value >> 64n;
+                    }
+                }
+                result.push(buffer);
+            }
+        }
+        return result;
+    }
 }
 exports.JsMatrix = JsMatrix;
 //# sourceMappingURL=JsMatrix.js.map

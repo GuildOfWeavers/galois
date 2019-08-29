@@ -54,7 +54,7 @@ class WasmVector128 {
         const length = elementCount === undefined
             ? this.byteLength - startIdx * this.elementSize
             : elementCount * this.elementSize;
-        return Buffer.from(this.wasm.U8.buffer, offset, length);
+        return Buffer.from(this.wasm.memory.buffer, offset, length);
     }
     load(values) {
         if (values.length !== this.length) {

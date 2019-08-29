@@ -57,7 +57,22 @@ class WasmMatrix128 {
         return values;
     }
     toBuffer() {
-        return Buffer.from(this.wasm.U8.buffer, this.base, this.byteLength);
+        return Buffer.from(this.wasm.memory.buffer, this.base, this.byteLength);
+    }
+    rowsToBuffers(indexes) {
+        const result = new Array(indexes ? indexes.length : this.rowCount);
+        if (!indexes) {
+            for (let i = 0, offset = this.base; i < result.length; i++, offset += this.rowSize) {
+                result[i] = Buffer.from(this.wasm.memory.buffer, offset, this.rowSize);
+            }
+        }
+        else {
+            for (let i = 0; i < indexes.length; i++) {
+                let offset = this.base + indexes[i] * this.rowSize;
+                result[i] = Buffer.from(this.wasm.memory.buffer, offset, this.rowSize);
+            }
+        }
+        return result;
     }
     load(values) {
         let idx = this.base >>> 3;

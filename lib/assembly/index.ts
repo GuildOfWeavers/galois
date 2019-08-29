@@ -55,6 +55,8 @@ export type WasmPrime128 = loader.ASUtil & {
     interpolate(xRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateRoots(rRef: number, yRef: number, resRef: number, elementCount: number): void;
     interpolateQuarticBatch(xRef: number, yRef: number, resRef: number, rowCount: number): void;
+
+    readonly memory: WebAssembly.Memory;
 }
 
 // PUBLIC MODULE

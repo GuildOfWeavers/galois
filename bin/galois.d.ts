@@ -423,6 +423,9 @@ declare module '@guildofweavers/galois' {
 
         /** Serializes matrix elements into a single buffer (in row-major form) */
         toBuffer(): Buffer;
+
+        /** Serializes matrix rows into an array of buffers (one buffer per row) */
+        rowsToBuffers(indexes?: number[]): Buffer[];
     }
 
     // GLOBAL FUNCTIONS
