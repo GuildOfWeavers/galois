@@ -71,19 +71,23 @@ class WasmMatrix128 {
         return values;
     }
     toBuffer() {
-        return Buffer.from(this.wasm.memory.buffer, this.base, this.byteLength);
+        // copy the buffer out of wasm memory
+        return Buffer.from(this.wasm.memory.buffer.slice(this.base, this.base + this.byteLength));
     }
     rowsToBuffers(indexes) {
         const result = new Array(indexes ? indexes.length : this.rowCount);
+        const buffer = this.wasm.memory.buffer;
         if (!indexes) {
             for (let i = 0, offset = this.base; i < result.length; i++, offset += this.rowSize) {
-                result[i] = Buffer.from(this.wasm.memory.buffer, offset, this.rowSize);
+                // copy the buffer out of wasm memory
+                result[i] = Buffer.from(buffer.slice(offset, offset + this.rowSize));
             }
         }
         else {
             for (let i = 0; i < indexes.length; i++) {
                 let offset = this.base + indexes[i] * this.rowSize;
-                result[i] = Buffer.from(this.wasm.memory.buffer, offset, this.rowSize);
+                // copy the buffer out of wasm memory
+                result[i] = Buffer.from(buffer.slice(offset, offset + this.rowSize));
             }
         }
         return result;

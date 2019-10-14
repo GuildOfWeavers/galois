@@ -91,7 +91,8 @@ export class WasmVector128 implements Vector {
         const length = elementCount === undefined 
             ? this.byteLength - startIdx * this.elementSize
             : elementCount * this.elementSize;
-        return Buffer.from(this.wasm.memory.buffer, offset, length);
+        // copy the buffer out of wasm memory
+        return Buffer.from(this.wasm.memory.buffer.slice(offset, offset + length));
     }
 
     load(values: bigint[]): void {
