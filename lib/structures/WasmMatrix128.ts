@@ -23,6 +23,9 @@ export class WasmMatrix128 implements Matrix {
     readonly byteLength     : number;
     readonly rowSize        : number;
 
+    private memU8           : Uint8Array;
+    private memU64          : BigUint64Array;
+
     constructor(wasm: WasmPrime128, rows: number, columns: number, base?: number) {
         this.wasm = wasm;
         this.elementCount = rows * columns;
@@ -31,6 +34,8 @@ export class WasmMatrix128 implements Matrix {
         this.colCount = columns;
         this.rowSize = columns * VALUE_SIZE;
         this.byteLength = rows * this.rowSize;
+        this.memU8 = new Uint8Array(wasm.memory.buffer);
+        this.memU64 = new BigUint64Array(wasm.memory.buffer);
     }
 
     get elementSize(): number {
@@ -38,10 +43,14 @@ export class WasmMatrix128 implements Matrix {
     }
 
     getValue(row: number, column: number): bigint {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)
-        const lo = this.wasm.U64[idx];
-        const hi = this.wasm.U64[idx + 1];
+        const lo = this.memU64[idx];
+        const hi = this.memU64[idx + 1];
         return (hi << 64n) | lo;
     }
 
@@ -49,26 +58,38 @@ export class WasmMatrix128 implements Matrix {
         if (value > MAX_VALUE) {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
+        
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value & MASK_64B;
-        this.wasm.U64[idx + 1] = value >> 64n;
+        this.memU64[idx] = value & MASK_64B;
+        this.memU64[idx + 1] = value >> 64n;
     }
     
     copyValue(row: number, column: number, destination: Buffer, offset: number): number {
+        if (this.memU8.buffer !== this.wasm.memory.buffer) {
+            this.memU8 = new Uint8Array(this.wasm.memory.buffer);
+        }
         const idx = (this.base + row * this.rowSize + column * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        destination.set(this.memU8.subarray(idx, idx + VALUE_SIZE), offset);
         return VALUE_SIZE;
     }
 
     toValues(): bigint[][] {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         const values = new Array<bigint[]>(this.rowCount);
         let idx = this.base >>> 3;
         for (let i = 0; i < this.rowCount; i++) {
             let row = new Array<bigint>(this.colCount);
             for (let j = 0; j < this.colCount; j++, idx += 2) {
-                let lo = this.wasm.U64[idx];
-                let hi = this.wasm.U64[idx + 1];
+                let lo = this.memU64[idx];
+                let hi = this.memU64[idx + 1];
                 row[j] = (hi << 64n) | lo;
             }
             values[i] = row;
@@ -97,13 +118,17 @@ export class WasmMatrix128 implements Matrix {
     }
 
     load(values: bigint[][]): void {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         let idx = this.base >>> 3;
         for (let i = 0; i < this.rowCount; i++) {
             let row = values[i];
             for (let j = 0; j < this.colCount; j++, idx += 2) {
                 let value = row[j];
-                this.wasm.U64[idx] = value & MASK_64B
-                this.wasm.U64[idx + 1] = value >> 64n;
+                this.memU64[idx] = value & MASK_64B
+                this.memU64[idx + 1] = value >> 64n;
             }
         }
     }

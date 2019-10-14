@@ -22,6 +22,8 @@ export class WasmPrimeField128 implements FiniteField {
     readonly inputsIdx      : number;
     readonly outputsIdx     : number;
 
+    private memU64          : BigUint64Array;
+
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
     constructor(modulus: bigint, options: WasmOptions) {
@@ -37,6 +39,7 @@ export class WasmPrimeField128 implements FiniteField {
         const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B) as any);
         const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B) as any);
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
+        this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
     }
 
     // PUBLIC ACCESSORS
@@ -62,7 +65,7 @@ export class WasmPrimeField128 implements FiniteField {
     }
 
     get memorySize(): number {
-        return this.wasm.U8.byteLength;
+        return this.wasm.memory.buffer.byteLength;
     }
 
     // BASIC ARITHMETIC
@@ -250,11 +253,15 @@ export class WasmPrimeField128 implements FiniteField {
             throw new Error('Number of vectors must be the same as the number of coefficients');
         }
 
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         const vw = v as WasmVector128[], kw = k as WasmVector128;
         const vRef = this.wasm.newRefArray(v.length);
         const vIdx = vRef >>> 3;
         for (let i = 0; i < vw.length; i++) {
-            this.wasm.U64[vIdx + i] = BigInt(vw[i].base);
+            this.memU64[vIdx + i] = BigInt(vw[i].base);
         }
 
         const resultLength = v[0].length;
@@ -734,15 +741,22 @@ export class WasmPrimeField128 implements FiniteField {
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
     private loadInput(value: bigint, index: number): void {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
         let idx = this.inputsIdx + (index << 1);
-        this.wasm.U64[idx] = value & MASK_64B
-        this.wasm.U64[idx + 1] = value >> 64n;
+        this.memU64[idx] = value & MASK_64B
+        this.memU64[idx + 1] = value >> 64n;
     }
 
     private readOutput(index: number): bigint {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         let idx = this.outputsIdx + (index << 1);
-        const lo = this.wasm.U64[idx];
-        const hi = this.wasm.U64[idx + 1];
+        const lo = this.memU64[idx];
+        const hi = this.memU64[idx + 1];
         return (hi << 64n) | lo;
     }
 }

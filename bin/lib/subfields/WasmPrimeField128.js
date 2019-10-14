@@ -25,6 +25,7 @@ class WasmPrimeField128 {
         const mHi2 = Number.parseInt(((modulus >> 64n) & MASK_32B));
         const mHi1 = Number.parseInt(((modulus >> 96n) & MASK_32B));
         this.wasm.setModulus(mHi1, mHi2, mLo1, mLo2);
+        this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
     }
     // PUBLIC ACCESSORS
     // --------------------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ class WasmPrimeField128 {
         return 1n;
     }
     get memorySize() {
-        return this.wasm.U8.byteLength;
+        return this.wasm.memory.buffer.byteLength;
     }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
@@ -208,11 +209,14 @@ class WasmPrimeField128 {
         if (v.length != k.length) {
             throw new Error('Number of vectors must be the same as the number of coefficients');
         }
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
         const vw = v, kw = k;
         const vRef = this.wasm.newRefArray(v.length);
         const vIdx = vRef >>> 3;
         for (let i = 0; i < vw.length; i++) {
-            this.wasm.U64[vIdx + i] = BigInt(vw[i].base);
+            this.memU64[vIdx + i] = BigInt(vw[i].base);
         }
         const resultLength = v[0].length;
         const result = this.newVector(resultLength);
@@ -636,14 +640,20 @@ class WasmPrimeField128 {
     // HELPER METHODS
     // --------------------------------------------------------------------------------------------
     loadInput(value, index) {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
         let idx = this.inputsIdx + (index << 1);
-        this.wasm.U64[idx] = value & MASK_64B;
-        this.wasm.U64[idx + 1] = value >> 64n;
+        this.memU64[idx] = value & MASK_64B;
+        this.memU64[idx + 1] = value >> 64n;
     }
     readOutput(index) {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
         let idx = this.outputsIdx + (index << 1);
-        const lo = this.wasm.U64[idx];
-        const hi = this.wasm.U64[idx + 1];
+        const lo = this.memU64[idx];
+        const hi = this.memU64[idx + 1];
         return (hi << 64n) | lo;
     }
 }

@@ -20,11 +20,16 @@ export class WasmVector128 implements Vector {
     readonly length         : number;
     readonly byteLength     : number;
 
+    private memU8           : Uint8Array;
+    private memU64          : BigUint64Array;
+
     constructor(wasm: WasmPrime128, length: number, base?: number) {
         this.wasm = wasm;
         this.base = base === undefined ? this.wasm.newArray(length) : base;
         this.length = length;
         this.byteLength = length * VALUE_SIZE;
+        this.memU8 = new Uint8Array(wasm.memory.buffer);
+        this.memU64 = new BigUint64Array(wasm.memory.buffer);
     }
 
     get elementSize(): number {
@@ -32,10 +37,13 @@ export class WasmVector128 implements Vector {
     }
 
     getValue(index: number): bigint {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
         // reads a 128-bit value from WebAssembly memory (little-endian layout)
-        const lo = this.wasm.U64[idx];
-        const hi = this.wasm.U64[idx + 1];
+        const lo = this.memU64[idx];
+        const hi = this.memU64[idx + 1];
         return (hi << 64n) | lo;
     }
 
@@ -43,24 +51,36 @@ export class WasmVector128 implements Vector {
         if (value > MAX_VALUE) {
             throw new TypeError(`Value cannot be greater than ${MAX_VALUE}`);
         }
+
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         // writes a 128-bit value to WebAssembly memory (little-endian layout)
         const idx = (this.base + index * VALUE_SIZE) >>> 3;
-        this.wasm.U64[idx] = value & MASK_64B;
-        this.wasm.U64[idx + 1] = value >> 64n;
+        this.memU64[idx] = value & MASK_64B;
+        this.memU64[idx + 1] = value >> 64n;
     }
 
     copyValue(index: number, destination: Buffer, offset: number): number {
+        if (this.memU8.buffer !== this.wasm.memory.buffer) {
+            this.memU8 = new Uint8Array(this.wasm.memory.buffer);
+        }
         const idx = (this.base + index * VALUE_SIZE);
-        destination.set(this.wasm.U8.subarray(idx, idx + VALUE_SIZE), offset);
+        destination.set(this.memU8.subarray(idx, idx + VALUE_SIZE), offset);
         return VALUE_SIZE;
     }
 
     toValues(): bigint[] {
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         const values = new Array<bigint>(this.length);
         let idx = this.base >>> 3;
         for (let i = 0; i < this.length; i++, idx += 2) {
-            let lo = this.wasm.U64[idx];
-            let hi = this.wasm.U64[idx + 1];
+            let lo = this.memU64[idx];
+            let hi = this.memU64[idx + 1];
             values[i] = (hi << 64n) | lo;
         }
         return values;
@@ -79,11 +99,15 @@ export class WasmVector128 implements Vector {
             throw new Error(`Cannot load values: vector length must match the number of values`);
         }
 
+        if (this.memU64.buffer !== this.wasm.memory.buffer) {
+            this.memU64 = new BigUint64Array(this.wasm.memory.buffer);
+        }
+
         let idx = this.base >>> 3;
         for (let i = 0; i < this.length; i++, idx += 2) {
             let value = values[i];
-            this.wasm.U64[idx] = value & MASK_64B;
-            this.wasm.U64[idx + 1] = value >> 64n;
+            this.memU64[idx] = value & MASK_64B;
+            this.memU64[idx + 1] = value >> 64n;
         }
     }
 }
