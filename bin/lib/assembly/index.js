@@ -10,7 +10,7 @@ const PRIME128_WASM = `${__dirname}/prime128.wasm`;
 // PUBLIC MODULE
 // ================================================================================================
 function instantiatePrime128(options) {
-    const wasm = loader.instantiateBuffer(fs.readFileSync(PRIME128_WASM), {
+    const wasm = loader.instantiateSync(fs.readFileSync(PRIME128_WASM), {
         env: { memory: options.memory }
     });
     return wasm;
