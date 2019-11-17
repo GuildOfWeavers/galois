@@ -1,7 +1,7 @@
 // IMPORTS
 // ================================================================================================
 import * as fs from 'fs';
-import * as loader from 'assemblyscript/lib/loader';
+import * as loader from '@assemblyscript/loader';
 import { WasmOptions } from '@guildofweavers/galois';
 
 // CONSTANTS
