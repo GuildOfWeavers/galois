@@ -34,6 +34,9 @@ class BinaryField {
     get one() {
         throw new Error('Not implemented');
     }
+    isElement() {
+        throw new Error('Not implemented');
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     add(x, y) {

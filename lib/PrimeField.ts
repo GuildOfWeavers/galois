@@ -61,6 +61,10 @@ export class PrimeField implements FiniteField {
         return 1n;
     }
 
+    isElement(value: bigint): boolean {
+        return (value >= 0n && value < this.modulus);
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value: bigint): bigint {

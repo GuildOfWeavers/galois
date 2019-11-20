@@ -40,6 +40,9 @@ class PrimeField {
     get one() {
         return 1n;
     }
+    isElement(value) {
+        return (value >= 0n && value < this.modulus);
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value) {

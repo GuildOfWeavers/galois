@@ -47,6 +47,9 @@ class WasmPrimeField128 {
     get memorySize() {
         return this.wasm.memory.buffer.byteLength;
     }
+    isElement(value) {
+        return this.jsField.isElement(value);
+    }
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value) {

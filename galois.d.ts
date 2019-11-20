@@ -30,6 +30,8 @@ declare module '@guildofweavers/galois' {
         /** Multiplicative identity of the field */
         readonly one: bigint;
 
+        isElement(value: bigint): boolean;
+
         // BASIC ARITHMETICS
         // ----------------------------------------------------------------------------------------
 

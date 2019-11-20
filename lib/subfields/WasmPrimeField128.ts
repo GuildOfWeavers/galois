@@ -68,6 +68,10 @@ export class WasmPrimeField128 implements FiniteField {
         return this.wasm.memory.buffer.byteLength;
     }
 
+    isElement(value: bigint): boolean {
+        return this.jsField.isElement(value);
+    }
+
     // BASIC ARITHMETIC
     // --------------------------------------------------------------------------------------------
     mod(value: bigint): bigint {
