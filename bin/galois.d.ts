@@ -147,6 +147,9 @@ declare module '@guildofweavers/galois' {
         /** Creates a copy of a vector that represents the source vector duplicated the specified number of times */
         duplicateVector(v: Vector, times?: number): Vector;
 
+        /** Creates a new vector with the elements rotated by the specified number of slots */
+        rotateVector(v: Vector, slots: number): Vector;
+
         /** Transposes the provided vector into a matrix with the specified number of columns */
         transposeVector(v: Vector, columns: number, step?: number): Matrix;
 

@@ -241,6 +241,20 @@ class WasmPrimeField128 {
         this.wasm.copyArrayElements(vw.base, result.base, newLength);
         return result;
     }
+    rotateVector(v, slots) {
+        if (slots === 0 || v.length < 2)
+            return v;
+        if (Math.abs(slots) >= v.length) {
+            throw new Error(`Number of rotation slots cannot exceed vector length`);
+        }
+        const s1 = slots < 0 ? -slots : v.length - slots;
+        const s2 = v.length - s1;
+        const vw = v;
+        const result = this.newVector(vw.length);
+        this.wasm.copyArrayElements(vw.base, result.base + s2 * vw.elementSize, s1);
+        this.wasm.copyArrayElements(vw.base + s1 * vw.elementSize, result.base, s2);
+        return result;
+    }
     duplicateVector(v, times = 1) {
         let currentLength = v.length;
         const resultLength = currentLength << times;

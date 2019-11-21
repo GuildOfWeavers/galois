@@ -145,6 +145,9 @@ class BinaryField {
     duplicateVector(v, times = 1) {
         throw new Error('Not implemented');
     }
+    rotateVector(v, rotations) {
+        throw new Error('Not implemented');
+    }
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows, columns) {

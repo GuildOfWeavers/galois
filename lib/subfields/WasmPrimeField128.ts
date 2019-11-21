@@ -291,6 +291,23 @@ export class WasmPrimeField128 implements FiniteField {
         return result;
     }
 
+    rotateVector(v: Vector, slots: number): WasmVector128 {
+        if (slots === 0 || v.length < 2) return v as WasmVector128;
+        if (Math.abs(slots) >= v.length) {
+            throw new Error(`Number of rotation slots cannot exceed vector length`);
+        }
+
+        const s1 = slots < 0 ? -slots : v.length - slots;
+        const s2 = v.length - s1;
+
+        const vw = v as WasmVector128;
+        const result = this.newVector(vw.length);
+        this.wasm.copyArrayElements(vw.base, result.base + s2 * vw.elementSize, s1);
+        this.wasm.copyArrayElements(vw.base + s1 * vw.elementSize, result.base, s2);
+
+        return result;
+    }
+
     duplicateVector(v: Vector, times = 1): WasmVector128 {
         let currentLength = v.length;
         const resultLength = currentLength << times;

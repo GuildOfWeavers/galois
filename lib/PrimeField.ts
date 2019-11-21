@@ -285,6 +285,17 @@ export class PrimeField implements FiniteField {
         return this.newVectorFrom(rValues);
     }
 
+    rotateVector(v: Vector, slots: number): JsVector {
+        if (slots === 0 || v.length < 2) return v as JsVector;
+        if (Math.abs(slots) >= v.length) {
+            throw new Error(`Number of rotation slots cannot exceed vector length`);
+        }
+        slots = -slots;
+        const vValues = v.toValues();
+        const rValues = [...vValues.slice(slots), ...vValues.slice(0, slots)];
+        return this.newVectorFrom(rValues);
+    }
+
     transposeVector(v: Vector, columns: number, step = 1): JsMatrix {
         const rowCount = (v.length / step) / columns;
         if (!Number.isInteger(rowCount)) {

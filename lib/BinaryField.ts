@@ -191,6 +191,10 @@ export class BinaryField implements FiniteField {
         throw new Error('Not implemented');
     }
 
+    rotateVector(v: Vector, rotations: number): Vector {
+        throw new Error('Not implemented');
+    }
+
     // MATRIX OPERATIONS
     // --------------------------------------------------------------------------------------------
     newMatrix(rows: number, columns: number): Matrix {
