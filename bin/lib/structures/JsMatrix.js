@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // CONSTANTS
 // ================================================================================================
-const MASK_64B = 0xffffffffffffffffn;
+const MASK_32B = 0xffffffffn;
 // CLASS DEFINITION
 // ================================================================================================
 class JsMatrix {
@@ -28,12 +28,11 @@ class JsMatrix {
         this.values[row][column] = value;
     }
     copyValue(row, column, destination, offset) {
-        const blocks = this.elementSize >> 3;
+        const limbCount = this.elementSize >> 2;
         let value = this.values[row][column];
-        for (let i = 0; i < blocks; i++) {
-            destination.writeBigUInt64LE(value & MASK_64B, offset);
-            value = value >> 64n;
-            offset += 8;
+        for (let i = 0; i < limbCount; i++, offset += 4) {
+            destination.writeUInt32LE(Number(value & MASK_32B), offset);
+            value = value >> 32n;
         }
         return this.elementSize;
     }
@@ -43,13 +42,13 @@ class JsMatrix {
     toBuffer() {
         let offset = 0;
         const result = Buffer.alloc(this.byteLength);
-        const limbCount = this.elementSize >> 3;
+        const limbCount = this.elementSize >> 2;
         for (let i = 0; i < this.rowCount; i++) {
             for (let j = 0; j < this.colCount; j++) {
                 let value = this.values[i][j];
-                for (let limb = 0; limb < limbCount; limb++, offset += 8) {
-                    result.writeBigUInt64LE(value & MASK_64B, offset);
-                    value = value >> 64n;
+                for (let limb = 0; limb < limbCount; limb++, offset += 4) {
+                    result.writeUInt32LE(Number(value & MASK_32B), offset);
+                    value = value >> 32n;
                 }
             }
         }
@@ -57,16 +56,16 @@ class JsMatrix {
     }
     rowsToBuffers(indexes) {
         const result = new Array();
-        const limbCount = this.elementSize >> 3;
+        const limbCount = this.elementSize >> 2;
         const rowSize = this.colCount * this.elementSize;
         if (!indexes) {
             for (let i = 0; i < this.rowCount; i++) {
                 let buffer = Buffer.allocUnsafe(rowSize), offset = 0;
                 for (let j = 0; j < this.colCount; j++) {
                     let value = this.values[i][j];
-                    for (let limb = 0; limb < limbCount; limb++, offset += 8) {
-                        buffer.writeBigUInt64LE(value & MASK_64B, offset);
-                        value = value >> 64n;
+                    for (let limb = 0; limb < limbCount; limb++, offset += 4) {
+                        buffer.writeUInt32LE(Number(value & MASK_32B), offset);
+                        value = value >> 32n;
                     }
                 }
                 result.push(buffer);
@@ -77,9 +76,9 @@ class JsMatrix {
                 let buffer = Buffer.allocUnsafe(rowSize), offset = 0;
                 for (let j = 0; j < this.colCount; j++) {
                     let value = this.values[i][j];
-                    for (let limb = 0; limb < limbCount; limb++, offset += 8) {
-                        buffer.writeBigUInt64LE(value & MASK_64B, offset);
-                        value = value >> 64n;
+                    for (let limb = 0; limb < limbCount; limb++, offset += 4) {
+                        buffer.writeUInt32LE(Number(value & MASK_32B), offset);
+                        value = value >> 32n;
                     }
                 }
                 result.push(buffer);

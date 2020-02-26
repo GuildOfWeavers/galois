@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // CONSTANTS
 // ================================================================================================
-const MASK_64B = 0xffffffffffffffffn;
+const MASK_32B = 0xffffffffn;
 // CLASS DEFINITION
 // ================================================================================================
 class JsVector {
@@ -29,12 +29,11 @@ class JsVector {
         this.values[index] = value;
     }
     copyValue(index, destination, offset) {
-        const blocks = this.elementSize >> 3;
+        const limbCount = this.elementSize >> 2;
         let value = this.values[index];
-        for (let i = 0; i < blocks; i++) {
-            destination.writeBigUInt64LE(value & MASK_64B, offset);
-            value = value >> 64n;
-            offset += 8;
+        for (let i = 0; i < limbCount; i++, offset += 4) {
+            destination.writeUInt32LE(Number(value & MASK_32B), offset);
+            value = value >> 32n;
         }
         return this.elementSize;
     }
@@ -47,22 +46,21 @@ class JsVector {
         }
         let offset = 0;
         const result = Buffer.alloc(elementCount * this.elementSize);
-        const limbCount = this.elementSize >> 3;
+        const limbCount = this.elementSize >> 2;
         if (elementCount === 1) {
             let value = this.values[startIdx];
-            for (let i = 0; i < limbCount; i++) {
-                result.writeBigUInt64LE(value & MASK_64B, offset);
-                value = value >> 64n;
-                offset += 8;
+            for (let i = 0; i < limbCount; i++, offset += 4) {
+                result.writeUInt32LE(Number(value & MASK_32B), offset);
+                value = value >> 32n;
             }
             return result;
         }
         const endIdx = startIdx + elementCount;
         for (let index = startIdx; index < endIdx; index++) {
             let value = this.values[index];
-            for (let limb = 0; limb < limbCount; limb++, offset += 8) {
-                result.writeBigUInt64LE(value & MASK_64B, offset);
-                value = value >> 64n;
+            for (let i = 0; i < limbCount; i++, offset += 4) {
+                result.writeUInt32LE(Number(value & MASK_32B), offset);
+                value = value >> 32n;
             }
         }
         return result;
