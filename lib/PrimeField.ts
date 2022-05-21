@@ -950,8 +950,18 @@ function fastFT(values: readonly bigint[], roots: readonly bigint[], depth: numb
     const step = 1 << depth;
     const resultLength = roots.length / step;
 
+    if (resultLength == 2) {
+        const result = new Array<bigint>(2);
+        for (let i = 0; i < 2; i++) {
+            let last = values[offset] * roots[0];
+            last += values[offset + step] * roots[i * step];
+            result[i] = F.mod(last);
+        }
+        return result;
+    }
+
     // if only 4 values left, use simple FT
-    if (resultLength <= 4) {
+    if (resultLength == 4) {
         const result = new Array<bigint>(4);
         for (let i = 0; i < 4; i++) {
             let last = values[offset] * roots[0];
