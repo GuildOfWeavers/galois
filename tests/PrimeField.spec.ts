@@ -1214,6 +1214,8 @@ describe('PrimeField;', () => {
             let fp: JsVector;
 
             [
+                [1n, 18446744069414584320n],
+
                 [2n,  1n,  2n, 3n],
                 [-2n, 1n, -2n, 3n],
 
