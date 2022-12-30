@@ -34,6 +34,6 @@
     "del": "5.0.x",
     "gulp": "4.0.x",
     "gulp-mocha": "6.0.x",
-    "mocha": "6.2.x"
+    "mocha": "10.2.x"
   }
 }
